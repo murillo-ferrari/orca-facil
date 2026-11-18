@@ -47,14 +47,14 @@ Rápida e independente. Dá visibilidade ao projeto antes da Cloud.
 
 ### 3.1 Antes de tornar o repositório público
 
-- [ ] **E-mail nos commits:** o e-mail configurado no Git aparece no histórico de um repositório público. Confira
+- [x] **E-mail nos commits** (decidido: manter o e-mail pessoal): o e-mail configurado no Git aparece no histórico de um repositório público. Confira
       com `git log --format='%an <%ae>' | sort -u`. Se não quiser expô-lo, configure o e-mail _noreply_ do GitHub
       (`usuario@users.noreply.github.com`) e reescreva o histórico **antes** do primeiro push (são poucos commits).
-- [ ] Conferir que não há segredos no histórico (hoje não há nenhum).
-- [ ] Adicionar `LICENSE` (decisão D1) e uma seção "Como contribuir" no README.
+- [x] Conferir que não há segredos no histórico (não há nenhum).
+- [x] Adicionar `LICENSE` (AGPL-3.0) e uma seção "Como contribuir" no README.
 - [x] Hospedar a fonte Inter localmente (pacote `@fontsource-variable/inter`) e remover o Google Fonts do
       `index.html` (feito na F1). Assim o app não contata terceiros ao abrir, o que fica coerente com a promessa de privacidade.
-- [ ] Ajustar o README: link para a versão publicada e instruções de clone/build/deploy.
+- [x] Ajustar o README: link para a versão publicada e instruções de clone/build/deploy.
 
 ### 3.2 Publicação
 

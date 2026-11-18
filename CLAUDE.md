@@ -5,7 +5,9 @@ sem backend, sem login; os dados ficam no `localStorage`. O `README.md` é a doc
 estrutura de pastas arquivo por arquivo, diagramas Mermaid). Este arquivo guarda o contexto para continuar o trabalho.
 
 O nome "Orçafácil" (aparece em `src/App.tsx` e `index.html`) acompanha o domínio `orcafacil.com.br`, em registro.
-Licença: AGPL-3.0 (o arquivo `LICENSE` entra na publicação da etapa 1).
+Licença: AGPL-3.0 (`LICENSE`). Repositório público: <https://github.com/murillo-ferrari/orca-facil> (a pasta local
+ainda se chama `gerador-orcamento`). Edição Local publicada em <https://murillo-ferrari.github.io/orca-facil/>.
+Commits com o e-mail pessoal do usuário, por escolha dele.
 
 ## Stack e comandos
 
@@ -24,7 +26,7 @@ npm run lint           # oxlint (avisos only-export-components e purity são con
 ```
 
 - `VITE_EDITION` (`local` | `cloud`, padrão `local`) escolhe a edição no build; `vite.config.ts` valida e hoje
-  **recusa `cloud`** até a edição existir. CI em `.github/workflows/ci.yml` (roda quando houver remoto no GitHub).
+  **recusa `cloud`** até a edição existir. CI em `.github/workflows/ci.yml`; publicação em `.github/workflows/pages.yml`.
 
 ## Testes e validação
 
@@ -62,7 +64,8 @@ npm run lint           # oxlint (avisos only-export-components e purity são con
   Ao comparar `statusHistory[].at` com datas de calendário, converter para data local (ver `statusDate` em
   `reports/data.ts`).
 - **Impressão:** elementos que não devem sair no papel levam `print:hidden`.
-- **Commits:** só quando o usuário pedir. Repositório na branch `main`, **sem remoto configurado**.
+- **Commits e push:** só quando o usuário pedir. Branch `main`, remoto `origin` no GitHub. Push na `main` dispara o
+  CI (`ci.yml`) e a publicação no GitHub Pages (`pages.yml`, que só publica se `npm run check` passar).
 
 ## Modelo de dados e persistência
 
@@ -149,7 +152,6 @@ quando o usuário clica em _Cobrar_). A fonte é servida pelo próprio app desde
 - Os cards "Aguardando" da lista de orçamentos e da página do cliente **incluem enviados já vencidos**. Foi
   proposto separar os vencidos ("+N vencidos"); o usuário ainda não decidiu.
 - O layout de impressão dos relatórios não foi conferido visualmente (o diálogo de impressão trava a automação).
-- Sem remoto Git (nada publicado).
 
 ## Roadmap
 

@@ -3,6 +3,10 @@
 Ferramenta web para profissionais autônomos criarem orçamentos e exportarem em PDF.
 Tudo roda no navegador: não há servidor nem login, e os dados ficam salvos no `localStorage`.
 
+**Use agora, de graça:** <https://murillo-ferrari.github.io/orca-facil/>
+
+Seus dados ficam só no seu navegador. Para levá-los a outro computador, use _Ajustes › Exportar backup_.
+
 ## Funcionalidades
 
 - **Perfis de empresa (vários):** CPF ou CNPJ (com máscara e validação), razão social, nome fantasia,
@@ -40,6 +44,8 @@ Tudo roda no navegador: não há servidor nem login, e os dados ficam salvos no 
 ## Rodando
 
 ```bash
+git clone https://github.com/murillo-ferrari/orca-facil.git
+cd orca-facil
 npm install
 npm run dev          # desenvolvimento em http://localhost:5173
 npm test             # testes automatizados (Vitest); npm run test:watch para modo contínuo
@@ -53,11 +59,19 @@ ainda não existe e o build recusa esse valor com uma mensagem explicativa.
 O build usa caminhos relativos e rotas com `#`, então a pasta `dist/` funciona em qualquer hospedagem estática
 (Netlify, Vercel, GitHub Pages) ou subpasta.
 
+### Publicar a sua própria cópia
+
+1. Faça um _fork_ do repositório.
+2. Em _Settings › Pages › Build and deployment_, escolha **GitHub Actions** como _Source_.
+3. Cada push na `main` roda as verificações e publica em `https://<seu-usuario>.github.io/<repositorio>/`
+   (workflow `.github/workflows/pages.yml`).
+
 ## Estrutura
 
 ```
-gerador-orcamento/
+orca-facil/
 ├── README.md
+├── LICENSE                     AGPL-3.0
 ├── CLAUDE.md                   contexto do projeto para o Claude Code (regras, decisões, pendências)
 ├── package.json                dependências e scripts (dev, build, lint, preview)
 ├── index.html                  página base (título, descrição, favicon)
@@ -67,7 +81,9 @@ gerador-orcamento/
 ├── .oxlintrc.json              lint (oxlint)
 ├── .gitignore
 ├── .env.example                variáveis de build (VITE_EDITION)
-├── .github/workflows/ci.yml    CI: formatação, lint, tipos, testes e build a cada push/PR
+├── .github/workflows/
+│   ├── ci.yml                  formatação, lint, tipos, testes e build a cada push/PR
+│   └── pages.yml               publica a edição Local no GitHub Pages a cada push na main
 ├── public/favicon.svg
 ├── docs/
 │   ├── plano-versao-cloud.md   plano da edição Cloud (login, sincronização entre dispositivos, planos)
@@ -244,3 +260,22 @@ Algumas armadilhas da biblioteca, já tratadas em `src/pdf/QuotePdf.tsx`:
 - `lineHeight` não pode ficar na `Page` nem em `View`s; use-o apenas em estilos de `Text` que também definem `fontSize`.
 - `Text` com `render` (numeração de páginas) precisa de `left` + `right` e de um conteúdo inicial (`' '`).
 - `View` absoluta e `fixed` precisa de `height`; `Text` absoluto não pode ter `height`.
+
+## Como contribuir
+
+Sugestões e correções são bem-vindas.
+
+- **Encontrou um problema ou tem uma ideia?** Abra uma
+  [issue](https://github.com/murillo-ferrari/orca-facil/issues) descrevendo o que aconteceu (ou o que gostaria) e,
+  se possível, os passos para reproduzir.
+- **Quer enviar código?** Faça um _fork_, crie uma branch e abra um _pull request_. Antes, rode `npm run check`
+  (o mesmo que o CI roda) e inclua testes para regras novas.
+- **Convenções:** interface, comentários e documentação em português do Brasil, com acentuação; nomes no código em
+  inglês. Formatação pelo Prettier (`npm run format`). O `CLAUDE.md` resume as regras de negócio e as decisões do
+  projeto.
+
+## Licença
+
+[GNU AGPL-3.0](LICENSE). Você pode usar, estudar, modificar e redistribuir o código. Se disponibilizar uma versão
+modificada para outras pessoas usarem pela rede (por exemplo, hospedando-a como serviço), precisa publicar o código
+dessa versão sob a mesma licença.

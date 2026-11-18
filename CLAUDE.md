@@ -11,21 +11,31 @@ Licença: AGPL-3.0 (o arquivo `LICENSE` entra na publicação da etapa 1).
 
 React 19 · Vite 8 · TypeScript 7 · Tailwind CSS 4 (`@tailwindcss/vite`) · zustand 5 (estado + `persist`) ·
 react-router-dom 7 (`HashRouter`) · react-day-picker 10 (calendário, locale `pt-BR`) · date-fns 4 ·
-@react-pdf/renderer 4.9 (PDF) · lucide-react (ícones). Node 24.
+@react-pdf/renderer 4.9 (PDF) · lucide-react (ícones) · fonte Inter via `@fontsource-variable/inter` (servida pelo
+app, sem Google Fonts). Testes: Vitest 5 + happy-dom. Node 24.
 
 ```bash
-npm run dev                              # http://localhost:5173 (nas sessões usamos --port 5180 --strictPort)
-npm run build                            # tsc -b && vite build → dist/ (estático, caminhos relativos)
-npm run lint                             # oxlint (avisos only-export-components e purity são conhecidos)
-npx prettier --write "src/**/*.{ts,tsx}" # sem ponto e vírgula, aspas simples, 120 colunas
-npx tsc -b                               # checagem de tipos
+npm run dev            # http://localhost:5173 (nas sessões usamos --port 5180 --strictPort)
+npm test               # Vitest (npm run test:watch para modo contínuo)
+npm run check          # o mesmo que o CI: format:check + lint + typecheck + test
+npm run build          # tsc -b && vite build → dist/ (estático, caminhos relativos)
+npm run format         # Prettier: sem ponto e vírgula, aspas simples, 120 colunas
+npm run lint           # oxlint (avisos only-export-components e purity são conhecidos)
 ```
 
-Não há framework de testes. Validação feita até agora:
+- `VITE_EDITION` (`local` | `cloud`, padrão `local`) escolhe a edição no build; `vite.config.ts` valida e hoje
+  **recusa `cloud`** até a edição existir. CI em `.github/workflows/ci.yml` (roda quando houver remoto no GitHub).
 
-- **Cálculos (relatórios, PDF):** script Node que sobe o Vite em modo middleware e usa `server.ssrLoadModule('/src/...')`
-  para importar os módulos e rodar asserções com cenários de resultado conhecido. Para o PDF, o mesmo truque com
-  `renderToFile` do `@react-pdf/renderer` (importado direto de `node_modules`) gera o arquivo sem passar pelo navegador.
+## Testes e validação
+
+- **Vitest:** testes `*.test.ts` ao lado do código (`lib/`, `data/`, `store/`, `reports/`, `pdf/`,
+  `components/NumberInput`). Ambiente `node` por padrão; arquivos que precisam de `localStorage` começam com
+  `// @vitest-environment happy-dom`. Rode `npm run check` antes de considerar algo pronto.
+- Os testes independem do fuso horário (verificados de UTC−11 a UTC+14); mantenha assim (datas `yyyy-MM-dd` e ISO
+  com hora local explícita nos cenários).
+- `reports/data.test.ts` tem um cenário de resultado conhecido (orçamentos A–G); amplie-o ao mudar regras de relatório.
+- `pdf/QuotePdf.test.ts` conta páginas do PDF gerado (regressões de paginação/layout). Conteúdo visual do PDF ainda se
+  confere gerando o arquivo e convertendo para imagem (`qlmanage -t` no macOS, ou PDFKit via Swift para outras páginas).
 - **Telas:** navegador (Claude in Chrome), semeando dados com `await import('/src/store/store.ts')` +
   `useStore.setState(...)` no console da página. Para simular celular quando a janela não redimensiona: iframe de
   390px da própria URL dentro da página.
@@ -56,13 +66,18 @@ Não há framework de testes. Validação feita até agora:
 
 ## Modelo de dados e persistência
 
-Tipos em `src/types.ts`. Estado global em `src/store/store.ts`:
-`profiles`, `activeProfileId`, `clients`, `units`, `catalog`, `quotes`.
+Tipos em `src/types.ts`. Formato dos dados (`DataState`: `profiles`, `activeProfileId`, `clients`, `units`, `catalog`,
+`quotes`) em `src/data/schema.ts`. Ações em `src/store/store.ts` (zustand). **Onde** os dados ficam vem da edição:
+`src/editions/index.ts` → `src/editions/local/persistence.ts` (localStorage). A edição Cloud vai plugar a própria
+persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem mudar telas nem ações.
 
-- Chave do `localStorage`: **`gerador-orcamento:v1` — nome fixo, nunca renomear** (apagaria os dados dos usuários).
-- Versão do formato: `version` do `persist` (hoje **2**). Para mudar o formato: aumentar `version`, tratar em
-  `migrate` e completar campos em `normalizeQuote` (`store/factories.ts`). `importData` (backup JSON) também passa
-  por `normalizeQuote`.
+- Chave do `localStorage`: **`STORAGE_KEY = 'gerador-orcamento:v1'` — nome fixo, nunca renomear** (apagaria os dados
+  dos usuários).
+- Versão do formato: **`SCHEMA_VERSION`** (hoje **2**), em `data/schema.ts`. Para mudar o formato: incrementar, tratar a
+  conversão em `migrateState` (e em `normalizeQuote`, de `store/factories.ts`, se for campo de orçamento) e cobrir em
+  `data/schema.test.ts`. O persist só grava os dados (`partialize: pickData`).
+- Importação de backup: `parseBackup` (valida o arquivo, `data/backup.ts`) → `importData` → `normalizeImport` (migra,
+  restaura unidades padrão se vazias, escolhe a empresa ativa).
 - Campo novo em orçamento/item: atualizar `types.ts`, a fábrica correspondente (`newQuote`, `newItem`…) e
   `normalizeQuote`.
 - v2 adicionou:
@@ -72,7 +87,8 @@ Tipos em `src/types.ts`. Estado global em `src/store/store.ts`:
     "Salvar no catálogo"; apagar a descrição desfaz o vínculo; editar a descrição mantém.
 - `Quote.client` é uma **cópia** dos dados do cliente no momento do orçamento (`clientId` aponta para o cadastro,
   ou `null` se digitado à mão). Editar o cadastro não altera orçamentos antigos.
-- Backup: _Ajustes_ exporta `{ app, version, exportedAt, data }` em JSON; importar **substitui** tudo.
+- Backup: _Ajustes_ exporta `{ app, version: 1, schemaVersion, exportedAt, data }` em JSON (`createBackup`); importar
+  **substitui** tudo. Arquivos sem envelope (só o estado) também são aceitos.
 
 ## Regras de negócio
 
@@ -125,15 +141,14 @@ Armadilhas já resolvidas em `QuotePdf.tsx` — não reintroduzir:
 
 ## Serviços externos
 
-Os dados dos orçamentos nunca saem do navegador. Contatos externos: **Google Fonts** (fonte Inter, em todo acesso),
-**ViaCEP** (só o CEP digitado) e **WhatsApp** (só quando o usuário clica em _Cobrar_).
+Os dados dos orçamentos nunca saem do navegador. Contatos externos: **ViaCEP** (só o CEP digitado) e **WhatsApp** (só
+quando o usuário clica em _Cobrar_). A fonte é servida pelo próprio app desde a F1 (antes vinha do Google Fonts).
 
 ## Pendências e pontos em aberto
 
 - Os cards "Aguardando" da lista de orçamentos e da página do cliente **incluem enviados já vencidos**. Foi
   proposto separar os vencidos ("+N vencidos"); o usuário ainda não decidiu.
 - O layout de impressão dos relatórios não foi conferido visualmente (o diálogo de impressão trava a automação).
-- Sem testes automatizados no repositório; vale considerar Vitest para `lib/` e `reports/data.ts`.
 - Sem remoto Git (nada publicado).
 
 ## Roadmap
@@ -163,3 +178,5 @@ login `login@orcafacil.com.br`). Pendentes: D4 pagamento, D5 planos, D6 login, D
 4. README com estrutura detalhada e dois diagramas Mermaid (funcionamento e fluxo de dados).
 5. Correções do README apontadas no /code-review, CLAUDE.md e plano da edição Cloud em `docs/`.
 6. Reavaliação de autenticação/backend: Supabase Auth no lugar do Clerk; plano atualizado.
+7. **F1 (fundação) concluída:** Vitest (95 testes), camada `src/data/` + `src/editions/`, `VITE_EDITION`, fonte
+   Inter local, CI e scripts `test`/`check`/`format`.

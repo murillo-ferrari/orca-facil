@@ -52,8 +52,8 @@ Rápida e independente. Dá visibilidade ao projeto antes da Cloud.
       (`usuario@users.noreply.github.com`) e reescreva o histórico **antes** do primeiro push (são poucos commits).
 - [ ] Conferir que não há segredos no histórico (hoje não há nenhum).
 - [ ] Adicionar `LICENSE` (decisão D1) e uma seção "Como contribuir" no README.
-- [ ] Hospedar a fonte Inter localmente (pacote `@fontsource-variable/inter`) e remover o Google Fonts do
-      `index.html`. Assim o app não contata terceiros ao abrir, o que fica coerente com a promessa de privacidade.
+- [x] Hospedar a fonte Inter localmente (pacote `@fontsource-variable/inter`) e remover o Google Fonts do
+      `index.html` (feito na F1). Assim o app não contata terceiros ao abrir, o que fica coerente com a promessa de privacidade.
 - [ ] Ajustar o README: link para a versão publicada e instruções de clone/build/deploy.
 
 ### 3.2 Publicação
@@ -554,7 +554,7 @@ Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úte
 | Fase | Entregas | Estimativa |
 |---|---|---|
 | **F0 · Decisões e contas** | Decisões D1–D10; domínio; contas Supabase/Cloudflare/SMTP/pagamento; cliente OAuth do Google; repositório no GitHub | 1 dia |
-| **F1 · Fundação** | Vitest com os testes das regras atuais; camada `src/data/` (repositório) sem mudar comportamento; variável `VITE_EDITION`; fonte Inter local | 2–3 dias |
+| ✅ **F1 · Fundação** (concluída em 18/11/2026) | Vitest com 95 testes das regras atuais; camada `src/data/` + `src/editions/` sem mudar comportamento; variável `VITE_EDITION` validada no build; fonte Inter local; CI (`ci.yml`) | 2–3 dias |
 | **F2 · Etapa 1 publicada** | LICENSE, README, workflow do Pages, repositório público | 0,5–1 dia |
 | **F3 · Banco** | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, testes pgTAP, projeto `staging` | 2–3 dias |
 | **F4 · Autenticação** | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
@@ -613,7 +613,7 @@ infraestrutura (considerando taxas e câmbio).
 
 1. ~~Responder às decisões D1, D2 e D3~~ (feito). Concluir o registro de `orcafacil.com.br`. D10 (SMTP) até a F4;
    D4–D8 até a F7.
-2. Executar a **F1** (testes + camada de dados), que beneficia as duas edições e reduz o risco de todo o resto.
+2. ~~Executar a F1 (testes + camada de dados)~~ (feito em 18/11/2026).
 3. Executar a **F2** e publicar a edição Local.
 
 ## Fontes consultadas (novembro de 2026)

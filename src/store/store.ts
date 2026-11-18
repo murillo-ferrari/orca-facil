@@ -1,16 +1,11 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
 import type { CatalogItem, Client, CompanyProfile, Quote, QuoteClient, Unit } from '../types'
-import { DEFAULT_UNITS, formatQuoteNumber, newQuote, normalizeQuote, nowISO, uid } from './factories'
+import { DEFAULT_UNITS, formatQuoteNumber, newQuote, nowISO, uid } from './factories'
+import { STORAGE_KEY, SCHEMA_VERSION, migrateState, normalizeImport, pickData, type DataState } from '../data/schema'
+import { persistence } from '../editions'
 
-export interface DataState {
-  profiles: CompanyProfile[]
-  activeProfileId: string | null
-  clients: Client[]
-  units: Unit[]
-  catalog: CatalogItem[]
-  quotes: Quote[]
-}
+export type { DataState }
 
 interface Actions {
   saveProfile: (p: CompanyProfile) => void
@@ -54,7 +49,8 @@ function takeNumber(profiles: CompanyProfile[], profileId: string): [string, Com
 }
 
 export const useStore = create<DataState & Actions>()(
-  persist(
+  // Genéricos explícitos: o estado tem ações, mas só os dados (DataState) são persistidos
+  persist<DataState & Actions, [], [], DataState>(
     (set, get) => ({
       profiles: [],
       activeProfileId: null,
@@ -136,25 +132,15 @@ export const useStore = create<DataState & Actions>()(
         return copy.id
       },
 
-      importData: (data) =>
-        set(() => ({
-          profiles: data.profiles ?? [],
-          activeProfileId: data.activeProfileId ?? data.profiles?.[0]?.id ?? null,
-          clients: data.clients ?? [],
-          units: data.units?.length ? data.units : DEFAULT_UNITS,
-          catalog: data.catalog ?? [],
-          quotes: (data.quotes ?? []).map(normalizeQuote),
-        })),
+      importData: (data) => set(() => normalizeImport(data)),
     }),
     {
-      name: 'gerador-orcamento:v1',
-      version: 2,
-      storage: createJSONStorage(() => localStorage),
-      // v2: histórico de status nos orçamentos e vínculo dos itens com o catálogo
-      migrate: (persisted) => {
-        const state = persisted as DataState
-        return { ...state, quotes: (state.quotes ?? []).map(normalizeQuote) } as DataState & Actions
-      },
+      name: STORAGE_KEY,
+      version: SCHEMA_VERSION,
+      // Onde os dados ficam depende da edição (src/editions); as ações acima não mudam
+      storage: persistence.storage,
+      partialize: pickData,
+      migrate: (persisted, fromVersion) => migrateState(persisted, fromVersion) as DataState & Actions,
     },
   ),
 )
@@ -162,7 +148,4 @@ export const useStore = create<DataState & Actions>()(
 export const useActiveProfile = () =>
   useStore((s) => s.profiles.find((p) => p.id === s.activeProfileId) ?? s.profiles[0] ?? null)
 
-export function exportSnapshot(): DataState {
-  const { profiles, activeProfileId, clients, units, catalog, quotes } = useStore.getState()
-  return { profiles, activeProfileId, clients, units, catalog, quotes }
-}
+export const exportSnapshot = (): DataState => pickData(useStore.getState())

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { DatabaseBackup, Download, Plus, Ruler, RotateCcw, Trash2, Upload } from 'lucide-react'
-import { exportSnapshot, useStore, type DataState } from '../store/store'
+import { exportSnapshot, useStore } from '../store/store'
+import { BackupError, backupFileName, createBackup, parseBackup } from '../data/backup'
 import { uid } from '../store/factories'
 import { Button, Card, CardHeader, Input } from '../components/ui'
 import { toast } from '../components/toast'
@@ -104,28 +105,27 @@ function BackupCard() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   function handleExport() {
-    const data = { app: 'gerador-orcamento', version: 1, exportedAt: new Date().toISOString(), data: exportSnapshot() }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const blob = new Blob([JSON.stringify(createBackup(exportSnapshot()), null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `backup-orcamentos-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = backupFileName()
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 5000)
     toast('Backup exportado')
   }
 
   async function handleImport(file: File) {
+    let data
     try {
-      const json = JSON.parse(await file.text())
-      const data: Partial<DataState> = json?.data ?? json
-      if (!Array.isArray(data.profiles) || !Array.isArray(data.quotes)) throw new Error('formato inválido')
-      if (!window.confirm('Importar este backup vai SUBSTITUIR todos os dados atuais. Continuar?')) return
-      importData(data)
-      toast('Backup restaurado')
-    } catch {
-      toast('Arquivo de backup inválido', 'error')
+      data = parseBackup(await file.text())
+    } catch (e) {
+      toast(e instanceof BackupError ? e.message : 'Arquivo de backup inválido', 'error')
+      return
     }
+    if (!window.confirm('Importar este backup vai SUBSTITUIR todos os dados atuais. Continuar?')) return
+    importData(data)
+    toast('Backup restaurado')
   }
 
   return (

@@ -41,9 +41,14 @@ Tudo roda no navegador: não há servidor nem login, e os dados ficam salvos no 
 
 ```bash
 npm install
-npm run dev      # desenvolvimento em http://localhost:5173
-npm run build    # gera o site estático em dist/
+npm run dev          # desenvolvimento em http://localhost:5173
+npm test             # testes automatizados (Vitest); npm run test:watch para modo contínuo
+npm run check        # tudo que o CI roda: formatação, lint, tipos e testes
+npm run build        # gera o site estático em dist/
 ```
+
+A edição é escolhida no build pela variável `VITE_EDITION` (padrão `local`; veja `.env.example`). A edição `cloud`
+ainda não existe e o build recusa esse valor com uma mensagem explicativa.
 
 O build usa caminhos relativos e rotas com `#`, então a pasta `dist/` funciona em qualquer hospedagem estática
 (Netlify, Vercel, GitHub Pages) ou subpasta.
@@ -55,24 +60,36 @@ gerador-orcamento/
 ├── README.md
 ├── CLAUDE.md                   contexto do projeto para o Claude Code (regras, decisões, pendências)
 ├── package.json                dependências e scripts (dev, build, lint, preview)
-├── index.html                  página base (título, fonte Inter do Google Fonts, favicon)
+├── index.html                  página base (título, descrição, favicon)
 ├── vite.config.ts              Vite + React + Tailwind; base relativa para hospedar em qualquer pasta
 ├── tsconfig.json               referências para tsconfig.app.json (código) e tsconfig.node.json (vite.config)
 ├── .prettierrc                 formatação (Prettier: sem ponto e vírgula, aspas simples, 120 colunas)
 ├── .oxlintrc.json              lint (oxlint)
 ├── .gitignore
+├── .env.example                variáveis de build (VITE_EDITION)
+├── .github/workflows/ci.yml    CI: formatação, lint, tipos, testes e build a cada push/PR
 ├── public/favicon.svg
 ├── docs/
 │   ├── plano-versao-cloud.md   plano da edição Cloud (login, sincronização entre dispositivos, planos)
 │   └── avaliacao-autenticacao-e-backend.md  Clerk × Supabase Auth e alternativas de backend
 └── src/
-    ├── main.tsx                ponto de entrada
+    ├── main.tsx                ponto de entrada (carrega a fonte Inter, servida pelo próprio app)
+    ├── vite-env.d.ts           tipos das variáveis de ambiente (VITE_EDITION)
     ├── App.tsx                 layout (menu lateral, barra inferior no celular, seletor de empresa) e rotas
     ├── index.css               Tailwind, tema (cores) e estilos de calendário e impressão
     ├── types.ts                modelos: empresa, cliente, catálogo, unidade, orçamento, item, histórico de status
     │
+    ├── data/                   formato dos dados, independente de onde ficam guardados
+    │   ├── schema.ts           DataState, chave do localStorage, versão do formato e migrações
+    │   ├── backup.ts           criar e ler o arquivo de backup (JSON)
+    │   └── persistence.ts      contrato de persistência que cada edição implementa
+    │
+    ├── editions/               o que muda entre as edições
+    │   ├── index.ts            edição atual (VITE_EDITION) e sua persistência
+    │   └── local/persistence.ts  edição Local: localStorage
+    │
     ├── store/
-    │   ├── store.ts            estado global (zustand) salvo no localStorage, ações e migração de versões
+    │   ├── store.ts            estado global (zustand) e ações; a persistência vem de src/editions
     │   └── factories.ts        criação de registros vazios, unidades padrão, numeração e normalização de dados antigos
     │
     ├── lib/
@@ -122,6 +139,9 @@ gerador-orcamento/
         └── shared.tsx          cards de indicador, seções e botão de exportar
 ```
 
+Os testes (`*.test.ts`) ficam ao lado do código que testam: `lib/`, `data/`, `store/`, `reports/`, `pdf/` e
+`components/NumberInput`.
+
 ## Como funciona
 
 ### Funcionamento do app
@@ -164,10 +184,10 @@ flowchart TD
 
 ### Fluxo dos dados
 
-Não há servidor: as telas leem e alteram um único estado global (zustand), que é persistido no `localStorage`.
-Os dados dos orçamentos nunca saem do navegador. Há três contatos com serviços externos:
+Não há servidor: as telas leem e alteram um único estado global (zustand), que é persistido no `localStorage`
+pela persistência da edição (`src/editions`). Os dados dos orçamentos nunca saem do navegador, e a fonte é servida
+pelo próprio app. Há só dois contatos com serviços externos:
 
-- **Google Fonts:** o `index.html` carrega a fonte Inter a cada acesso (o Google recebe o IP e o endereço da página).
 - **ViaCEP:** recebe apenas o CEP digitado, para preencher o endereço.
 - **WhatsApp:** só quando o usuário clica em _Cobrar_ no follow-up; o link leva o telefone, o primeiro nome do
   cliente e o número do orçamento.
@@ -189,7 +209,6 @@ flowchart TB
     telas -->|chamam| acoes
     estado -->|"seletores useStore"| telas
     telas <-->|"CEP digitado → endereço"| viacep
-    fonts[["Google Fonts<br/>fonte Inter"]] -->|"carregada pelo index.html"| telas
     estado <-->|"persist · schema versão 2<br/>migrate normaliza versões anteriores"| ls
 
     subgraph saidas["Saídas"]

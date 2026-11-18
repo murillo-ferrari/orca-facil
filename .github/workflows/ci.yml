@@ -1,0 +1,35 @@
+# Verificações de todo push e pull request: formatação, lint, tipos, testes e build.
+# (A publicação no GitHub Pages fica em pages.yml, na fase F2 do plano.)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Build (edição Local)
+        run: npm run build
+        env:
+          VITE_EDITION: local

@@ -51,17 +51,171 @@ O build usa caminhos relativos e rotas com `#`, então a pasta `dist/` funciona 
 ## Estrutura
 
 ```
-src/
-  types.ts              modelos de dados
-  store/                estado global (zustand + persistência no localStorage) e fábricas
-  lib/                  formatação/máscaras/validação BR, cálculos, CEP, status
-  components/           UI base, campos (data, número, documento, endereço), editor de itens
-  pages/                Orçamentos, Editor, Clientes, Serviços, Empresas, Ajustes
-  pdf/                  documento PDF (@react-pdf/renderer) e exportação
-  reports/              cálculos dos relatórios, filtros, tabela ordenável, gráfico mensal e CSV
+gerador-orcamento/
+├── README.md
+├── CLAUDE.md                   contexto do projeto para o Claude Code (regras, decisões, pendências)
+├── package.json                dependências e scripts (dev, build, lint, preview)
+├── index.html                  página base (título, fonte Inter do Google Fonts, favicon)
+├── vite.config.ts              Vite + React + Tailwind; base relativa para hospedar em qualquer pasta
+├── tsconfig.json               referências para tsconfig.app.json (código) e tsconfig.node.json (vite.config)
+├── .prettierrc                 formatação (Prettier: sem ponto e vírgula, aspas simples, 120 colunas)
+├── .oxlintrc.json              lint (oxlint)
+├── .gitignore
+├── public/favicon.svg
+└── src/
+    ├── main.tsx                ponto de entrada
+    ├── App.tsx                 layout (menu lateral, barra inferior no celular, seletor de empresa) e rotas
+    ├── index.css               Tailwind, tema (cores) e estilos de calendário e impressão
+    ├── types.ts                modelos: empresa, cliente, catálogo, unidade, orçamento, item, histórico de status
+    │
+    ├── store/
+    │   ├── store.ts            estado global (zustand) salvo no localStorage, ações e migração de versões
+    │   └── factories.ts        criação de registros vazios, unidades padrão, numeração e normalização de dados antigos
+    │
+    ├── lib/
+    │   ├── format.ts           moeda, datas, máscaras e validação de CPF/CNPJ, CEP e telefone
+    │   ├── calc.ts             total do item, subtotal, desconto, acréscimos e total do orçamento
+    │   ├── cep.ts              consulta de endereço na API ViaCEP
+    │   ├── clientQuotes.ts     regra de quais orçamentos pertencem a um cliente
+    │   └── status.ts           rótulos e cores dos status
+    │
+    ├── components/
+    │   ├── ui.tsx              base: botão, campos, card, modal, abas segmentadas, estado vazio
+    │   ├── toast.tsx           notificações
+    │   ├── DateField.tsx       campo de data com calendário em pt-BR
+    │   ├── NumberInput.tsx     número/moeda no formato brasileiro
+    │   ├── DocumentField.tsx   CPF/CNPJ com alternância, máscara e validação
+    │   ├── AddressFields.tsx   endereço com preenchimento pelo CEP
+    │   ├── ClientFields.tsx    campos de cliente (usados no cadastro e no orçamento)
+    │   ├── ClientFormModal.tsx modal de cadastro/edição de cliente
+    │   ├── ItemsEditor.tsx     itens do orçamento: sugestões do catálogo, atalhos de teclado, menu do item
+    │   ├── UnitSelect.tsx      seletor de unidade (mostra só a sigla quando fechado)
+    │   └── QuoteRow.tsx        linha de orçamento nas listas (PDF, duplicar, excluir)
+    │
+    ├── pages/                  telas (rota entre parênteses)
+    │   ├── QuotesList.tsx      lista de orçamentos e boas-vindas  (/)
+    │   ├── QuoteEditor.tsx     editor de orçamento                (/orcamentos/:id)
+    │   ├── Clients.tsx         lista de clientes                  (/clientes)
+    │   ├── ClientDetail.tsx    página do cliente com histórico    (/clientes/:id)
+    │   ├── Catalog.tsx         catálogo de serviços               (/servicos)
+    │   ├── Reports.tsx         relatórios, abas e filtros         (/relatorios e /relatorios/:tab)
+    │   ├── Profiles.tsx        perfis de empresa                  (/empresas)
+    │   ├── ProfileEditor.tsx   cadastro/edição de empresa         (/empresas/:id)
+    │   └── Settings.tsx        unidades e backup                  (/config)
+    │
+    ├── pdf/
+    │   ├── QuotePdf.tsx        layout do PDF do orçamento (@react-pdf/renderer)
+    │   └── exportPdf.ts        geração sob demanda, nome do arquivo e download
+    │
+    └── reports/
+        ├── data.ts             cálculos: filtros, períodos, agrupamento de clientes/serviços, datas pelo histórico
+        ├── FilterBar.tsx       barra de filtros (recolhível no celular) e resumo dos filtros para impressão
+        ├── OverviewView.tsx    Visão geral
+        ├── FollowUpView.tsx    Follow-up (cobrança pelo WhatsApp, marcar aprovado/recusado)
+        ├── TableViews.tsx      Clientes, Serviços e Descontos
+        ├── DataTable.tsx       tabela ordenável que também gera o CSV
+        ├── MonthlyChart.tsx    gráfico mensal orçado × aprovado (SVG)
+        ├── csv.ts              CSV no formato do Excel em português
+        └── shared.tsx          cards de indicador, seções e botão de exportar
 ```
 
-### Notas sobre o PDF (@react-pdf/renderer)
+## Como funciona
+
+### Funcionamento do app
+
+O caminho do profissional: cadastra a empresa uma vez, monta o orçamento, gera o PDF e acompanha a resposta do cliente
+até o orçamento virar aprovado ou recusado. Clientes e serviços salvos alimentam os próximos orçamentos.
+
+```mermaid
+flowchart TD
+    inicio([Primeiro acesso]) --> empresa["Cadastrar empresa<br/>CPF/CNPJ, endereço via CEP, contatos, PIX e padrões"]
+    empresa --> lista["Orçamentos<br/>lista, busca e filtro por status"]
+    lista -->|"Novo orçamento (salvo automaticamente)"| dados
+    lista -.->|menu Clientes| telaClientes["Clientes<br/>lista e busca"]
+    telaClientes -->|abrir cliente| paginaCliente["Página do cliente<br/>histórico e resumo"]
+    paginaCliente -->|Novo orçamento já com o cliente| dados
+
+    subgraph editor["Editor de orçamento"]
+        direction TB
+        dados["Emissão e validade<br/>calendário e atalhos de 7/15/30/60 dias"] --> cli["Cliente<br/>busca no cadastro ou digitação"]
+        cli --> itens["Itens<br/>unidade, quantidade e preço"]
+        itens --> totais["Desconto, acréscimos e total"]
+        totais --> cond["Pagamento, prazo e observações"]
+    end
+
+    clientes[("Clientes")] -.->|preenche| cli
+    cli -.->|salvar no cadastro| clientes
+    catalogo[("Catálogo de serviços")] -.->|sugestões ao digitar| itens
+    itens -.->|salvar no catálogo| catalogo
+
+    cond --> pdf[["Baixar ou visualizar PDF"]]
+    pdf --> enviado["Enviar ao cliente<br/>e marcar como Enviado"]
+    enviado --> resposta{"Cliente respondeu?"}
+    resposta -->|Sim, aprovou| aprovado["Aprovado"]
+    resposta -->|Sim, recusou| recusado["Recusado"]
+    resposta -->|Ainda não| followup["Relatórios › Follow-up<br/>cobrar pelo WhatsApp"]
+    followup --> resposta
+    aprovado --> relatorios["Relatórios<br/>visão geral, clientes, serviços e descontos"]
+    recusado --> relatorios
+```
+
+### Fluxo dos dados
+
+Não há servidor: as telas leem e alteram um único estado global (zustand), que é persistido no `localStorage`.
+Os dados dos orçamentos nunca saem do navegador. Há três contatos com serviços externos:
+
+- **Google Fonts:** o `index.html` carrega a fonte Inter a cada acesso (o Google recebe o IP e o endereço da página).
+- **ViaCEP:** recebe apenas o CEP digitado, para preencher o endereço.
+- **WhatsApp:** só quando o usuário clica em _Cobrar_ no follow-up; o link leva o telefone, o primeiro nome do
+  cliente e o número do orçamento.
+
+```mermaid
+flowchart TB
+    telas["Telas React<br/>páginas e componentes"]
+    viacep[["API ViaCEP"]]
+
+    subgraph store["Store zustand (src/store)"]
+        direction LR
+        acoes["Ações<br/>saveProfile, saveClient, createQuote,<br/>updateQuote, duplicateQuote…"]
+        estado[("Estado<br/>profiles · activeProfileId · clients<br/>catalog · units · quotes")]
+        acoes -->|"atualizam · mudança de status grava statusHistory"| estado
+    end
+
+    ls[("localStorage<br/>chave fixa gerador-orcamento:v1")]
+
+    telas -->|chamam| acoes
+    estado -->|"seletores useStore"| telas
+    telas <-->|"CEP digitado → endereço"| viacep
+    fonts[["Google Fonts<br/>fonte Inter"]] -->|"carregada pelo index.html"| telas
+    estado <-->|"persist · schema versão 2<br/>migrate normaliza versões anteriores"| ls
+
+    subgraph saidas["Saídas"]
+        direction LR
+        quotepdf["src/pdf · QuotePdf<br/>@react-pdf carregado sob demanda"] -->|Blob| arquivoPdf[/"Orcamento-ORC-0001-Cliente.pdf"/]
+        backup[/"backup .json<br/>(Ajustes)"/]
+    end
+
+    subgraph rep["Relatórios (src/reports)"]
+        direction LR
+        filtros["Filtros<br/>sessionStorage"] --> calculos["data.ts<br/>filtros, chaves de cliente e serviço,<br/>datas pelo statusHistory"]
+        calculos --> visoes["Visões, tabelas e gráfico"]
+        visoes --> csv[/"arquivo .csv"/]
+        visoes --> impresso[/"impressão ou PDF"/]
+    end
+
+    estado -->|"orçamento + empresa"| quotepdf
+    estado -->|exportar| backup
+    backup -.->|"importar · normalizeQuote"| acoes
+    estado --> calculos
+    visoes -.->|"aprovar ou recusar no follow-up"| acoes
+```
+
+> **Chave × versão:** o `:v1` em `gerador-orcamento:v1` é só o nome da chave no `localStorage` e não deve mudar
+> (renomear apagaria os dados de quem já usa o app). A versão do formato dos dados é o `version` do `persist`
+> (hoje `2`). Para mudar o formato, aumente `version` e trate a conversão em `migrate` / `normalizeQuote`, que rodam
+> para qualquer versão anterior, inclusive dados sem versão.
+
+## Notas sobre o PDF (@react-pdf/renderer)
 
 Algumas armadilhas da biblioteca, já tratadas em `src/pdf/QuotePdf.tsx`:
 

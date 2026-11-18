@@ -25,9 +25,10 @@ export function ClientFormModal({
     setTried(true)
     if (!draft.name.trim()) return
     saveClient(draft)
-    toast(isNew ? 'Cliente cadastrado' : 'Cliente atualizado')
-    onSaved?.(draft)
+    // Fecha o modal antes de notificar: com o modal aberto, o resto da página fica inerte e o aviso se perde
     onClose()
+    onSaved?.(draft)
+    toast(isNew ? 'Cliente cadastrado' : 'Cliente atualizado')
   }
 
   return (

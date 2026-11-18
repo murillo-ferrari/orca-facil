@@ -74,7 +74,7 @@ export function QuoteRow({
       <p className="text-right font-semibold text-slate-900 tabular-nums">{formatCurrency(total)}</p>
       <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
         <Button size="icon" variant="ghost" aria-label="Baixar PDF" title="Baixar PDF" onClick={handleDownload}>
-          {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+          {downloading ? <Loader2 size={16} className="motion-safe:animate-spin" /> : <Download size={16} />}
         </Button>
         <Button
           size="icon"

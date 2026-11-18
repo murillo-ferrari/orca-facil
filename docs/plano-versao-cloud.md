@@ -315,6 +315,12 @@ await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo:
 
 ### 6.2 Configuração
 
+> **Antes de implementar as telas**, consultar o Modern Web Guidance (`npm run -s mwg -- search ...`), em especial
+> os guias de formulários e de passkeys: campo de código com `autocomplete="one-time-code"` e `inputmode="numeric"`,
+> e-mail com `autocomplete="email webauthn"` (deixa o caminho pronto para passkeys no futuro), mensagens de erro
+> anunciadas a leitores de tela e o fluxo de passkeys (`passkey-registration`, `passkey-authentication`) como
+> evolução do login por código.
+
 - **Cliente:** `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, { auth: { flowType: 'pkce' } })`.
   O supabase-js guarda e renova a sessão sozinho; o mesmo cliente é usado pelo motor de sincronização.
 - **E-mail com código:** já vem ativo. O modelo do e-mail "Magic Link" passa a mostrar o código (`{{ .Token }}`), em

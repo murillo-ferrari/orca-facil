@@ -29,6 +29,7 @@ export function DataTable<T>({
   initialSort,
   onRowClick,
   empty = 'Nenhum dado para os filtros selecionados.',
+  label,
 }: {
   columns: Column<T>[]
   rows: T[]
@@ -36,15 +37,19 @@ export function DataTable<T>({
   initialSort?: { key: string; dir: 'asc' | 'desc' }
   onRowClick?: (row: T) => void
   empty?: ReactNode
+  /** Nome da tabela para leitores de tela (ex.: "Ranking de clientes") */
+  label: string
 }) {
   const visible = columns.filter((c) => !c.csvOnly)
   const [sort, setSort] = useState(initialSort ?? { key: visible[0].key, dir: 'asc' as const })
+  // Aviso para leitores de tela quando a pessoa reordena (não no carregamento inicial)
+  const [announcement, setAnnouncement] = useState('')
 
   const sorted = useMemo(() => {
     const col = columns.find((c) => c.key === sort.key)
     if (!col) return rows
     const dir = sort.dir === 'asc' ? 1 : -1
-    return [...rows].sort((a, b) => {
+    return rows.toSorted((a, b) => {
       const va = col.value(a)
       const vb = col.value(b)
       if (va === null || va === undefined) return 1
@@ -61,7 +66,11 @@ export function DataTable<T>({
   if (!rows.length) return <p className="px-5 py-10 text-center text-sm text-slate-500">{empty}</p>
 
   return (
-    <div className="overflow-x-auto">
+    // Região rolável nomeada e focável: dá para rolar a tabela pelo teclado em telas estreitas
+    <div className="overflow-x-auto" role="region" aria-label={label} tabIndex={0}>
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
       <table className="w-full min-w-[640px] text-sm">
         <thead>
           <tr className="border-b border-slate-200 bg-slate-50/70">
@@ -71,7 +80,8 @@ export function DataTable<T>({
                 <th
                   key={c.key}
                   scope="col"
-                  aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  // Só a coluna ordenada recebe aria-sort (nunca "none" nas demais)
+                  aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                   className={cn('px-3 py-2 first:pl-5 last:pr-5', alignClass(c.align))}
                 >
                   <button
@@ -81,13 +91,17 @@ export function DataTable<T>({
                       active ? 'text-slate-900' : 'text-slate-500 hover:text-slate-800',
                       c.align === 'right' && 'flex-row-reverse',
                     )}
-                    onClick={() =>
-                      setSort((s) =>
-                        s.key === c.key
-                          ? { key: c.key, dir: s.dir === 'asc' ? 'desc' : 'asc' }
-                          : { key: c.key, dir: typeof c.value(rows[0]) === 'number' ? 'desc' : 'asc' },
-                      )
-                    }
+                    onClick={() => {
+                      const next =
+                        sort.key === c.key
+                          ? { key: c.key, dir: sort.dir === 'asc' ? ('desc' as const) : ('asc' as const) }
+                          : {
+                              key: c.key,
+                              dir: typeof c.value(rows[0]) === 'number' ? ('desc' as const) : ('asc' as const),
+                            }
+                      setSort(next)
+                      setAnnouncement(`Ordenado por ${c.header}, ${next.dir === 'asc' ? 'crescente' : 'decrescente'}`)
+                    }}
                   >
                     {c.header}
                     <span className="print:hidden">

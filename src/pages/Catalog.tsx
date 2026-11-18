@@ -29,8 +29,8 @@ export function Catalog() {
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
-    return [...catalog]
-      .sort((a, b) => a.description.localeCompare(b.description, 'pt-BR'))
+    return catalog
+      .toSorted((a, b) => a.description.localeCompare(b.description, 'pt-BR'))
       .filter((c) => !q || `${c.description} ${c.details}`.toLowerCase().includes(q))
   }, [catalog, query])
 

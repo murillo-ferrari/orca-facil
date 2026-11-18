@@ -76,3 +76,13 @@ input[type='number']::-webkit-inner-spin-button {
     print-color-adjust: exact;
   }
 }
+
+/* Modal: impede que a rolagem dentro do modal ou sobre o fundo role a página por trás
+   (guia "prevent-page-scroll-under-modal-dialog"; melhoria progressiva, sem travar o <body>) */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}

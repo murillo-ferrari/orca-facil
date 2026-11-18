@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code: a skill do projeto é versionada; configurações locais não
+.claude/settings.local.json

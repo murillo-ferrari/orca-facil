@@ -72,6 +72,24 @@ npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
 - **Commits e push:** só quando o usuário pedir. Branch `main`, remoto `origin` no GitHub. Push na `main` dispara o
   CI (`ci.yml`) e a publicação no GitHub Pages (`pages.yml`, que só publica se `npm run check` passar).
 
+## Boas práticas da web (Modern Web Guidance)
+
+- **Antes de criar ou alterar interface** (JSX, CSS/Tailwind, JS do navegador), use a skill do projeto
+  `.claude/skills/modern-web-guidance/SKILL.md`: `npm run -s mwg -- search "<capacidade em inglês>"` e
+  `npm run -s mwg -- retrieve "<id>"`. Versão fixa em `devDependencies`; os scripts desligam a telemetria.
+- **Política de navegadores:** Baseline **amplamente disponível** sem fallback; recursos recentes ou limitados só
+  com detecção + alternativa simples (≤ ~20 linhas, sem polyfill/nova dependência). Senão, registrar em Pendências.
+- Já aplicado (18/11/2026): `toSorted`/`findLast`; `Modal` com `aria-labelledby`, `closedby="any"` + fallback por
+  coordenadas (Safari) e `overscroll-behavior` no `dialog`/`::backdrop`; mensagem de campo ligada por
+  `aria-describedby` (`fieldMessageId`); `autocomplete` nos dados **do próprio usuário** (perfil da empresa,
+  `AddressFields ownData`) e `off` nos dados de **clientes**; `aria-sort` só na coluna ordenada + `role="status"`
+  anunciando a ordenação, tabela em região rolável nomeada (`DataTable` exige `label`); animações de movimento só
+  com `motion-safe:`; região "Notificações" para os toasts e toasts disparados só depois de fechar modais.
+- **Padrões a seguir:** modal = `<Modal>` (nunca `role="dialog"`/`aria-modal`/focus trap manuais); dados de terceiros
+  com `autoComplete="off"`; nada de `overflow: hidden` no `body` para travar rolagem; movimento novo dentro de
+  `motion-safe:` (ou `@media (prefers-reduced-motion: no-preference)`); `npm run -s mwg:scan` deve continuar só com os
+  2 falsos positivos conhecidos (cópia de `Map` em `reports/data.ts`).
+
 ## Modelo de dados e persistência
 
 Tipos em `src/types.ts`. Formato dos dados (`DataState`: `profiles`, `activeProfileId`, `clients`, `units`, `catalog`,
@@ -173,6 +191,15 @@ quando o usuário clica em _Cobrar_). A fonte é servida pelo próprio app desde
 - Os cards "Aguardando" da lista de orçamentos e da página do cliente **incluem enviados já vencidos**. Foi
   proposto separar os vencidos ("+N vencidos"); o usuário ainda não decidiu.
 - O layout de impressão dos relatórios não foi conferido visualmente (o diálogo de impressão trava a automação).
+- **Modern Web Guidance — adiado pela política de navegadores:**
+  - Menus (`RowMenu` do editor de itens) e o calendário (`DateField`) como **Popover API** (`popover="auto"` +
+    `command`/`commandfor`), navegação por setas com **`focusgroup`** e posição com **anchor positioning** (guias
+    `menu`, `viewport-aware-dropdowns`). Popover é Baseline recente (jan/2025), `focusgroup` só no Chrome e anchor
+    positioning sem Firefox: hoje exigiriam polyfills. Reavaliar quando ficarem amplamente disponíveis.
+  - Notificações com `ariaNotify()` e `popover="manual"` (guia `persistent-toast-notifications`): Baseline só desde
+    set/2026; o `aria-live` atual é o fallback indicado pelo guia.
+  - Tabelas como cartões em telas estreitas (guia `responsive-table`); hoje há rolagem horizontal acessível.
+  - Tema escuro (guias de UX) e animação de abertura de modal/popover (`animate-to-from-top-layer`).
 
 ## Roadmap
 
@@ -206,3 +233,5 @@ login `login@orcafacil.com.br`). Pendentes: D4 pagamento, D5 planos, D6 login, D
 8. **F2:** repositório público, LICENSE, GitHub Pages; lint estrito (`--deny-warnings`).
 9. **F3 (banco) concluída localmente:** migrações, RLS, planos, sincronização, 78 testes pgTAP, tipos gerados.
    Falta o projeto `staging` online.
+10. **Modern Web Guidance incorporado:** skill do projeto, scripts `mwg`, política de navegadores e correções de
+   acessibilidade/modernização (ver seção própria).

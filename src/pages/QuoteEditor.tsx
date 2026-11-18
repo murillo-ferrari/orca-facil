@@ -272,10 +272,11 @@ export function QuoteEditor() {
   const pdfButtons = (
     <>
       <Button onClick={handlePreview} disabled={!!busy} className="hidden sm:inline-flex">
-        {busy === 'preview' ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} />} Visualizar
+        {busy === 'preview' ? <Loader2 size={16} className="motion-safe:animate-spin" /> : <Eye size={16} />} Visualizar
       </Button>
       <Button variant="primary" onClick={handleDownload} disabled={!!busy}>
-        {busy === 'download' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} Baixar PDF
+        {busy === 'download' ? <Loader2 size={16} className="motion-safe:animate-spin" /> : <Download size={16} />}{' '}
+        Baixar PDF
       </Button>
     </>
   )

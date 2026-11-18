@@ -19,8 +19,8 @@ export function Clients() {
 
   const filtered = useMemo(() => {
     const q = normalize(query)
-    return [...clients]
-      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    return clients
+      .toSorted((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
       .filter((c) => !q || normalize(`${c.name} ${c.document} ${c.email} ${c.phone} ${c.contactName}`).includes(q))
   }, [clients, query])
 

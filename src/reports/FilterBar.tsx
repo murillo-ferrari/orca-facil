@@ -55,7 +55,7 @@ export function FilterBar({
             <span className="rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold text-white">{activeCount}</span>
           )}
         </span>
-        <ChevronDown size={16} className={cn('text-slate-400 transition', open && 'rotate-180')} />
+        <ChevronDown size={16} className={cn('text-slate-400 motion-safe:transition', open && 'rotate-180')} />
       </button>
       <div className={cn(open ? 'mt-3 block' : 'hidden', 'sm:mt-0 sm:block')}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

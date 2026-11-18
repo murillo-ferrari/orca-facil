@@ -122,6 +122,7 @@ export function OverviewView({ ctx, filters }: ViewProps) {
           </div>
         ) : (
           <DataTable
+            label="Evolução mensal"
             columns={monthColumns}
             rows={r.series}
             rowKey={(m) => m.month}

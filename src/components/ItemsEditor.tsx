@@ -208,8 +208,9 @@ function CatalogPicker({
             variant="primary"
             disabled={!selected.length}
             onClick={() => {
-              onAdd(catalog.filter((c) => selected.includes(c.id)))
-              close()
+              const chosen = catalog.filter((c) => selected.includes(c.id))
+              close() // fecha antes do aviso de "itens adicionados"
+              onAdd(chosen)
             }}
           >
             Adicionar {selected.length ? `(${selected.length})` : ''}

@@ -92,6 +92,7 @@ orca-facil/
 ├── .prettierrc                 formatação (Prettier: sem ponto e vírgula, aspas simples, 120 colunas)
 ├── .oxlintrc.json              lint (oxlint)
 ├── .gitignore
+├── .claude/skills/            skill do projeto: consultar o Modern Web Guidance antes de mexer em interface
 ├── .env.example                variáveis de build (VITE_EDITION)
 ├── .github/workflows/
 │   ├── ci.yml                  formatação, lint, tipos, testes, build e testes do banco a cada push/PR
@@ -290,6 +291,9 @@ Sugestões e correções são bem-vindas.
   se possível, os passos para reproduzir.
 - **Quer enviar código?** Faça um _fork_, crie uma branch e abra um _pull request_. Antes, rode `npm run check`
   (o mesmo que o CI roda) e inclua testes para regras novas.
+- **Boas práticas da web:** antes de mexer em interface, consulte o
+  [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance) (`npm run -s mwg -- search "<tema em inglês>"`
+  e `npm run -s mwg -- retrieve "<id>"`). Recursos do navegador seguem a política Baseline descrita no `CLAUDE.md`.
 - **Convenções:** interface, comentários e documentação em português do Brasil, com acentuação; nomes no código em
   inglês. Formatação pelo Prettier (`npm run format`). O `CLAUDE.md` resume as regras de negócio e as decisões do
   projeto.

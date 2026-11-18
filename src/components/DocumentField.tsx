@@ -3,6 +3,7 @@ import { CheckCircle2 } from 'lucide-react'
 import type { DocType } from '../types'
 import { isValidDoc, maskDoc, onlyDigits } from '../lib/format'
 import { Field, Input, Segmented } from './ui'
+import { fieldMessageId } from './styles'
 
 export function DocumentField({
   docType,
@@ -53,6 +54,7 @@ export function DocumentField({
           placeholder={docType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
           value={value}
           aria-invalid={!!error}
+          aria-describedby={error ? fieldMessageId(id) : undefined}
           onChange={(e) => onChange(docType, maskDoc(e.target.value, docType))}
         />
         {valid && <CheckCircle2 size={16} className="absolute top-1/2 right-3 -translate-y-1/2 text-emerald-500" />}

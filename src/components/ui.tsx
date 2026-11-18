@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, type ComponentProps, type ReactNode } from 'react'
 import { X } from 'lucide-react'
-import { cn, inputClass } from './styles'
+import { cn, fieldMessageId, inputClass } from './styles'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'subtle'
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
@@ -40,7 +40,8 @@ export function Button({
 }
 
 export function Input({ className, ...props }: ComponentProps<'input'>) {
-  return <input className={cn(inputClass, className)} {...props} />
+  // data-autofocus marca o campo para o <Modal> focar depois de abrir (o React não grava o atributo autofocus)
+  return <input className={cn(inputClass, className)} data-autofocus={props.autoFocus || undefined} {...props} />
 }
 
 export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
@@ -75,9 +76,13 @@ export function Field({
       )}
       {children}
       {error ? (
-        <p className="text-xs text-red-600">{error}</p>
+        <p id={htmlFor && fieldMessageId(htmlFor)} className="text-xs text-red-600">
+          {error}
+        </p>
       ) : hint ? (
-        <p className="text-xs text-slate-500">{hint}</p>
+        <p id={htmlFor && fieldMessageId(htmlFor)} className="text-xs text-slate-500">
+          {hint}
+        </p>
       ) : null}
     </div>
   )
@@ -94,7 +99,13 @@ export function TextField({
   const id = useId()
   return (
     <Field label={label} hint={hint} error={error} className={className} htmlFor={id}>
-      <Input id={id} aria-invalid={!!error} {...props} />
+      <Input
+        id={id}
+        aria-invalid={!!error}
+        // Leitores de tela leem a dica ou o erro junto com o campo
+        aria-describedby={error || hint ? fieldMessageId(id) : undefined}
+        {...props}
+      />
     </Field>
   )
 }
@@ -224,20 +235,46 @@ export function Modal({
   size?: 'md' | 'lg'
 }) {
   const ref = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    if (open && !el.open) el.showModal()
+    if (open && !el.open) {
+      el.showModal()
+      // showModal() foca o primeiro elemento focável (o botão Fechar); o guia pede foco no primeiro campo
+      el.querySelector<HTMLElement>('[data-autofocus]')?.focus()
+    }
     if (!open && el.open) el.close()
   }, [open])
+
+  // Fechar ao clicar fora: nativo via closedby="any". Safari ainda não suporta closedby, então lá
+  // comparamos a posição do ponteiro com a caixa do modal (guia "dialog" do Modern Web Guidance).
+  useEffect(() => {
+    const el = ref.current
+    if (!el || 'closedBy' in HTMLDialogElement.prototype) return
+    const outside = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect()
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom
+    }
+    let pressedOutside = false
+    const down = (e: PointerEvent) => (pressedOutside = outside(e))
+    // Exige pressionar e soltar fora, para uma seleção de texto que termine no fundo não fechar o modal
+    const up = (e: PointerEvent) => pressedOutside && outside(e) && el.close()
+    el.addEventListener('pointerdown', down)
+    el.addEventListener('pointerup', up)
+    return () => {
+      el.removeEventListener('pointerdown', down)
+      el.removeEventListener('pointerup', up)
+    }
+  }, [])
 
   return (
     <dialog
       ref={ref}
       onClose={onClose}
-      onClick={(e) => {
-        if (e.target === ref.current) onClose()
-      }}
+      aria-labelledby={titleId}
+      // Atributo ainda sem tipo no React
+      {...({ closedby: 'any' } as object)}
       className={cn(
         'm-auto w-[calc(100%-2rem)] rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-slate-900/40 backdrop:backdrop-blur-[2px]',
         size === 'lg' ? 'max-w-3xl' : 'max-w-lg',
@@ -246,7 +283,9 @@ export function Modal({
       {open && (
         <div className="flex max-h-[85vh] flex-col">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-            <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+            <h2 id={titleId} className="text-lg font-semibold text-slate-900">
+              {title}
+            </h2>
             <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar">
               <X size={18} />
             </Button>

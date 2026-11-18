@@ -24,6 +24,7 @@ const sumBy = <T,>(rows: T[], f: (r: T) => number) => rows.reduce((a, r) => a + 
 export function ClientsView({ ctx, filters }: ViewProps) {
   const navigate = useNavigate()
   const rows = useMemo(() => clientsReport(ctx, filters), [ctx, filters])
+  const topClient = rows.toSorted((a, b) => b.approvedValue - a.approvedValue)[0]
 
   const columns: Column<ClientRow>[] = [
     {
@@ -95,14 +96,8 @@ export function ClientsView({ ctx, filters }: ViewProps) {
         <StatTile label="Clientes que aprovaram" tone="good" value={rows.filter((r) => r.approved > 0).length} />
         <StatTile
           label="Maior cliente (aprovado)"
-          value={
-            <span className="block truncate text-base">
-              {[...rows].sort((a, b) => b.approvedValue - a.approvedValue)[0]?.approvedValue
-                ? [...rows].sort((a, b) => b.approvedValue - a.approvedValue)[0].name
-                : '—'}
-            </span>
-          }
-          sub={money([...rows].sort((a, b) => b.approvedValue - a.approvedValue)[0]?.approvedValue ?? null)}
+          value={<span className="block truncate text-base">{topClient?.approvedValue ? topClient.name : '—'}</span>}
+          sub={money(topClient?.approvedValue ?? null)}
         />
         <StatTile
           label="Clientes recorrentes"
@@ -116,6 +111,7 @@ export function ClientsView({ ctx, filters }: ViewProps) {
         actions={<CsvButton filename="clientes" build={() => csvFromColumns(columns, rows)} />}
       >
         <DataTable
+          label="Ranking de clientes"
           columns={columns}
           rows={rows}
           rowKey={(r) => r.key}
@@ -220,7 +216,8 @@ export function ServicesView({ ctx, filters }: ViewProps) {
     { key: 'qtyApproved', header: 'Qtd aprovada', value: (r) => r.qtyApproved, csvOnly: true },
   ]
 
-  const top = [...rows].sort((a, b) => b.approvedValue - a.approvedValue)[0]
+  const top = rows.toSorted((a, b) => b.approvedValue - a.approvedValue)[0]
+  const mostQuoted = rows.toSorted((a, b) => b.quotes - a.quotes)[0]
   const belowCatalog = rows.filter((r) => r.priceDiff !== null && r.priceDiff < -0.005)
 
   return (
@@ -234,12 +231,8 @@ export function ServicesView({ ctx, filters }: ViewProps) {
         />
         <StatTile
           label="Mais orçado (vezes)"
-          value={
-            <span className="block truncate text-base">
-              {[...rows].sort((a, b) => b.quotes - a.quotes)[0]?.name ?? '—'}
-            </span>
-          }
-          sub={rows.length ? `${[...rows].sort((a, b) => b.quotes - a.quotes)[0].quotes} orçamento(s)` : undefined}
+          value={<span className="block truncate text-base">{mostQuoted?.name ?? '—'}</span>}
+          sub={mostQuoted ? `${mostQuoted.quotes} orçamento(s)` : undefined}
         />
         <StatTile
           label="Abaixo do preço de catálogo"
@@ -254,6 +247,7 @@ export function ServicesView({ ctx, filters }: ViewProps) {
         actions={<CsvButton filename="servicos" build={() => csvFromColumns(columns, rows)} />}
       >
         <DataTable
+          label="Serviços"
           columns={columns}
           rows={rows}
           rowKey={(r) => r.key}
@@ -363,6 +357,7 @@ export function DiscountsView({ ctx, filters }: ViewProps) {
         actions={<CsvButton filename="descontos" build={() => csvFromColumns(quoteColumns, r.rows)} />}
       >
         <DataTable
+          label="Orçamentos com desconto"
           columns={quoteColumns}
           rows={r.rows}
           rowKey={(x) => x.quote.id}
@@ -376,6 +371,7 @@ export function DiscountsView({ ctx, filters }: ViewProps) {
         actions={<CsvButton filename="descontos-por-cliente" build={() => csvFromColumns(clientColumns, r.byClient)} />}
       >
         <DataTable
+          label="Descontos por cliente"
           columns={clientColumns}
           rows={r.byClient}
           rowKey={(c) => c.key}

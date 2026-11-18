@@ -27,12 +27,14 @@ export function ClientFields<T extends ClientLike>({
 }) {
   const set = (patch: Partial<ClientLike>) => onChange({ ...value, ...patch })
   return (
+    // Dados de terceiros: sem preenchimento automático, para o navegador não colocar os dados do próprio usuário
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField
           label="Nome / Razão social"
           autoFocus={autoFocus}
           value={value.name}
+          autoComplete="off"
           error={nameError}
           onChange={(e) => set({ name: e.target.value })}
         />
@@ -47,12 +49,14 @@ export function ClientFields<T extends ClientLike>({
           label="Pessoa de contato"
           hint="Opcional"
           value={value.contactName}
+          autoComplete="off"
           onChange={(e) => set({ contactName: e.target.value })}
         />
         <TextField
           label="Telefone / WhatsApp"
           inputMode="tel"
           value={value.phone}
+          autoComplete="off"
           onChange={(e) => set({ phone: maskPhone(e.target.value) })}
         />
         <TextField
@@ -60,12 +64,13 @@ export function ClientFields<T extends ClientLike>({
           type="email"
           className="sm:col-span-2"
           value={value.email}
+          autoComplete="off"
           onChange={(e) => set({ email: e.target.value })}
         />
       </div>
       <details className="group rounded-lg border border-slate-200 px-3 py-2 open:pb-4">
         <summary className="cursor-pointer list-none text-sm font-medium text-slate-700 select-none">
-          <span className="mr-1 inline-block transition group-open:rotate-90">›</span> Endereço
+          <span className="mr-1 inline-block group-open:rotate-90 motion-safe:transition">›</span> Endereço
           {value.address.city && (
             <span className="ml-2 font-normal text-slate-400">
               {value.address.city}

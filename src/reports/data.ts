@@ -92,7 +92,7 @@ const localDate = (isoDateTime: string) => toISODate(new Date(isoDateTime))
  * Orçamentos criados antes do histórico existir caem na data de emissão.
  */
 export function statusDate(q: Quote, status: QuoteStatus): string {
-  const hit = [...(q.statusHistory ?? [])].reverse().find((h) => h.status === status)
+  const hit = (q.statusHistory ?? []).findLast((h) => h.status === status)
   return hit ? localDate(hit.at) : q.issueDate
 }
 
@@ -343,7 +343,7 @@ export function clientsReport(ctx: ReportContext, f: ReportFilters): ClientRow[]
   }
   return [...groups].map(([key, qs]) => {
     const registered = key.startsWith('id:') ? ctx.clients.find((c) => c.id === key.slice(3)) : undefined
-    const latest = [...qs].sort((a, b) => b.issueDate.localeCompare(a.issueDate))[0]
+    const latest = qs.toSorted((a, b) => b.issueDate.localeCompare(a.issueDate))[0]
     const sent = qs.filter(isSent)
     const approved = qs.filter((q) => q.status === 'aprovado')
     return {

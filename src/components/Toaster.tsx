@@ -6,6 +6,9 @@ export function Toaster() {
   const toasts = useToasts((s) => s.toasts)
   return (
     <div
+      // Região fixa e nomeada: leitores de tela encontram e anunciam as notificações sempre no mesmo lugar
+      role="region"
+      aria-label="Notificações"
       aria-live="polite"
       className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6 print:hidden"
     >

@@ -34,7 +34,11 @@ export function ProfileEditor() {
   function handleSave() {
     setTried(true)
     if (nameMissing) {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      window.scrollTo({
+        top: 0,
+        // Respeita a preferência de movimento reduzido do sistema
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      })
       return
     }
     saveProfile({ ...p, label: p.label.trim() || p.tradeName.trim() || p.legalName.trim() })
@@ -95,6 +99,7 @@ export function ProfileEditor() {
             />
             <TextField
               label={p.docType === 'CNPJ' ? 'Razão social' : 'Nome completo'}
+              autoComplete={p.docType === 'CNPJ' ? 'organization' : 'name'}
               value={p.legalName}
               onChange={(e) => set({ legalName: e.target.value })}
             />
@@ -116,7 +121,7 @@ export function ProfileEditor() {
         <Card>
           <CardHeader icon={<MapPin size={18} />} title="Endereço" />
           <div className="p-4 sm:p-5">
-            <AddressFields value={p.address} onChange={(address) => set({ address })} />
+            <AddressFields ownData value={p.address} onChange={(address) => set({ address })} />
           </div>
         </Card>
 
@@ -127,6 +132,7 @@ export function ProfileEditor() {
               label="Telefone"
               inputMode="tel"
               placeholder="(00) 0000-0000"
+              autoComplete="tel"
               value={p.phone}
               onChange={(e) => set({ phone: maskPhone(e.target.value) })}
             />
@@ -134,11 +140,23 @@ export function ProfileEditor() {
               label="WhatsApp"
               inputMode="tel"
               placeholder="(00) 00000-0000"
+              autoComplete="tel"
               value={p.whatsapp}
               onChange={(e) => set({ whatsapp: maskPhone(e.target.value) })}
             />
-            <TextField label="E-mail" type="email" value={p.email} onChange={(e) => set({ email: e.target.value })} />
-            <TextField label="Site / Instagram" value={p.website} onChange={(e) => set({ website: e.target.value })} />
+            <TextField
+              label="E-mail"
+              type="email"
+              autoComplete="email"
+              value={p.email}
+              onChange={(e) => set({ email: e.target.value })}
+            />
+            <TextField
+              label="Site / Instagram"
+              autoComplete="url"
+              value={p.website}
+              onChange={(e) => set({ website: e.target.value })}
+            />
           </div>
         </Card>
 

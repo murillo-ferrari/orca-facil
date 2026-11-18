@@ -315,13 +315,25 @@ export function ItemsEditor({ items, onChange }: { items: QuoteItem[]; onChange:
   }
 
   function pickCatalog(id: string, c: CatalogItem) {
-    update(id, { description: c.description, details: c.details, unit: c.unit, unitPrice: c.unitPrice })
+    update(id, {
+      catalogId: c.id,
+      description: c.description,
+      details: c.details,
+      unit: c.unit,
+      unitPrice: c.unitPrice,
+    })
     if (c.details) setDetailsOpen((d) => ({ ...d, [id]: true }))
   }
 
   function addFromCatalog(list: CatalogItem[]) {
     const fresh = list.map((c) =>
-      newItem({ description: c.description, details: c.details, unit: c.unit, unitPrice: c.unitPrice }),
+      newItem({
+        catalogId: c.id,
+        description: c.description,
+        details: c.details,
+        unit: c.unit,
+        unitPrice: c.unitPrice,
+      }),
     )
     // Substitui a linha vazia inicial, se houver
     const base = items.filter((it) => it.description.trim() || it.unitPrice)
@@ -332,8 +344,9 @@ export function ItemsEditor({ items, onChange }: { items: QuoteItem[]; onChange:
   function saveToCatalog(it: QuoteItem) {
     if (!it.description.trim()) return toast('Preencha a descrição antes de salvar', 'error')
     const existing = catalog.find((c) => norm(c.description) === norm(it.description))
+    const catalogId = existing?.id ?? uid()
     saveCatalogItem({
-      id: existing?.id ?? uid(),
+      id: catalogId,
       description: it.description.trim(),
       details: it.details,
       unit: it.unit,
@@ -341,6 +354,7 @@ export function ItemsEditor({ items, onChange }: { items: QuoteItem[]; onChange:
       createdAt: existing?.createdAt ?? nowISO(),
       updatedAt: nowISO(),
     })
+    update(it.id, { catalogId })
     toast(existing ? 'Item atualizado no catálogo' : 'Item salvo no catálogo')
   }
 
@@ -382,7 +396,10 @@ export function ItemsEditor({ items, onChange }: { items: QuoteItem[]; onChange:
                       if (el) descRefs.current.set(it.id, el)
                       else descRefs.current.delete(it.id)
                     }}
-                    onChange={(description) => update(it.id, { description })}
+                    onChange={(description) =>
+                      // Apagar a descrição desfaz o vínculo com o catálogo; editar mantém (é uma variação do serviço)
+                      update(it.id, description.trim() ? { description } : { description, catalogId: null })
+                    }
                     onPick={(c) => pickCatalog(it.id, c)}
                   />
                   {showDetails ? (

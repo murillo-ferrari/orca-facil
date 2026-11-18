@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { CatalogItem, Client, CompanyProfile, Quote, QuoteClient, Unit } from '../types'
-import { DEFAULT_UNITS, formatQuoteNumber, newQuote, nowISO, uid } from './factories'
+import { DEFAULT_UNITS, formatQuoteNumber, newQuote, normalizeQuote, nowISO, uid } from './factories'
 
 export interface DataState {
   profiles: CompanyProfile[]
@@ -101,7 +101,16 @@ export const useStore = create<DataState & Actions>()(
       },
       updateQuote: (id, patch) =>
         set((s) => ({
-          quotes: s.quotes.map((q) => (q.id === id ? { ...q, ...patch, updatedAt: nowISO() } : q)),
+          quotes: s.quotes.map((q) => {
+            if (q.id !== id) return q
+            const now = nowISO()
+            const next = { ...q, ...patch, updatedAt: now }
+            // Registra quando o status muda (base dos relatórios por data de aprovação/envio)
+            if (patch.status && patch.status !== q.status) {
+              next.statusHistory = [...(q.statusHistory ?? []), { status: patch.status, at: now }]
+            }
+            return next
+          }),
         })),
       deleteQuote: (id) => set((s) => ({ quotes: s.quotes.filter((q) => q.id !== id) })),
       duplicateQuote: (id) => {
@@ -117,6 +126,7 @@ export const useStore = create<DataState & Actions>()(
           id: uid(),
           number,
           status: 'rascunho',
+          statusHistory: [{ status: 'rascunho', at: now }],
           createdAt: now,
           updatedAt: now,
         }
@@ -133,13 +143,18 @@ export const useStore = create<DataState & Actions>()(
           clients: data.clients ?? [],
           units: data.units?.length ? data.units : DEFAULT_UNITS,
           catalog: data.catalog ?? [],
-          quotes: data.quotes ?? [],
+          quotes: (data.quotes ?? []).map(normalizeQuote),
         })),
     }),
     {
       name: 'gerador-orcamento:v1',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
+      // v2: histórico de status nos orçamentos e vínculo dos itens com o catálogo
+      migrate: (persisted) => {
+        const state = persisted as DataState
+        return { ...state, quotes: (state.quotes ?? []).map(normalizeQuote) } as DataState & Actions
+      },
     },
   ),
 )

@@ -63,3 +63,16 @@ input[type='number']::-webkit-inner-spin-button {
   font-size: 11px;
   color: var(--color-slate-500);
 }
+
+/* Impressão dos relatórios */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  body {
+    background: white;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

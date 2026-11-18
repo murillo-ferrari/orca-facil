@@ -90,6 +90,7 @@ export const clientToQuoteClient = (c: Client): QuoteClient => ({
 
 export const newItem = (partial: Partial<QuoteItem> = {}): QuoteItem => ({
   id: uid(),
+  catalogId: null,
   description: '',
   details: '',
   unit: 'un',
@@ -109,6 +110,7 @@ export function newQuote(profile: CompanyProfile, number: string): Quote {
     number,
     title: '',
     status: 'rascunho',
+    statusHistory: [{ status: 'rascunho', at: now }],
     issueDate: toISODate(today),
     validUntil: toISODate(addDays(today, profile.defaultValidityDays || 15)),
     client: emptyQuoteClient(),
@@ -140,3 +142,13 @@ export const DEFAULT_UNITS: Unit[] = [
   ['cx', 'Caixa'],
   ['kit', 'Kit'],
 ].map(([symbol, name]) => ({ id: uid(), symbol, name }))
+
+/** Completa campos adicionados em versões novas (dados antigos do localStorage ou backups) */
+export function normalizeQuote(q: Quote): Quote {
+  return {
+    ...q,
+    statusHistory: Array.isArray(q.statusHistory) ? q.statusHistory : [],
+    items: (q.items ?? []).map((it) => ({ ...it, catalogId: it.catalogId ?? null })),
+    extras: q.extras ?? [],
+  }
+}

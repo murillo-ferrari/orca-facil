@@ -17,6 +17,25 @@ Tudo roda no navegador: não há servidor nem login, e os dados ficam salvos no 
 - **Clientes e catálogo de serviços** reutilizáveis, salvos direto do editor.
 - **PDF** com layout sóbrio, gerado no navegador (a biblioteca só carrega na hora de gerar), com rodapé e numeração de páginas.
 - **Backup:** exporte/importe todos os dados em JSON em _Ajustes_.
+- **Página do cliente** com histórico de orçamentos, resumo e taxa de aprovação.
+- **Relatórios** (por empresa ou todas), com filtros de período, status, cliente, serviço e faixa de valor,
+  exportação em CSV (formato do Excel em português) e impressão/PDF:
+  - _Visão geral_: enviados, aprovados, taxa de aprovação, ticket médio, vencidos, tempo até aprovar e evolução mensal.
+  - _Follow-up_: orçamentos aguardando resposta (vencidos, vencendo em breve, em aberto), com link de cobrança
+    pelo WhatsApp e botões para marcar como aprovado/recusado.
+  - _Clientes_: ranking por valor aprovado, taxa de aprovação e último orçamento.
+  - _Serviços_: o que mais é orçado e vendido, preço médio praticado vs. preço de catálogo.
+  - _Descontos_: quanto foi concedido, em quais orçamentos e para quais clientes.
+
+### Regras dos relatórios
+
+- O período considera a **data de emissão**: os números mostram os orçamentos emitidos no período e o que aconteceu
+  com eles. A série "Aprovado" do gráfico e o "fechado no período" usam a **data de aprovação**.
+- Taxa de aprovação = aprovados ÷ enviados (tudo que não é rascunho).
+- A data de cada mudança de status é registrada no orçamento (`statusHistory`). Orçamentos anteriores a isso usam a
+  data de emissão como aproximação.
+- Itens adicionados do catálogo guardam o vínculo (`catalogId`); os demais são agrupados pela descrição normalizada
+  (sem acentos, maiúsculas e espaços extras).
 
 ## Rodando
 
@@ -39,6 +58,7 @@ src/
   components/           UI base, campos (data, número, documento, endereço), editor de itens
   pages/                Orçamentos, Editor, Clientes, Serviços, Empresas, Ajustes
   pdf/                  documento PDF (@react-pdf/renderer) e exportação
+  reports/              cálculos dos relatórios, filtros, tabela ordenável, gráfico mensal e CSV
 ```
 
 ### Notas sobre o PDF (@react-pdf/renderer)

@@ -1,5 +1,5 @@
 import { HashRouter, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
-import { Building2, FileText, Package, Settings, Users, ChevronsUpDown, Plus } from 'lucide-react'
+import { BarChart3, Building2, FileText, Package, Settings, Users, ChevronsUpDown, Plus } from 'lucide-react'
 import { useStore, useActiveProfile } from './store/store'
 import { Toaster } from './components/toast'
 import { cn } from './components/ui'
@@ -11,11 +11,13 @@ import { Clients } from './pages/Clients'
 import { ClientDetail } from './pages/ClientDetail'
 import { Catalog } from './pages/Catalog'
 import { SettingsPage } from './pages/Settings'
+import { Reports } from './pages/Reports'
 
 const NAV = [
   { to: '/', label: 'Orçamentos', icon: FileText, end: true },
   { to: '/clientes', label: 'Clientes', icon: Users },
   { to: '/servicos', label: 'Serviços', icon: Package },
+  { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
   { to: '/empresas', label: 'Empresas', icon: Building2 },
   { to: '/config', label: 'Ajustes', icon: Settings },
 ]
@@ -67,9 +69,9 @@ function ProfileSwitcher() {
 
 function Shell() {
   return (
-    <div className="min-h-screen lg:pl-64">
+    <div className="min-h-screen lg:pl-64 print:pl-0">
       {/* Sidebar desktop */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-slate-200 bg-white lg:flex print:hidden">
         <div className="flex items-center gap-2 px-5 py-5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
             <FileText size={16} />
@@ -101,7 +103,7 @@ function Shell() {
       </aside>
 
       {/* Topo mobile */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur lg:hidden print:hidden">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
           <FileText size={16} />
         </div>
@@ -110,7 +112,7 @@ function Shell() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
+      <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 print:max-w-none print:p-0">
         <Routes>
           <Route path="/" element={<QuotesList />} />
           <Route path="/orcamentos/:id" element={<QuoteEditor />} />
@@ -119,13 +121,15 @@ function Shell() {
           <Route path="/servicos" element={<Catalog />} />
           <Route path="/empresas" element={<Profiles />} />
           <Route path="/empresas/:id" element={<ProfileEditor />} />
+          <Route path="/relatorios" element={<Reports />} />
+          <Route path="/relatorios/:tab" element={<Reports />} />
           <Route path="/config" element={<SettingsPage />} />
           <Route path="*" element={<QuotesList />} />
         </Routes>
       </main>
 
       {/* Navegação inferior mobile */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden print:hidden">
         {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
@@ -133,7 +137,7 @@ function Shell() {
             end={end}
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium',
+                'flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium',
                 isActive ? 'text-brand-600' : 'text-slate-500',
               )
             }

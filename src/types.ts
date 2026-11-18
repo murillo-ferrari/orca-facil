@@ -80,6 +80,8 @@ export interface CatalogItem {
 
 export interface QuoteItem {
   id: string
+  /** Serviço do catálogo de onde o item veio (permite agrupar nos relatórios mesmo com descrição editada) */
+  catalogId: string | null
   description: string
   details: string
   unit: string
@@ -88,6 +90,11 @@ export interface QuoteItem {
 }
 
 export type QuoteStatus = 'rascunho' | 'enviado' | 'aprovado' | 'recusado'
+
+export interface StatusChange {
+  status: QuoteStatus
+  at: string // ISO datetime
+}
 
 export interface Adjustment {
   type: 'percent' | 'value'
@@ -118,6 +125,8 @@ export interface Quote {
   number: string
   title: string
   status: QuoteStatus
+  /** Histórico de mudanças de status (registrado a partir da v2; orçamentos antigos podem não ter) */
+  statusHistory: StatusChange[]
   issueDate: string // yyyy-MM-dd
   validUntil: string // yyyy-MM-dd
   client: QuoteClient

@@ -4,7 +4,8 @@ App web para profissionais autônomos criarem orçamentos de serviços e exporta
 sem backend, sem login; os dados ficam no `localStorage`. O `README.md` é a documentação para pessoas (funcionalidades,
 estrutura de pastas arquivo por arquivo, diagramas Mermaid). Este arquivo guarda o contexto para continuar o trabalho.
 
-O nome "Orçafácil" é provisório (aparece em `src/App.tsx` e `index.html`).
+O nome "Orçafácil" (aparece em `src/App.tsx` e `index.html`) acompanha o domínio `orcafacil.com.br`, em registro.
+Licença: AGPL-3.0 (o arquivo `LICENSE` entra na publicação da etapa 1).
 
 ## Stack e comandos
 
@@ -149,8 +150,10 @@ Ideia do usuário em duas etapas, detalhada em **`docs/plano-versao-cloud.md`** 
    7 dias sem uso, então produção vai no Pro.
    Comparativo em `docs/avaliacao-autenticacao-e-backend.md`.
 
-Decisões pendentes do usuário: D1–D10 na seção 2 do plano (licença, mesmo repo, domínio, provedor de pagamento,
-planos, login, offline, conflitos, nome, SMTP).
+Decididas: **D1 licença AGPL-3.0**, **D2 código da Cloud no mesmo repositório público** (edição escolhida por
+`VITE_EDITION`), **D3 domínio `orcafacil.com.br`** (registro em andamento; app em `app.orcafacil.com.br`, e-mail de
+login `login@orcafacil.com.br`). Pendentes: D4 pagamento, D5 planos, D6 login, D7 offline, D8 conflitos, D9 nome
+(tende a "Orçafácil"), D10 SMTP — ver seção 2 do plano.
 
 ## Histórico (resumo)
 

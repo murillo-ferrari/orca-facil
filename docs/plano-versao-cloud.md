@@ -25,20 +25,21 @@ a experiência atual: o app continua rápido e funciona sem internet.
 
 ## 2. Decisões que dependem de você
 
-As recomendações estão marcadas. Todas afetam o plano; as três primeiras precisam ser definidas antes de começar.
+Decididas em 18/11/2026: **D1, D2 e D3**, além de backend e autenticação (Supabase + Supabase Auth). As demais têm
+recomendação e podem ser definidas até a fase indicada na seção 17.
 
 | # | Decisão | Opções | Recomendação |
 |---|---|---|---|
-| D1 | **Licença** do repositório público | MIT (uso livre, inclusive por concorrentes em produto fechado) · AGPL-3.0 (quem hospedar uma versão modificada precisa abrir o código) | **AGPL-3.0**, se a Cloud for virar negócio; MIT, se a prioridade for adoção máxima |
-| D2 | **Código da Cloud** no mesmo repositório público? | Mesmo repo (uma base de código, edições por variável de build) · repo privado separado | **Mesmo repo.** Segredos ficam fora do código; o diferencial é a operação, não o código |
-| D3 | **Domínio** | Ex.: `orcafacil.com.br` (registro.br) | Necessário na prática: endereço do app e remetente dos e-mails de login (SPF/DKIM/DMARC evitam que o código caia no spam) |
+| D1 | **Licença** do repositório público | MIT · AGPL-3.0 | ✅ **AGPL-3.0** — quem hospedar uma versão modificada do app como serviço precisa publicar o código |
+| D2 | **Código da Cloud** no mesmo repositório público? | Mesmo repo · repo privado separado | ✅ **Mesmo repositório**, com as edições escolhidas por variável de build; segredos fora do código |
+| D3 | **Domínio** | — | ✅ **`orcafacil.com.br`** (registro em andamento no registro.br). App em `app.orcafacil.com.br`, e-mails de login de `login@orcafacil.com.br` |
 | D4 | **Provedor de pagamento** | Asaas · Mercado Pago · Stripe · Paddle (detalhes na seção 9.2) | **Asaas** se você tiver CNPJ (Pix, boleto, cartão e emissão de NFS-e); **Paddle** se quiser que outra empresa fature e cuide dos impostos |
 | D5 | **Planos e limites** | Ver seção 9.1 | Grátis com limite de volume; Pro sem limites |
 | D6 | **Formas de login** | E-mail com código · Google · Apple · senha | **E-mail com código de 6 dígitos + Google** (sem senha para esquecer) |
 | D10 | **Serviço de envio de e-mail (SMTP)** | Resend · Brevo · Amazon SES · Postmark · ZeptoMail | **Resend** ou **Brevo** (planos grátis suficientes no início; conferir cotas) |
 | D7 | **Nível de offline** | Só online · leitura offline · leitura e escrita offline | **Leitura e escrita offline**: o público trabalha na casa do cliente, muitas vezes sem sinal |
 | D8 | **Conflito** entre dispositivos | Última gravação vence · diálogo de escolha · mesclar | **Última gravação vence**, guardando a versão perdida para restaurar (seção 7.5) |
-| D9 | **Nome do produto** | "Orçafácil" é provisório | Definir antes do domínio |
+| D9 | **Nome do produto** | — | **Orçafácil**, acompanhando o domínio; confirmar quando o registro for concluído |
 
 ## 3. Etapa 1 — Publicação da edição Local (pré-requisito)
 
@@ -610,7 +611,8 @@ infraestrutura (considerando taxas e câmbio).
 
 ## 17. Próximos passos imediatos
 
-1. Responder às decisões **D1, D2 e D3** (licença, mesmo repositório, domínio). D10 (SMTP) até a F4; as demais até a F7.
+1. ~~Responder às decisões D1, D2 e D3~~ (feito). Concluir o registro de `orcafacil.com.br`. D10 (SMTP) até a F4;
+   D4–D8 até a F7.
 2. Executar a **F1** (testes + camada de dados), que beneficia as duas edições e reduz o risco de todo o resto.
 3. Executar a **F2** e publicar a edição Local.
 

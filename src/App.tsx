@@ -8,6 +8,7 @@ import { QuoteEditor } from './pages/QuoteEditor'
 import { Profiles } from './pages/Profiles'
 import { ProfileEditor } from './pages/ProfileEditor'
 import { Clients } from './pages/Clients'
+import { ClientDetail } from './pages/ClientDetail'
 import { Catalog } from './pages/Catalog'
 import { SettingsPage } from './pages/Settings'
 
@@ -114,6 +115,7 @@ function Shell() {
           <Route path="/" element={<QuotesList />} />
           <Route path="/orcamentos/:id" element={<QuoteEditor />} />
           <Route path="/clientes" element={<Clients />} />
+          <Route path="/clientes/:id" element={<ClientDetail />} />
           <Route path="/servicos" element={<Catalog />} />
           <Route path="/empresas" element={<Profiles />} />
           <Route path="/empresas/:id" element={<ProfileEditor />} />

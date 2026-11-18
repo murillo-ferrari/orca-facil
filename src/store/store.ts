@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { CatalogItem, Client, CompanyProfile, Quote, Unit } from '../types'
+import type { CatalogItem, Client, CompanyProfile, Quote, QuoteClient, Unit } from '../types'
 import { DEFAULT_UNITS, formatQuoteNumber, newQuote, nowISO, uid } from './factories'
 
 export interface DataState {
@@ -27,7 +27,8 @@ interface Actions {
   saveCatalogItem: (c: CatalogItem) => void
   deleteCatalogItem: (id: string) => void
 
-  createQuote: (profileId: string) => string | null
+  /** Cria um orçamento (opcionalmente já com o cliente preenchido) e retorna o id */
+  createQuote: (profileId: string, client?: QuoteClient) => string | null
   updateQuote: (id: string, patch: Partial<Quote>) => void
   deleteQuote: (id: string) => void
   duplicateQuote: (id: string) => string | null
@@ -87,13 +88,14 @@ export const useStore = create<DataState & Actions>()(
       saveCatalogItem: (c) => set((s) => ({ catalog: upsert(s.catalog, { ...c, updatedAt: nowISO() }) })),
       deleteCatalogItem: (id) => set((s) => ({ catalog: s.catalog.filter((c) => c.id !== id) })),
 
-      createQuote: (profileId) => {
+      createQuote: (profileId, client) => {
         const s = get()
         const taken = takeNumber(s.profiles, profileId)
         if (!taken) return null
         const [number, profiles] = taken
         const profile = profiles.find((p) => p.id === profileId)!
         const quote = newQuote(profile, number)
+        if (client) quote.client = structuredClone(client)
         set({ profiles, quotes: [quote, ...s.quotes] })
         return quote.id
       },

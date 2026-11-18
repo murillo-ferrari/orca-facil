@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { addDays, differenceInCalendarDays } from 'date-fns'
 import {
   ArrowLeft,
@@ -116,9 +116,13 @@ function ClientSection({ client, onChange }: { client: QuoteClient; onChange: (c
         actions={
           <>
             {linked && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-                <CheckCircle2 size={14} /> Cadastrado
-              </span>
+              <Link
+                to={`/clientes/${linked.id}`}
+                title="Ver cliente e histórico de orçamentos"
+                className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:underline"
+              >
+                <CheckCircle2 size={14} /> Cadastrado · ver histórico
+              </Link>
             )}
             {client.name && (
               <Button size="sm" variant="ghost" onClick={() => onChange(emptyQuoteClient())}>

@@ -1,14 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Copy, Download, FileText, Loader2, Package, Plus, Search, Trash2, Users } from 'lucide-react'
+import { Building2, Download, FileText, Package, Plus, Search, Users } from 'lucide-react'
 import { useActiveProfile, useStore } from '../store/store'
-import type { Quote, QuoteStatus } from '../types'
+import type { QuoteStatus } from '../types'
 import { quoteTotals } from '../lib/calc'
-import { formatCurrency, formatDate, todayISO } from '../lib/format'
+import { formatCurrency } from '../lib/format'
 import { STATUS, STATUS_ORDER } from '../lib/status'
-import { Badge, Button, Card, EmptyState, Input, PageHeader, Segmented, cn } from '../components/ui'
-import { toast } from '../components/toast'
-import { downloadQuotePdf } from '../pdf/exportPdf'
+import { Button, Card, EmptyState, Input, PageHeader, Segmented, cn } from '../components/ui'
+import { QuoteRow } from '../components/QuoteRow'
 
 function Welcome() {
   const navigate = useNavigate()
@@ -57,8 +56,6 @@ export function QuotesList() {
   const profiles = useStore((s) => s.profiles)
   const quotes = useStore((s) => s.quotes)
   const createQuote = useStore((s) => s.createQuote)
-  const duplicateQuote = useStore((s) => s.duplicateQuote)
-  const deleteQuote = useStore((s) => s.deleteQuote)
   const clientsCount = useStore((s) => s.clients.length)
   const catalogCount = useStore((s) => s.catalog.length)
   const active = useActiveProfile()
@@ -66,9 +63,7 @@ export function QuotesList() {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<QuoteStatus | 'todos'>('todos')
   const [scope, setScope] = useState<'ativa' | 'todas'>('ativa')
-  const [downloading, setDownloading] = useState<string | null>(null)
 
-  const today = todayISO()
   const scoped = useMemo(
     () => (scope === 'ativa' && active ? quotes.filter((q) => q.profileId === active.id) : quotes),
     [quotes, scope, active],
@@ -93,20 +88,6 @@ export function QuotesList() {
     if (!active) return
     const id = createQuote(active.id)
     if (id) navigate(`/orcamentos/${id}`)
-  }
-
-  async function handleDownload(q: Quote) {
-    const profile = profiles.find((p) => p.id === q.profileId)
-    if (!profile) return toast('A empresa deste orçamento foi excluída', 'error')
-    setDownloading(q.id)
-    try {
-      await downloadQuotePdf(q, profile)
-    } catch (e) {
-      console.error(e)
-      toast('Não foi possível gerar o PDF', 'error')
-    } finally {
-      setDownloading(null)
-    }
   }
 
   return (
@@ -211,77 +192,9 @@ export function QuotesList() {
           </div>
 
           <Card className="divide-y divide-slate-100 overflow-hidden">
-            {filtered.map((q) => {
-              const total = quoteTotals(q).total
-              const expired = q.validUntil < today && (q.status === 'rascunho' || q.status === 'enviado')
-              const profile = profiles.find((p) => p.id === q.profileId)
-              return (
-                <div
-                  key={q.id}
-                  className="group flex cursor-pointer items-center gap-3 px-4 py-3 transition hover:bg-slate-50 sm:px-5"
-                  onClick={() => navigate(`/orcamentos/${q.id}`)}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-slate-500">{q.number}</span>
-                      <Badge className={STATUS[q.status].className}>{STATUS[q.status].label}</Badge>
-                      {expired && <Badge className="bg-red-50 text-red-600">Vencido</Badge>}
-                    </div>
-                    <p className="mt-0.5 truncate font-medium text-slate-900">
-                      {q.client.name || <span className="text-slate-400">Sem cliente</span>}
-                      {q.title && <span className="font-normal text-slate-500"> · {q.title}</span>}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {formatDate(q.issueDate)} · válido até {formatDate(q.validUntil)}
-                      {scope === 'todas' && profile && ` · ${profile.label || profile.tradeName}`}
-                    </p>
-                  </div>
-                  <p className="text-right font-semibold text-slate-900 tabular-nums">{formatCurrency(total)}</p>
-                  <div className="flex gap-0.5" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label="Baixar PDF"
-                      title="Baixar PDF"
-                      onClick={() => handleDownload(q)}
-                    >
-                      {downloading === q.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label="Duplicar"
-                      title="Duplicar"
-                      className="hidden sm:inline-flex"
-                      onClick={() => {
-                        const id = duplicateQuote(q.id)
-                        if (id) {
-                          toast('Orçamento duplicado')
-                          navigate(`/orcamentos/${id}`)
-                        }
-                      }}
-                    >
-                      <Copy size={16} />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label="Excluir"
-                      title="Excluir"
-                      className="hidden hover:text-red-600 sm:inline-flex"
-                      onClick={() => {
-                        if (window.confirm(`Excluir o orçamento ${q.number}?`)) {
-                          deleteQuote(q.id)
-                          toast('Orçamento excluído')
-                        }
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              )
-            })}
+            {filtered.map((q) => (
+              <QuoteRow key={q.id} quote={q} showProfile={scope === 'todas'} />
+            ))}
             {filtered.length === 0 && (
               <p className="px-5 py-10 text-center text-sm text-slate-500">Nenhum orçamento encontrado.</p>
             )}

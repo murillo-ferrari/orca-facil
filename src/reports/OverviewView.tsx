@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { formatCurrency } from '../lib/format'
+import { formatCurrency, formatPercent } from '../lib/format'
 import { Segmented } from '../components/ui'
 import { overviewReport, type MonthPoint } from './data'
-import { DataTable, csvFromColumns, type Column } from './DataTable'
+import { DataTable, type Column } from './DataTable'
+import { csvFromColumns } from './csv'
 import { MonthlyChart } from './MonthlyChart'
-import { CsvButton, Section, StatTile, formatPercent, type ViewProps } from './shared'
+import { CsvButton, Section, StatTile, type ViewProps } from './shared'
 
 const plural = (n: number, s: string, p: string) => `${n} ${n === 1 ? s : p}`
 

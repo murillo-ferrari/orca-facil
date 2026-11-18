@@ -7,7 +7,8 @@ import { itemTotal } from '../lib/calc'
 import { formatCurrency } from '../lib/format'
 import { NumberInput } from './NumberInput'
 import { UnitSelect } from './UnitSelect'
-import { Button, Input, Modal, Textarea, cn, inputClass } from './ui'
+import { Button, Input, Modal, Textarea } from './ui'
+import { cn, inputClass } from './styles'
 import { toast } from './toast'
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()

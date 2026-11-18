@@ -1,11 +1,13 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import { BarChart3, Printer } from 'lucide-react'
 import { useActiveProfile, useStore } from '../store/store'
 import { todayISO } from '../lib/format'
-import { Button, EmptyState, PageHeader, cn } from '../components/ui'
+import { Button, EmptyState, PageHeader } from '../components/ui'
+import { cn } from '../components/styles'
 import { defaultFilters, filterOptions, type ReportContext, type ReportFilters } from '../reports/data'
-import { FilterBar, describeFilters, type FilterAvailability } from '../reports/FilterBar'
+import { FilterBar } from '../reports/FilterBar'
+import { describeFilters, type FilterAvailability } from '../reports/describeFilters'
 import { OverviewView } from '../reports/OverviewView'
 import { FollowUpView } from '../reports/FollowUpView'
 import { ClientsView, DiscountsView, ServicesView } from '../reports/TableViews'
@@ -50,6 +52,13 @@ export function Reports() {
   const catalog = useStore((s) => s.catalog)
   const active = useActiveProfile()
   const [filters, setFiltersState] = useState<ReportFilters>(() => loadFilters(active?.id ?? ''))
+  // Horário do cabeçalho de impressão: atualizado no momento em que a pessoa manda imprimir
+  const [generatedAt, setGeneratedAt] = useState(() => new Date())
+  useEffect(() => {
+    const onBeforePrint = () => setGeneratedAt(new Date())
+    window.addEventListener('beforeprint', onBeforePrint)
+    return () => window.removeEventListener('beforeprint', onBeforePrint)
+  }, [])
 
   const setFilters = (f: ReportFilters) => {
     setFiltersState(f)
@@ -95,7 +104,7 @@ export function Reports() {
         <p className="text-xs tracking-wide text-slate-500 uppercase">Relatório</p>
         <h1 className="text-xl font-semibold text-slate-900">{current.label}</h1>
         <p className="mt-1 text-xs text-slate-600">{summary.join(' · ')}</p>
-        <p className="text-xs text-slate-400">Gerado em {new Date().toLocaleString('pt-BR')}</p>
+        <p className="text-xs text-slate-400">Gerado em {generatedAt.toLocaleString('pt-BR')}</p>
       </div>
 
       <div className="print:hidden">

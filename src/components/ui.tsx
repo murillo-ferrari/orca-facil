@@ -1,9 +1,6 @@
 import { useEffect, useId, useRef, type ComponentProps, type ReactNode } from 'react'
 import { X } from 'lucide-react'
-
-export function cn(...classes: (string | false | null | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
-}
+import { cn, inputClass } from './styles'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'subtle'
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
@@ -41,9 +38,6 @@ export function Button({
     />
   )
 }
-
-export const inputClass =
-  'block w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-xs transition focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-100 disabled:bg-slate-50'
 
 export function Input({ className, ...props }: ComponentProps<'input'>) {
   return <input className={cn(inputClass, className)} {...props} />

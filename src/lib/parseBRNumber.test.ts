@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseBRNumber } from './NumberInput'
+import { parseBRNumber } from './format'
 
 describe('parseBRNumber (o que o usuário digita nos campos de valor e quantidade)', () => {
   it.each([

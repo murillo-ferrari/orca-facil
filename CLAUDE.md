@@ -22,7 +22,7 @@ npm test               # Vitest (npm run test:watch para modo contínuo)
 npm run check          # o mesmo que o CI: format:check + lint + typecheck + test
 npm run build          # tsc -b && vite build → dist/ (estático, caminhos relativos)
 npm run format         # Prettier: sem ponto e vírgula, aspas simples, 120 colunas
-npm run lint           # oxlint (avisos only-export-components e purity são conhecidos)
+npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
 ```
 
 - `VITE_EDITION` (`local` | `cloud`, padrão `local`) escolhe a edição no build; `vite.config.ts` valida e hoje
@@ -31,7 +31,7 @@ npm run lint           # oxlint (avisos only-export-components e purity são con
 ## Testes e validação
 
 - **Vitest:** testes `*.test.ts` ao lado do código (`lib/`, `data/`, `store/`, `reports/`, `pdf/`,
-  `components/NumberInput`). Ambiente `node` por padrão; arquivos que precisam de `localStorage` começam com
+  `lib/parseBRNumber`). Ambiente `node` por padrão; arquivos que precisam de `localStorage` começam com
   `// @vitest-environment happy-dom`. Rode `npm run check` antes de considerar algo pronto.
 - Os testes independem do fuso horário (verificados de UTC−11 a UTC+14); mantenha assim (datas `yyyy-MM-dd` e ISO
   com hora local explícita nos cenários).
@@ -52,8 +52,13 @@ npm run lint           # oxlint (avisos only-export-components e purity são con
 - **Idioma:** toda a interface, comentários e documentação em **português do Brasil com acentuação correta**.
   Identificadores de código em inglês.
 - **UI:** usar os componentes de `src/components/ui.tsx` (`Button`, `Input`, `Select`, `Field`, `TextField`, `Card`,
-  `CardHeader`, `Modal`, `Segmented`, `EmptyState`, `Badge`, `cn`). Cores da marca: tokens `brand-*` definidos em
-  `src/index.css`. Notificações com `toast()` de `components/toast.tsx`. Confirmações destrutivas com `window.confirm`.
+  `CardHeader`, `Modal`, `Segmented`, `EmptyState`, `Badge`); `cn` e `inputClass` vêm de `components/styles.ts`.
+  Cores da marca: tokens `brand-*` em `src/index.css`. Notificações com `toast()` de `components/toast.ts` (exibidas
+  pelo `<Toaster/>`). Confirmações destrutivas com `window.confirm`.
+- **Arquivos `.tsx` exportam só componentes** (regra de _fast refresh_ do lint): funções e constantes compartilhadas
+  vão para `.ts` próprios (ex.: `styles.ts`, `toast.ts`, `reports/describeFilters.ts`, `lib/format.ts`).
+- **Renderização pura:** nada de `new Date()`/`Math.random()` no corpo do componente; use `useState(() => …)`,
+  eventos ou efeitos.
 - **Responsivo:** pensado para celular. Barra inferior com 6 itens (`App.tsx`); barras de ação fixas ficam acima dela
   (ex.: `bottom-[57px]` no editor de orçamento) e descem para `bottom-0` a partir de `lg`. O editor de itens usa **container queries** (`@container` /
   `@3xl:`), não breakpoints de tela, porque sua largura depende do layout.

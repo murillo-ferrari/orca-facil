@@ -1,24 +1,12 @@
 import { useRef, useState, type ComponentProps } from 'react'
-import { cn, inputClass } from './ui'
+import { cn, inputClass } from './styles'
+import { parseBRNumber } from '../lib/format'
 
 const fmt = (v: number, decimals: number, currency: boolean) =>
   new Intl.NumberFormat('pt-BR', {
     minimumFractionDigits: currency ? 2 : 0,
     maximumFractionDigits: decimals,
   }).format(v)
-
-/** Converte texto digitado no padrão brasileiro ("1.234,56" ou "1234.56") em número */
-export function parseBRNumber(text: string): number {
-  let t = text.replace(/[^\d,.-]/g, '')
-  if (!t) return 0
-  if (t.includes(',')) {
-    t = t.replace(/\./g, '').replace(',', '.')
-  } else if ((t.match(/\./g) ?? []).length > 1) {
-    t = t.replace(/\./g, '')
-  }
-  const n = Number.parseFloat(t)
-  return Number.isFinite(n) ? n : 0
-}
 
 type Props = Omit<ComponentProps<'input'>, 'value' | 'onChange' | 'type'> & {
   value: number

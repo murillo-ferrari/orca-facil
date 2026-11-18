@@ -40,8 +40,8 @@ import {
   Select,
   Textarea,
   TextField,
-  cn,
 } from '../components/ui'
+import { cn } from '../components/styles'
 import { toast } from '../components/toast'
 import { downloadQuotePdf, renderQuotePdf } from '../pdf/exportPdf'
 

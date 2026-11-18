@@ -109,7 +109,7 @@ orca-facil/
     │   └── factories.ts        criação de registros vazios, unidades padrão, numeração e normalização de dados antigos
     │
     ├── lib/
-    │   ├── format.ts           moeda, datas, máscaras e validação de CPF/CNPJ, CEP e telefone
+    │   ├── format.ts           moeda, percentual, datas, máscaras, validação de CPF/CNPJ e leitura de números digitados
     │   ├── calc.ts             total do item, subtotal, desconto, acréscimos e total do orçamento
     │   ├── cep.ts              consulta de endereço na API ViaCEP
     │   ├── clientQuotes.ts     regra de quais orçamentos pertencem a um cliente
@@ -117,7 +117,9 @@ orca-facil/
     │
     ├── components/
     │   ├── ui.tsx              base: botão, campos, card, modal, abas segmentadas, estado vazio
-    │   ├── toast.tsx           notificações
+    │   ├── styles.ts           `cn` (junta classes) e `inputClass` (estilo dos campos)
+    │   ├── toast.ts            `toast()`: dispara notificações de qualquer lugar
+    │   ├── Toaster.tsx         exibe as notificações
     │   ├── DateField.tsx       campo de data com calendário em pt-BR
     │   ├── NumberInput.tsx     número/moeda no formato brasileiro
     │   ├── DocumentField.tsx   CPF/CNPJ com alternância, máscara e validação
@@ -145,18 +147,19 @@ orca-facil/
     │
     └── reports/
         ├── data.ts             cálculos: filtros, períodos, agrupamento de clientes/serviços, datas pelo histórico
-        ├── FilterBar.tsx       barra de filtros (recolhível no celular) e resumo dos filtros para impressão
+        ├── FilterBar.tsx       barra de filtros (recolhível no celular)
+        ├── describeFilters.ts  resumo dos filtros ativos (cabeçalho de impressão)
         ├── OverviewView.tsx    Visão geral
         ├── FollowUpView.tsx    Follow-up (cobrança pelo WhatsApp, marcar aprovado/recusado)
         ├── TableViews.tsx      Clientes, Serviços e Descontos
         ├── DataTable.tsx       tabela ordenável que também gera o CSV
         ├── MonthlyChart.tsx    gráfico mensal orçado × aprovado (SVG)
-        ├── csv.ts              CSV no formato do Excel em português
+        ├── csv.ts              CSV no formato do Excel em português (inclui `csvFromColumns`)
         └── shared.tsx          cards de indicador, seções e botão de exportar
 ```
 
 Os testes (`*.test.ts`) ficam ao lado do código que testam: `lib/`, `data/`, `store/`, `reports/`, `pdf/` e
-`components/NumberInput`.
+`lib/parseBRNumber`.
 
 ## Como funciona
 

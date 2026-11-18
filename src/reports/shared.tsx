@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { Download } from 'lucide-react'
 import type { CompanyProfile } from '../types'
-import { Button, Card, cn } from '../components/ui'
+import { Button, Card } from '../components/ui'
+import { cn } from '../components/styles'
 import type { ReportContext, ReportFilters } from './data'
 import { downloadCsv, type CsvValue } from './csv'
 
@@ -10,9 +11,6 @@ export interface ViewProps {
   filters: ReportFilters
   profiles: CompanyProfile[]
 }
-
-const pct = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 1 })
-export const formatPercent = (v: number | null) => (v === null ? '—' : pct.format(v))
 
 export function StatTile({
   label,

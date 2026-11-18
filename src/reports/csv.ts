@@ -1,3 +1,5 @@
+import type { Column } from './DataTable'
+
 /**
  * CSV no padrão do Excel em português: separador ";", decimal com vírgula e BOM UTF-8
  * (sem o BOM o Excel mostra acentos quebrados).
@@ -28,4 +30,13 @@ export function downloadCsv(filename: string, header: string[], rows: CsvValue[]
   a.click()
   a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 5000)
+}
+
+/** Monta o CSV a partir das colunas de uma tabela (ignora as marcadas como só de tela) */
+export const csvFromColumns = <T>(columns: Column<T>[], rows: T[]) => {
+  const cols = columns.filter((c) => !c.screenOnly)
+  return {
+    header: cols.map((c) => c.header),
+    rows: rows.map((r) => cols.map((c) => (c.csv ? c.csv(r) : c.value(r)))),
+  }
 }

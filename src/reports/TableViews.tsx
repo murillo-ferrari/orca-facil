@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { formatCurrency, formatDate, formatNumber } from '../lib/format'
+import { formatCurrency, formatDate, formatNumber, formatPercent } from '../lib/format'
 import { STATUS } from '../lib/status'
-import { Badge, cn } from '../components/ui'
+import { Badge } from '../components/ui'
+import { cn } from '../components/styles'
 import {
   clientsReport,
   discountsReport,
@@ -11,8 +12,9 @@ import {
   type DiscountRow,
   type ServiceRow,
 } from './data'
-import { DataTable, csvFromColumns, type Column } from './DataTable'
-import { CsvButton, Section, StatTile, formatPercent, type ViewProps } from './shared'
+import { DataTable, type Column } from './DataTable'
+import { csvFromColumns } from './csv'
+import { CsvButton, Section, StatTile, type ViewProps } from './shared'
 
 const money = (v: number | null) => (v === null ? '—' : formatCurrency(v))
 const sumBy = <T,>(rows: T[], f: (r: T) => number) => rows.reduce((a, r) => a + f(r), 0)

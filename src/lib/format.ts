@@ -91,3 +91,20 @@ export function slugify(s: string) {
     .replace(/^-+|-+$/g, '')
     .slice(0, 40)
 }
+
+/** Converte texto digitado no padrão brasileiro ("1.234,56" ou "1234.56") em número */
+export function parseBRNumber(text: string): number {
+  let t = text.replace(/[^\d,.-]/g, '')
+  if (!t) return 0
+  if (t.includes(',')) {
+    t = t.replace(/\./g, '').replace(',', '.')
+  } else if ((t.match(/\./g) ?? []).length > 1) {
+    t = t.replace(/\./g, '')
+  }
+  const n = Number.parseFloat(t)
+  return Number.isFinite(n) ? n : 0
+}
+
+const pct = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 1 })
+/** Percentual em pt-BR a partir de fração (0.333 → "33,3%"); null vira "—" */
+export const formatPercent = (v: number | null) => (v === null ? '—' : pct.format(v))

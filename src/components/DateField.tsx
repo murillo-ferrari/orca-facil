@@ -6,7 +6,8 @@ import { CalendarDays } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR as dfPtBR } from 'date-fns/locale/pt-BR'
 import { parseDate, toISODate } from '../lib/format'
-import { Button, cn, inputClass } from './ui'
+import { Button } from './ui'
+import { cn, inputClass } from './styles'
 
 interface Props {
   id?: string
@@ -19,6 +20,8 @@ interface Props {
 
 export function DateField({ id, value, onChange, minDate, referenceDate }: Props) {
   const [open, setOpen] = useState(false)
+  // Data de referência fixada na montagem (não recalculada a cada renderização)
+  const [today] = useState(() => new Date())
   const wrapRef = useRef<HTMLDivElement>(null)
   const selected = parseDate(value)
   const min = minDate ? parseDate(minDate) : undefined
@@ -72,10 +75,10 @@ export function DateField({ id, value, onChange, minDate, referenceDate }: Props
             mode="single"
             locale={ptBR}
             selected={selected}
-            defaultMonth={selected ?? new Date()}
+            defaultMonth={selected ?? today}
             captionLayout="dropdown"
             startMonth={new Date(2015, 0)}
-            endMonth={new Date(new Date().getFullYear() + 5, 11)}
+            endMonth={new Date(today.getFullYear() + 5, 11)}
             disabled={min ? { before: min } : undefined}
             modifiers={ref ? { reference: ref } : undefined}
             modifiersClassNames={{ reference: 'underline decoration-2 decoration-slate-300 underline-offset-4' }}

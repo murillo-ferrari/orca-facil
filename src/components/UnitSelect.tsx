@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useStore } from '../store/store'
-import { cn, inputClass } from './ui'
+import { cn, inputClass } from './styles'
 
 /**
  * Seletor de unidades configuráveis. Fechado mostra só a sigla (compacto);

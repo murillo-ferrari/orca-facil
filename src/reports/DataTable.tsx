@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
-import { cn } from '../components/ui'
+import { cn } from '../components/styles'
 import type { CsvValue } from './csv'
 
 export interface Column<T> {
@@ -20,14 +20,6 @@ export interface Column<T> {
   csvOnly?: boolean
   /** Só na tela (não vai para o CSV) */
   screenOnly?: boolean
-}
-
-export const csvFromColumns = <T,>(columns: Column<T>[], rows: T[]) => {
-  const cols = columns.filter((c) => !c.screenOnly)
-  return {
-    header: cols.map((c) => c.header),
-    rows: rows.map((r) => cols.map((c) => (c.csv ? c.csv(r) : c.value(r)))),
-  }
 }
 
 export function DataTable<T>({

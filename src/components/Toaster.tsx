@@ -1,21 +1,6 @@
-import { create } from 'zustand'
 import { CheckCircle2, AlertCircle } from 'lucide-react'
-import { cn } from './ui'
-
-interface Toast {
-  id: number
-  message: string
-  kind: 'success' | 'error'
-}
-
-const useToasts = create<{ toasts: Toast[] }>(() => ({ toasts: [] }))
-
-let counter = 0
-export function toast(message: string, kind: Toast['kind'] = 'success') {
-  const id = ++counter
-  useToasts.setState((s) => ({ toasts: [...s.toasts, { id, message, kind }] }))
-  setTimeout(() => useToasts.setState((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 3200)
-}
+import { cn } from './styles'
+import { useToasts } from './toast'
 
 export function Toaster() {
   const toasts = useToasts((s) => s.toasts)

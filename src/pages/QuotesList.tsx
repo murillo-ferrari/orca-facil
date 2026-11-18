@@ -6,7 +6,8 @@ import type { QuoteStatus } from '../types'
 import { quoteTotals } from '../lib/calc'
 import { formatCurrency } from '../lib/format'
 import { STATUS, STATUS_ORDER } from '../lib/status'
-import { Button, Card, EmptyState, Input, PageHeader, Segmented, cn } from '../components/ui'
+import { Button, Card, EmptyState, Input, PageHeader, Segmented } from '../components/ui'
+import { cn } from '../components/styles'
 import { QuoteRow } from '../components/QuoteRow'
 
 function Welcome() {

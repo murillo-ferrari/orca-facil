@@ -98,6 +98,22 @@ persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem
 - Backup: _Ajustes_ exporta `{ app, version: 1, schemaVersion, exportedAt, data }` em JSON (`createBackup`); importar
   **substitui** tudo. Arquivos sem envelope (só o estado) também são aceitos.
 
+## Banco da edição Cloud (F3, `supabase/`)
+
+- Migrações em `supabase/migrations/` (SQL comentado em pt-BR). **Depois que uma migração for aplicada num ambiente
+  online, nunca editá-la: criar uma nova.** Enquanto só existir localmente, pode ser editada + `npm run db:reset`.
+- Tabelas: `user_settings` (1 por usuário, `id = user_id`), `company_profiles`, `clients`, `catalog_items`, `quotes`
+  (documento completo em `data` + colunas extraídas), `plan_limits`, `subscriptions`, `billing_events`.
+- Colunas de controle definidas pelo servidor: `user_id` (de `auth.uid()`), `rev`, `inserted_at`, `updated_at`;
+  `deleted_at` = exclusão lógica. Usuários não fazem DELETE físico; excluir a conta apaga tudo em cascata.
+- RPCs do app: `aplicar_alteracoes`, `buscar_alteracoes`, `reservar_numeros_orcamento`, `definir_proximo_numero`,
+  `uso_do_plano`. Auxiliares `security definer` ficam no schema `private` (não exposto pela API).
+- Limites (grátis: 15 orçamentos novos/mês, 1 empresa) na tabela `plan_limits`; aplicados nas policies de INSERT.
+- Testes: `npm run db:test` (78 pgTAP, também no CI). Ao mudar o banco: migração + teste + `npm run db:types`
+  (o CI falha se `src/editions/cloud/database.types.ts` estiver desatualizado). Nos testes, para mexer em colunas
+  protegidas por gatilho, usar `set local session_replication_role = replica`.
+- Docker Desktop precisa estar rodando. Container do banco: `supabase_db_orca-facil` (porta 54322).
+
 ## Regras de negócio
 
 - **Numeração:** por perfil de empresa, `prefixo + número com 4 dígitos` (`ORC-0001`). `createQuote` e
@@ -187,3 +203,6 @@ login `login@orcafacil.com.br`). Pendentes: D4 pagamento, D5 planos, D6 login, D
 6. Reavaliação de autenticação/backend: Supabase Auth no lugar do Clerk; plano atualizado.
 7. **F1 (fundação) concluída:** Vitest (95 testes), camada `src/data/` + `src/editions/`, `VITE_EDITION`, fonte
    Inter local, CI e scripts `test`/`check`/`format`.
+8. **F2:** repositório público, LICENSE, GitHub Pages; lint estrito (`--deny-warnings`).
+9. **F3 (banco) concluída localmente:** migrações, RLS, planos, sincronização, 78 testes pgTAP, tipos gerados.
+   Falta o projeto `staging` online.

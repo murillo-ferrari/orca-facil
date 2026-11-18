@@ -53,6 +53,18 @@ npm run check        # tudo que o CI roda: formatação, lint, tipos e testes
 npm run build        # gera o site estático em dist/
 ```
 
+### Banco de dados da edição Cloud (em desenvolvimento)
+
+Requer [Docker](https://www.docker.com/) rodando. O Supabase local sobe em contêineres:
+
+```bash
+npm run db:start     # sobe o Supabase local (primeira vez baixa as imagens)
+npm run db:test      # testes do banco (pgTAP): isolamento entre usuários, planos, sincronização
+npm run db:reset     # recria o banco aplicando as migrações de supabase/migrations/
+npm run db:types     # regenera src/editions/cloud/database.types.ts a partir do banco
+npm run db:stop
+```
+
 A edição é escolhida no build pela variável `VITE_EDITION` (padrão `local`; veja `.env.example`). A edição `cloud`
 ainda não existe e o build recusa esse valor com uma mensagem explicativa.
 
@@ -82,9 +94,13 @@ orca-facil/
 ├── .gitignore
 ├── .env.example                variáveis de build (VITE_EDITION)
 ├── .github/workflows/
-│   ├── ci.yml                  formatação, lint, tipos, testes e build a cada push/PR
+│   ├── ci.yml                  formatação, lint, tipos, testes, build e testes do banco a cada push/PR
 │   └── pages.yml               publica a edição Local no GitHub Pages a cada push na main
 ├── public/favicon.svg
+├── supabase/                   banco da edição Cloud (Postgres no Supabase)
+│   ├── config.toml             configuração do Supabase local
+│   ├── migrations/             tabelas, regras de acesso (RLS), planos e funções de sincronização
+│   └── tests/database/         testes do banco (pgTAP)
 ├── docs/
 │   ├── plano-versao-cloud.md   plano da edição Cloud (login, sincronização entre dispositivos, planos)
 │   └── avaliacao-autenticacao-e-backend.md  Clerk × Supabase Auth e alternativas de backend
@@ -102,7 +118,8 @@ orca-facil/
     │
     ├── editions/               o que muda entre as edições
     │   ├── index.ts            edição atual (VITE_EDITION) e sua persistência
-    │   └── local/persistence.ts  edição Local: localStorage
+    │   ├── local/persistence.ts  edição Local: localStorage
+    │   └── cloud/database.types.ts  tipos TypeScript gerados do banco (npm run db:types)
     │
     ├── store/
     │   ├── store.ts            estado global (zustand) e ações; a persistência vem de src/editions

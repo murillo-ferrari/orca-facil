@@ -176,11 +176,12 @@ extraídas resolvem, e uma view pode expandir o JSON.
 | Tabela | Colunas extraídas além do padrão | Observações |
 |---|---|---|
 | `user_settings` | — | 1 linha por usuário: unidades, preferências |
-| `profiles` | `next_number int` | `next_number` é a fonte da verdade da numeração (seção 7.6) |
+| `company_profiles` | `next_number int` | `next_number` é a fonte da verdade da numeração (seção 7.6). Nome evita confusão com "perfil de usuário" |
 | `clients` | `name text`, `document_digits text` | |
 | `catalog_items` | `description text` | |
 | `quotes` | `profile_id uuid`, `number text`, `status text`, `issue_date date` | Itens, acréscimos, cliente e `statusHistory` ficam no `data` |
-| `subscriptions` | `plan`, `status`, `current_period_end`, `provider`, `provider_customer_id`, `provider_subscription_id` | Gravada **só** pelas Edge Functions |
+| `plan_limits` | `max_new_quotes_per_month`, `max_company_profiles` | Limites por plano (grátis: 15/mês e 1 empresa); ajustáveis sem migração |
+| `subscriptions` | `plan`, `status`, `current_period_end`, `provider`, `provider_customer_id`, `provider_subscription_id` | Gravada **só** pelo servidor (gatilho de cadastro e Edge Functions) |
 | `billing_events` | `provider`, `event_id` (único), `payload jsonb` | Idempotência e auditoria dos webhooks |
 
 `activeProfileId` (empresa ativa) é preferência de cada dispositivo e fica só no local. As unidades vão para o
@@ -192,6 +193,9 @@ chave estrangeira para `auth.users` e `on delete cascade`),
 (exclusão lógica, para os outros dispositivos saberem que algo foi apagado).
 
 ### 5.2 Esboço de SQL (migração inicial)
+
+> Esboço de planejamento. A implementação real (F3) está em `supabase/migrations/` e difere em detalhes: tabela
+> `company_profiles`, funções auxiliares no schema `private` e policies de INSERT com `private.can_create_quote()`.
 
 ```sql
 -- Mantém rev/updated_at sob controle do servidor e impede trocar o dono da linha
@@ -227,7 +231,7 @@ alter table public.quotes enable row level security;
 create policy "dono lê" on public.quotes for select to authenticated
   using ((select auth.uid()) = user_id);
 create policy "dono cria (respeitando o plano)" on public.quotes for insert to authenticated
-  with check ((select auth.uid()) = user_id and public.pode_criar_orcamento());
+  with check ((select auth.uid()) = user_id and private.can_create_quote());
 create policy "dono altera" on public.quotes for update to authenticated
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
@@ -251,21 +255,39 @@ apenas com a chave de serviço, dentro das Edge Functions.
 
 ### 5.3 Funções no banco (RPC)
 
+Implementadas na F3 (`supabase/migrations/`). As chamáveis pelo app rodam como o usuário (RLS vale); as auxiliares
+ficam no schema `private`, que a API não expõe.
+
 | Função | Para quê |
 |---|---|
-| `aplicar_alteracoes(changes jsonb)` | Recebe um lote da fila de envio. Para cada registro, faz insert ou update **somente se** `rev` bater com o `base_rev` enviado. Devolve os aplicados (com o novo `rev`) e os conflitos (com a versão do servidor). Roda como `security invoker`, então a RLS vale |
-| `reservar_numeros(profile_id, qtd)` | `update profiles set next_number = next_number + qtd … returning`, atômico. Devolve o primeiro número do bloco |
-| `pode_criar_orcamento()` | `security definer`: lê o plano em `subscriptions` e conta os orçamentos do mês. Usada na policy de insert |
-| `uso_do_plano()` | Devolve uso × limite para a tela de planos |
+| `aplicar_alteracoes(p_changes)` | Recebe um lote (até 500) da fila de envio: `{ table, id, data, base_rev, deleted }`. Cria se `base_rev` for nulo; altera **somente se** `rev` ainda for igual a `base_rev`; `deleted` faz/desfaz a exclusão lógica. Cada item é independente e volta em `applied` (com o novo `rev`), `conflicts` (com a linha atual do servidor) ou `rejected` (com o motivo: `limite_do_plano`, `dados_invalidos`, `duplicado`, `sem_permissao`) |
+| `buscar_alteracoes(p_desde, p_limite)` | Por tabela, até `p_limite` linhas alteradas depois de `p_desde` (inclui excluídas), mais `has_more` e `server_time` |
+| `reservar_numeros_orcamento(p_empresa, p_quantidade)` | Atômica: devolve o primeiro número de um bloco reservado. Testada com 100 reservas simultâneas, sem colisão |
+| `definir_proximo_numero(p_empresa, p_proximo)` | Campo "Próximo número" da tela de empresa |
+| `uso_do_plano()` | Plano em vigor, orçamentos criados no mês, empresas e os limites |
+| `private.current_plan()`, `private.can_create_quote()`, `private.can_create_company_profile()` | Usadas nas policies de INSERT. O mês é contado no fuso de São Paulo, e excluídos contam (apagar não devolve cota) |
+| `private.handle_new_user()` | Gatilho no cadastro: cria `user_settings` e a assinatura grátis |
+| `private.purge_deleted_rows()` | Remove de vez linhas excluídas há mais de 90 dias (pg_cron, diário) |
+
+Proteções feitas por gatilho: o servidor define `user_id` (sem o app enviar), `rev`, `inserted_at` e `updated_at`;
+`data.id` precisa ser igual ao `id` da linha; colunas de orçamento são extraídas do documento; `next_number` só muda
+pelas funções de numeração, e `data.nextNumber` sempre reflete o valor real.
 
 ### 5.4 Testes do banco
 
-Testes pgTAP em `supabase/tests/`, rodando no Supabase local (`supabase start`):
+78 testes pgTAP em `supabase/tests/database/` (`npm run db:test`, também no CI):
 
-- o usuário A não lê, não altera e não "adota" linhas do usuário B;
-- o insert é bloqueado ao estourar o limite do plano grátis;
-- `rev` sobe a cada update e `user_id` não pode ser trocado;
-- duas reservas de número em paralelo nunca devolvem o mesmo bloco.
+- **isolamento:** um usuário não lê, não altera, não "adota" nem apaga linhas de outro; visitante sem login não acessa
+  nada; excluir a conta apaga tudo em cascata; todas as tabelas têm RLS;
+- **integridade:** versão sobe e não pode ser forjada; colunas extraídas; validações (status, data, número repetido);
+  numeração protegida;
+- **planos:** limites do grátis (orçamentos/mês e empresas), cota mensal, Pro, tolerância de 7 dias na
+  inadimplência, nada é apagado ao voltar ao grátis;
+- **sincronização:** criação, alteração, conflito, exclusão/restauração, lotes com itens inválidos, paginação da busca
+  e numeração.
+
+Os testes foram validados por sabotagem: desligar a RLS, remover o limite do plano ou quebrar o controle de versão
+faz os testes correspondentes falharem.
 
 ## 6. Autenticação (Supabase Auth)
 
@@ -390,7 +412,7 @@ O problema: dois dispositivos offline criariam o mesmo `ORC-0042`.
 
 A solução é a **reserva de blocos por dispositivo**:
 
-1. Online, cada dispositivo reserva um bloco pequeno (ex.: 3 números) por empresa, via `reservar_numeros`.
+1. Online, cada dispositivo reserva um bloco pequeno (ex.: 3 números) por empresa, via `reservar_numeros_orcamento`.
 2. Novos orçamentos usam o próximo número do bloco local, mesmo offline.
 3. Quando o bloco acaba, reserva outro, se houver conexão.
 4. Offline e sem números sobrando, o orçamento é criado com número provisório ("definido ao sincronizar"). O PDF
@@ -474,7 +496,7 @@ sequenceDiagram
     A->>U: "Plano Pro ativo"
 ```
 
-- **Fonte da verdade:** a tabela `subscriptions`. As policies (`pode_criar_orcamento`) consultam essa tabela, então
+- **Fonte da verdade:** a tabela `subscriptions`. As policies (`private.can_create_quote()` e `private.can_create_company_profile()`) consultam essa tabela, então
   não dá para burlar o limite alterando o app.
 - **Inadimplência:** pagamento atrasado → aviso no app → após 7 dias, volta para o Grátis. **Nenhum dado é
   apagado**: só a criação acima do limite fica bloqueada.
@@ -555,12 +577,12 @@ Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úte
 |---|---|---|
 | **F0 · Decisões e contas** | Decisões D1–D10; domínio; contas Supabase/Cloudflare/SMTP/pagamento; cliente OAuth do Google; repositório no GitHub | 1 dia |
 | ✅ **F1 · Fundação** (concluída em 18/11/2026) | Vitest com 95 testes das regras atuais; camada `src/data/` + `src/editions/` sem mudar comportamento; variável `VITE_EDITION` validada no build; fonte Inter local; CI (`ci.yml`) | 2–3 dias |
-| **F2 · Etapa 1 publicada** | LICENSE, README, workflow do Pages, repositório público | 0,5–1 dia |
-| **F3 · Banco** | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, testes pgTAP, projeto `staging` | 2–3 dias |
+| ✅ **F2 · Etapa 1 publicada** (18/11/2026) | LICENSE, README, workflow do Pages, repositório público | 0,5–1 dia |
+| ✅ **F3 · Banco** (concluída em 18/11/2026, exceto o projeto `staging` online) | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, 78 testes pgTAP + job no CI, tipos TypeScript gerados | 2–3 dias |
 | **F4 · Autenticação** | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
 | **F5 · Sincronização** | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes | 4–6 dias |
 | **F6 · Migração e conta** | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
-| **F7 · Planos e cobrança** | Tabela de planos, `pode_criar_orcamento`, tela de planos/uso, checkout, webhook do provedor, inadimplência, testes no sandbox | 3–5 dias |
+| **F7 · Planos e cobrança** | Tela de planos/uso, checkout, webhook do provedor, inadimplência, testes no sandbox | 3–5 dias |
 | **F8 · Segurança e LGPD** | Cabeçalhos/CSP, revisão de RLS, Termos e Política (+ revisão jurídica), página de status | 1–2 dias |
 | **F9 · Produção** | Supabase Pro em São Paulo, domínio e DNS (app + e-mail), Google OAuth publicado, Cloudflare Pages, Sentry, pipelines | 1–2 dias |
 | **F10 · Beta e lançamento** | Beta fechado (5–10 autônomos reais), correções, landing page, lançamento | 1–2 semanas de calendário |
@@ -614,7 +636,10 @@ infraestrutura (considerando taxas e câmbio).
 1. ~~Responder às decisões D1, D2 e D3~~ (feito). Concluir o registro de `orcafacil.com.br`. D10 (SMTP) até a F4;
    D4–D8 até a F7.
 2. ~~Executar a F1 (testes + camada de dados)~~ (feito em 18/11/2026).
-3. Executar a **F2** e publicar a edição Local.
+3. ~~Executar a F2 e publicar a edição Local~~ (feito: <https://murillo-ferrari.github.io/orca-facil/>).
+4. ~~F3 (banco)~~ (feito localmente). Pendente: criar a conta e o projeto `staging` no Supabase (região São Paulo)
+   e aplicar as migrações com `supabase link` + `supabase db push`.
+5. Próxima: **F4 (autenticação)**, que precisa do domínio e do serviço de SMTP (D10).
 
 ## Fontes consultadas (novembro de 2026)
 

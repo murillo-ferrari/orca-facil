@@ -62,6 +62,9 @@ gerador-orcamento/
 ├── .oxlintrc.json              lint (oxlint)
 ├── .gitignore
 ├── public/favicon.svg
+├── docs/
+│   ├── plano-versao-cloud.md   plano da edição Cloud (login, sincronização entre dispositivos, planos)
+│   └── avaliacao-autenticacao-e-backend.md  Clerk × Supabase Auth e alternativas de backend
 └── src/
     ├── main.tsx                ponto de entrada
     ├── App.tsx                 layout (menu lateral, barra inferior no celular, seletor de empresa) e rotas

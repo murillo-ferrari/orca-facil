@@ -135,9 +135,28 @@ Os dados dos orçamentos nunca saem do navegador. Contatos externos: **Google Fo
 - Sem testes automatizados no repositório; vale considerar Vitest para `lib/` e `reports/data.ts`.
 - Sem remoto Git (nada publicado).
 
+## Roadmap
+
+Ideia do usuário em duas etapas, detalhada em **`docs/plano-versao-cloud.md`** (ler antes de trabalhar nisso):
+
+1. **Edição Local pública:** repositório público + build no GitHub Pages; qualquer um usa ou clona.
+2. **Edição Cloud:** login obrigatório e dados sincronizados entre dispositivos, com planos pagos.
+   **Decidido (18/11/2026): Supabase para tudo** — banco Postgres com RLS (`auth.uid()`), **Supabase Auth** (código
+   de 6 dígitos por e-mail + Google, telas próprias em pt-BR, SMTP próprio obrigatório), Realtime e Edge Functions,
+   na região São Paulo. **O Clerk foi descartado**: o Clerk Billing não funciona no Brasil, e só o login não
+   justificava um segundo fornecedor. Cobrança por provedor brasileiro (ex.: Asaas); o plano fica na tabela
+   `subscriptions`. Sincronização offline com motor próprio; **PowerSync** é o plano B. Supabase Free pausa após
+   7 dias sem uso, então produção vai no Pro.
+   Comparativo em `docs/avaliacao-autenticacao-e-backend.md`.
+
+Decisões pendentes do usuário: D1–D10 na seção 2 do plano (licença, mesmo repo, domínio, provedor de pagamento,
+planos, login, offline, conflitos, nome, SMTP).
+
 ## Histórico (resumo)
 
 1. Commit inicial: perfis de empresa, clientes, catálogo, unidades, editor de orçamento, PDF, backup.
 2. Página do cliente com histórico de orçamentos; correção da taxa de aprovação.
 3. Aba de relatórios (5 relatórios, filtros, CSV, impressão) + `statusHistory` e `catalogId` (schema v2).
 4. README com estrutura detalhada e dois diagramas Mermaid (funcionamento e fluxo de dados).
+5. Correções do README apontadas no /code-review, CLAUDE.md e plano da edição Cloud em `docs/`.
+6. Reavaliação de autenticação/backend: Supabase Auth no lugar do Clerk; plano atualizado.

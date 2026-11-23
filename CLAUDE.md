@@ -130,6 +130,8 @@ persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem
 - Testes: `npm run db:test` (78 pgTAP, também no CI). Ao mudar o banco: migração + teste + `npm run db:types`
   (o CI falha se `src/editions/cloud/database.types.ts` estiver desatualizado). Nos testes, para mexer em colunas
   protegidas por gatilho, usar `set local session_replication_role = replica`.
+- Projeto online vinculado: `orca-facil` (staging, ref `tqysyqwzqyuiwbudnfqc`). CLI v3: comandos remotos exigem
+  `--remote` (ex.: `npx supabase db push --remote --dry-run` antes de aplicar); sem ele, o alvo é o banco local.
 - Docker Desktop precisa estar rodando. Container do banco: `supabase_db_orca-facil` (porta 54322).
 
 ## Regras de negócio
@@ -232,6 +234,6 @@ login `login@orcafacil.com.br`). Pendentes: D4 pagamento, D5 planos, D6 login, D
    Inter local, CI e scripts `test`/`check`/`format`.
 8. **F2:** repositório público, LICENSE, GitHub Pages; lint estrito (`--deny-warnings`).
 9. **F3 (banco) concluída localmente:** migrações, RLS, planos, sincronização, 78 testes pgTAP, tipos gerados.
-   Falta o projeto `staging` online.
+   Projeto `staging` online (`orca-facil`, ref `tqysyqwzqyuiwbudnfqc`) com as migrações aplicadas em 23/11/2026.
 10. **Modern Web Guidance incorporado:** skill do projeto, scripts `mwg`, política de navegadores e correções de
    acessibilidade/modernização (ver seção própria).

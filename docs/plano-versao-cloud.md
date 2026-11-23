@@ -584,7 +584,7 @@ Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úte
 | **F0 · Decisões e contas** | Decisões D1–D10; domínio; contas Supabase/Cloudflare/SMTP/pagamento; cliente OAuth do Google; repositório no GitHub | 1 dia |
 | ✅ **F1 · Fundação** (concluída em 18/11/2026) | Vitest com 95 testes das regras atuais; camada `src/data/` + `src/editions/` sem mudar comportamento; variável `VITE_EDITION` validada no build; fonte Inter local; CI (`ci.yml`) | 2–3 dias |
 | ✅ **F2 · Etapa 1 publicada** (18/11/2026) | LICENSE, README, workflow do Pages, repositório público | 0,5–1 dia |
-| ✅ **F3 · Banco** (concluída em 18/11/2026, exceto o projeto `staging` online) | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, 78 testes pgTAP + job no CI, tipos TypeScript gerados | 2–3 dias |
+| ✅ **F3 · Banco** (concluída em 18/11/2026; `staging` online em 23/11/2026) | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, 78 testes pgTAP + job no CI, tipos TypeScript gerados | 2–3 dias |
 | **F4 · Autenticação** | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
 | **F5 · Sincronização** | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes | 4–6 dias |
 | **F6 · Migração e conta** | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
@@ -643,8 +643,8 @@ infraestrutura (considerando taxas e câmbio).
    D4–D8 até a F7.
 2. ~~Executar a F1 (testes + camada de dados)~~ (feito em 18/11/2026).
 3. ~~Executar a F2 e publicar a edição Local~~ (feito: <https://murillo-ferrari.github.io/orca-facil/>).
-4. ~~F3 (banco)~~ (feito localmente). Pendente: criar a conta e o projeto `staging` no Supabase (região São Paulo)
-   e aplicar as migrações com `supabase link` + `supabase db push`.
+4. ~~F3 (banco)~~ (feito). Projeto `staging` criado (`orca-facil`, ref `tqysyqwzqyuiwbudnfqc`) e migrações
+   aplicadas em 23/11/2026 com `supabase db push --remote` (na CLI v3, sem `--remote` o alvo é o banco local).
 5. Próxima: **F4 (autenticação)**, que precisa do domínio e do serviço de SMTP (D10).
 
 ## Fontes consultadas (novembro de 2026)

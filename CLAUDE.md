@@ -4,7 +4,7 @@ App web para profissionais autônomos criarem orçamentos de serviços e exporta
 sem backend, sem login; os dados ficam no `localStorage`. O `README.md` é a documentação para pessoas (funcionalidades,
 estrutura de pastas arquivo por arquivo, diagramas Mermaid). Este arquivo guarda o contexto para continuar o trabalho.
 
-O nome "Orçafácil" (aparece em `src/App.tsx` e `index.html`) acompanha o domínio `orcafacil.com.br`, em registro.
+O nome "Orçafácil" (aparece em `src/App.tsx` e `index.html`) será publicado em `orcafacil.murilloferrari.tech` (subdomínio no Cloudflare).
 Licença: AGPL-3.0 (`LICENSE`). Repositório público: <https://github.com/murillo-ferrari/orca-facil> (a pasta local
 ainda se chama `gerador-orcamento`). Edição Local publicada em <https://murillo-ferrari.github.io/orca-facil/>.
 Commits com o e-mail pessoal do usuário, por escolha dele.
@@ -218,9 +218,9 @@ Ideia do usuário em duas etapas, detalhada em **`docs/plano-versao-cloud.md`** 
    Comparativo em `docs/avaliacao-autenticacao-e-backend.md`.
 
 Decididas: **D1 licença AGPL-3.0**, **D2 código da Cloud no mesmo repositório público** (edição escolhida por
-`VITE_EDITION`), **D3 domínio `orcafacil.com.br`** (registro em andamento; app em `app.orcafacil.com.br`, e-mail de
-login `login@orcafacil.com.br`). Pendentes: D4 pagamento, D5 planos, D6 login, D7 offline, D8 conflitos, D9 nome
-(tende a "Orçafácil"), D10 SMTP — ver seção 2 do plano.
+`VITE_EDITION`), **D3 domínio `orcafacil.murilloferrari.tech`** (trocado em 23/11/2026; e-mail de login
+`login@orcafacil.murilloferrari.tech`), **D10 Resend** (SMTP). Pendentes: D4 pagamento, D5 planos, D6 login, D7 offline,
+D8 conflitos, D9 nome (tende a "Orçafácil") — ver seção 2 do plano.
 
 ## Histórico (resumo)
 
@@ -237,3 +237,5 @@ login `login@orcafacil.com.br`). Pendentes: D4 pagamento, D5 planos, D6 login, D
    Projeto `staging` online (`orca-facil`, ref `tqysyqwzqyuiwbudnfqc`) com as migrações aplicadas em 23/11/2026.
 10. **Modern Web Guidance incorporado:** skill do projeto, scripts `mwg`, política de navegadores e correções de
    acessibilidade/modernização (ver seção própria).
+11. **F4 (autenticação) — código pronto:** login por código e Google, Turnstile, conta em Ajustes, `delete-account`,
+    modelo de e-mail; testado no banco local. Falta configurar o projeto online (ver item 5 da seção 17 do plano).

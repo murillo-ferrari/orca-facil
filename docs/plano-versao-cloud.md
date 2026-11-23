@@ -14,7 +14,7 @@ O projeto passa a ter duas edições, a partir do **mesmo código**:
 
 | | **Edição Local** (etapa 1) | **Edição Cloud** (etapa 2) |
 |---|---|---|
-| Onde roda | GitHub Pages, ou onde a pessoa quiser (clone + build) | Domínio próprio (ex.: `app.orcafacil.com.br`) |
+| Onde roda | GitHub Pages, ou onde a pessoa quiser (clone + build) | Domínio próprio (`orcafacil.murilloferrari.tech`) |
 | Conta | Não precisa | Login obrigatório (Supabase Auth) |
 | Dados | `localStorage` do navegador | Banco na nuvem (Supabase/Postgres) + cópia local para uso offline |
 | Diferencial | Grátis, código aberto, privado por padrão | Mesmos dados em qualquer dispositivo; backup automático |
@@ -32,11 +32,11 @@ recomendação e podem ser definidas até a fase indicada na seção 17.
 |---|---|---|---|
 | D1 | **Licença** do repositório público | MIT · AGPL-3.0 | ✅ **AGPL-3.0** — quem hospedar uma versão modificada do app como serviço precisa publicar o código |
 | D2 | **Código da Cloud** no mesmo repositório público? | Mesmo repo · repo privado separado | ✅ **Mesmo repositório**, com as edições escolhidas por variável de build; segredos fora do código |
-| D3 | **Domínio** | — | ✅ **`orcafacil.com.br`** (registro em andamento no registro.br). App em `app.orcafacil.com.br`, e-mails de login de `login@orcafacil.com.br` |
+| D3 | **Domínio** | — | ✅ **`orcafacil.murilloferrari.tech`** (subdomínio no Cloudflare; trocado em 23/11/2026 no lugar de `orcafacil.com.br`). App nesse endereço, e-mails de login de `login@orcafacil.murilloferrari.tech` |
 | D4 | **Provedor de pagamento** | Asaas · Mercado Pago · Stripe · Paddle (detalhes na seção 9.2) | **Asaas** se você tiver CNPJ (Pix, boleto, cartão e emissão de NFS-e); **Paddle** se quiser que outra empresa fature e cuide dos impostos |
 | D5 | **Planos e limites** | Ver seção 9.1 | Grátis com limite de volume; Pro sem limites |
 | D6 | **Formas de login** | E-mail com código · Google · Apple · senha | **E-mail com código de 6 dígitos + Google** (sem senha para esquecer) |
-| D10 | **Serviço de envio de e-mail (SMTP)** | Resend · Brevo · Amazon SES · Postmark · ZeptoMail | **Resend** ou **Brevo** (planos grátis suficientes no início; conferir cotas) |
+| D10 | **Serviço de envio de e-mail (SMTP)** | Resend · Brevo · Amazon SES · Postmark · ZeptoMail | ✅ **Resend** (decidido em 23/11/2026) |
 | D7 | **Nível de offline** | Só online · leitura offline · leitura e escrita offline | **Leitura e escrita offline**: o público trabalha na casa do cliente, muitas vezes sem sinal |
 | D8 | **Conflito** entre dispositivos | Última gravação vence · diálogo de escolha · mesclar | **Última gravação vence**, guardando a versão perdida para restaurar (seção 7.5) |
 | D9 | **Nome do produto** | — | **Orçafácil**, acompanhando o domínio; confirmar quando o registro for concluído |
@@ -328,7 +328,7 @@ await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo:
   por minuto por usuário.
 - **SMTP próprio (obrigatório):** o envio padrão do Supabase só entrega para membros da equipe e é limitado a
   2 e-mails/hora. Com SMTP próprio, o limite padrão é 30 e-mails/hora, ajustável em _Rate Limits_. Configurar
-  SPF, DKIM e DMARC no domínio remetente (ex.: `login@orcafacil.com.br`).
+  SPF, DKIM e DMARC no domínio remetente (`login@orcafacil.murilloferrari.tech`).
 - **Google:** criar o cliente OAuth no Google Cloud (tela de consentimento com nome, logo e política de privacidade)
   e cadastrar as URLs de retorno em _Authentication › URL Configuration_ (produção, staging e localhost).
 - **CAPTCHA:** Cloudflare Turnstile no envio do código, para evitar abuso do SMTP.
@@ -585,7 +585,7 @@ Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úte
 | ✅ **F1 · Fundação** (concluída em 18/11/2026) | Vitest com 95 testes das regras atuais; camada `src/data/` + `src/editions/` sem mudar comportamento; variável `VITE_EDITION` validada no build; fonte Inter local; CI (`ci.yml`) | 2–3 dias |
 | ✅ **F2 · Etapa 1 publicada** (18/11/2026) | LICENSE, README, workflow do Pages, repositório público | 0,5–1 dia |
 | ✅ **F3 · Banco** (concluída em 18/11/2026; `staging` online em 23/11/2026) | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, 78 testes pgTAP + job no CI, tipos TypeScript gerados | 2–3 dias |
-| **F4 · Autenticação** | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
+| 🟡 **F4 · Autenticação** (código pronto e testado no banco local em 23/11/2026; falta configurar o projeto online) | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
 | **F5 · Sincronização** | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes | 4–6 dias |
 | **F6 · Migração e conta** | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
 | **F7 · Planos e cobrança** | Tela de planos/uso, checkout, webhook do provedor, inadimplência, testes no sandbox | 3–5 dias |
@@ -639,13 +639,17 @@ infraestrutura (considerando taxas e câmbio).
 
 ## 17. Próximos passos imediatos
 
-1. ~~Responder às decisões D1, D2 e D3~~ (feito). Concluir o registro de `orcafacil.com.br`. D10 (SMTP) até a F4;
+1. ~~Responder às decisões D1, D2, D3 e D10~~ (feito; domínio passou a ser `orcafacil.murilloferrari.tech`);
    D4–D8 até a F7.
 2. ~~Executar a F1 (testes + camada de dados)~~ (feito em 18/11/2026).
 3. ~~Executar a F2 e publicar a edição Local~~ (feito: <https://murillo-ferrari.github.io/orca-facil/>).
 4. ~~F3 (banco)~~ (feito). Projeto `staging` criado (`orca-facil`, ref `tqysyqwzqyuiwbudnfqc`) e migrações
    aplicadas em 23/11/2026 com `supabase db push --remote` (na CLI v3, sem `--remote` o alvo é o banco local).
-5. Próxima: **F4 (autenticação)**, que precisa do domínio e do serviço de SMTP (D10).
+5. **F4 (autenticação)** em andamento. Código feito: `src/editions/cloud/` (`supabase.ts`, `auth/AuthGate`, `Login`,
+   `AccountCard` em Ajustes), `supabase/templates/codigo.html`, `supabase/functions/delete-account`. Diferenças do
+   esboço: não há rota `/entrar` (sem sessão, qualquer rota mostra o login) nem `/conta` (a conta fica em Ajustes).
+   Falta no projeto online: SMTP do Resend + DNS, modelos de e-mail, URLs de retorno, Google OAuth, Turnstile e o
+   deploy da função `delete-account`.
 
 ## Fontes consultadas (novembro de 2026)
 

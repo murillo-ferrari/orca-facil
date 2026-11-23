@@ -33,6 +33,12 @@ jobs:
         run: npm run build
         env:
           VITE_EDITION: local
+      - name: Build (edição Cloud)
+        # Só confere que compila; valores fictícios (as chaves reais entram no deploy da Cloud)
+        run: npm run build:cloud
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci
 
   database:
     # Sobe o Postgres do Supabase em Docker, aplica as migrações e roda os testes de banco (pgTAP)

@@ -1,10 +1,14 @@
-import { useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { DatabaseBackup, Download, Plus, Ruler, RotateCcw, Trash2, Upload } from 'lucide-react'
 import { exportSnapshot, useStore } from '../store/store'
 import { BackupError, backupFileName, createBackup, parseBackup } from '../data/backup'
 import { uid } from '../store/factories'
 import { Button, Card, CardHeader, Input } from '../components/ui'
 import { toast } from '../components/toast'
+
+// Só na edição Cloud; no build Local este import some
+const AccountCard =
+  import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/auth/AccountCard')) : null
 
 function UnitsCard() {
   const units = useStore((s) => s.units)
@@ -163,6 +167,11 @@ export function SettingsPage() {
     <>
       <h1 className="mb-6 text-2xl font-semibold tracking-tight text-slate-900">Ajustes</h1>
       <div className="space-y-5">
+        {AccountCard && (
+          <Suspense>
+            <AccountCard />
+          </Suspense>
+        )}
         <UnitsCard />
         <BackupCard />
       </div>

@@ -1,4 +1,5 @@
-import { HashRouter, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, HashRouter, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import { BarChart3, Building2, FileText, Package, Settings, Users, ChevronsUpDown, Plus } from 'lucide-react'
 import { useStore, useActiveProfile } from './store/store'
 import { Toaster } from './components/Toaster'
@@ -12,6 +13,12 @@ import { ClientDetail } from './pages/ClientDetail'
 import { Catalog } from './pages/Catalog'
 import { SettingsPage } from './pages/Settings'
 import { Reports } from './pages/Reports'
+
+// Edição Cloud: login obrigatório e rotas por caminho (o retorno do Google chega em /auth/callback?code=…).
+// A comparação direta com import.meta.env deixa o build Local sem o código da Cloud (e sem o Supabase).
+const CLOUD = import.meta.env.VITE_EDITION === 'cloud'
+const AuthGate = CLOUD ? lazy(() => import('./editions/cloud/auth/AuthGate')) : null
+const Router = CLOUD ? BrowserRouter : HashRouter
 
 const NAV = [
   { to: '/', label: 'Orçamentos', icon: FileText, end: true },
@@ -154,8 +161,16 @@ function Shell() {
 
 export default function App() {
   return (
-    <HashRouter>
-      <Shell />
-    </HashRouter>
+    <Router>
+      {AuthGate ? (
+        <Suspense>
+          <AuthGate>
+            <Shell />
+          </AuthGate>
+        </Suspense>
+      ) : (
+        <Shell />
+      )}
+    </Router>
   )
 }

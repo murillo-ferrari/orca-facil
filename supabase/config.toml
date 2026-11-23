@@ -166,7 +166,12 @@ site_url = "http://localhost:5173"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:5173/auth/callback", "http://127.0.0.1:5173/auth/callback"]
+# 5180: porta usada nas sessões de teste (npm run dev:cloud -- --port 5180)
+additional_redirect_urls = [
+  "http://localhost:5173/auth/callback",
+  "http://127.0.0.1:5173/auth/callback",
+  "http://localhost:5180/auth/callback",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -253,7 +258,17 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
+# E-mail de login com o código de 6 dígitos (sem link). O Supabase usa "confirmation" no primeiro acesso de um
+# e-mail e "magic_link" nos seguintes; os dois mostram o mesmo código. No projeto online, copiar o mesmo HTML em
+# Authentication › Emails.
+[auth.email.template.confirmation]
+subject = "Seu código de acesso ao Orçafácil"
+content_path = "./supabase/templates/codigo.html"
+
+[auth.email.template.magic_link]
+subject = "Seu código de acesso ao Orçafácil"
+content_path = "./supabase/templates/codigo.html"
+
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
@@ -386,6 +401,11 @@ enabled = false
 authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
+
+# Exclusão de conta: a função confere o token do usuário no próprio código (getUser), então a verificação
+# automática fica desligada (recomendação do Supabase para as novas chaves de assinatura do JWT).
+[functions.delete-account]
+verify_jwt = false
 
 [edge_runtime]
 enabled = true

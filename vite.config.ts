@@ -12,12 +12,15 @@ export default defineConfig(({ mode }) => {
     throw new Error(`VITE_EDITION inválida: "${edition}". Use "local" ou "cloud".`)
   }
   if (edition === 'cloud') {
-    throw new Error('A edição cloud ainda não foi implementada (fases F3 em diante do plano).')
+    const env = loadEnv(mode, process.cwd(), 'VITE_')
+    const missing = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY'].filter((k) => !env[k])
+    if (missing.length) throw new Error(`Edição cloud sem ${missing.join(', ')} (ver .env.example).`)
   }
 
   return {
-    // base relativa: o build funciona em qualquer subpasta (GitHub Pages, Netlify, etc.)
-    base: './',
+    // Local: base relativa, funciona em qualquer subpasta (GitHub Pages etc.).
+    // Cloud: rotas por caminho (BrowserRouter), então os arquivos precisam de caminho absoluto.
+    base: edition === 'cloud' ? '/' : './',
     plugins: [react(), tailwindcss()],
     // Garante o valor padrão também quando a variável não foi definida
     define: { 'import.meta.env.VITE_EDITION': JSON.stringify(edition) },

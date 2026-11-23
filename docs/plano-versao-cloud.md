@@ -442,7 +442,10 @@ impede duplicidade.
   `has_more`.
 - **Quando sincroniza:** ao gravar (com atraso de 1 s), ao voltar a conexão, ao voltar para a aba e a cada 60 s.
   Realtime fica para depois (decidido).
-- **Armazenamento:** IndexedDB `orcafacil:<userId>` com `records`, `outbox`, `conflicts` e `meta`.
+- **Armazenamento (como ficou):** IndexedDB nativo, banco `orcafacil:<userId>` com um store chave-valor:
+  `known:<tabela>` (rev e conteúdo da última versão sincronizada de cada registro), `cursors` e `conflicts`.
+  **Não há store de fila:** a fila é recalculada a cada sincronização (estado do store × `known`), então não existe
+  entrada velha para limpar. Os dados em si continuam no store zustand; ligar o store ao motor é a próxima etapa.
 - **IDs:** na Cloud, o `id` é UUID gerado com `crypto.getRandomValues` (sem fallback não criptográfico).
 
 ### 7.7 Indicador de sincronização

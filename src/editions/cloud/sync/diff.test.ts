@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { diffAgainstKnown, fingerprint, type Known, type Synced } from './diff'
-import { Outbox } from './outbox'
 
-const item = (id: string, nome: string): Synced => ({ id, rev: 1, nome })
+const item = (id: string, nome: string): Synced => ({ id, nome })
 
 describe('fingerprint', () => {
   it('ignora a ordem das chaves', () => {
@@ -31,25 +30,5 @@ describe('diffAgainstKnown', () => {
   it('registro que sumiu vira exclusão com a rev conhecida', () => {
     const conhecido = new Map<string, Known>([['1', { rev: 2, data: '{}' }]])
     expect(diffAgainstKnown([], conhecido)).toEqual([{ id: '1', baseRev: 2, deleted: true, data: null }])
-  })
-})
-
-describe('Outbox', () => {
-  it('várias edições do mesmo registro viram uma entrada, com o último estado e a base original', () => {
-    const fila = new Outbox()
-    fila.add([{ id: '1', baseRev: 3, deleted: false, data: { nome: 'A' } }])
-    fila.add([{ id: '1', baseRev: 4, deleted: false, data: { nome: 'B' } }])
-    fila.add([{ id: '1', baseRev: 4, deleted: false, data: { nome: 'C' } }])
-
-    expect(fila.size).toBe(1)
-    expect(fila.take()).toEqual([{ id: '1', baseRev: 3, deleted: false, data: { nome: 'C' } }])
-  })
-
-  it('ack remove só os aceitos e take respeita o limite do lote', () => {
-    const fila = new Outbox()
-    fila.add([0, 1, 2].map((i) => ({ id: String(i), baseRev: 0, deleted: false, data: {} })))
-    expect(fila.take(2)).toHaveLength(2)
-    fila.ack(['0', '2'])
-    expect(fila.take().map((c) => c.id)).toEqual(['1'])
   })
 })

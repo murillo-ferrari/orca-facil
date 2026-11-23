@@ -3,10 +3,9 @@
  * e devolve o que precisa ir para a fila. Pura (sem IndexedDB nem rede), para ser testada isoladamente.
  */
 
-/** Registro sincronizável, como ele é guardado localmente. `rev` é a versão conhecida do servidor. */
+/** Registro sincronizável, como o store o guarda (a `rev` do servidor fica à parte, em `Known`). */
 export interface Synced {
   id: string
-  rev: number
   [field: string]: unknown
 }
 

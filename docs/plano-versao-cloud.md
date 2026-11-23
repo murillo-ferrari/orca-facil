@@ -408,9 +408,9 @@ sequenceDiagram
 - Unidade de conflito: o **registro inteiro** (um orçamento, um cliente).
 - A versão do servidor prevalece. A versão local perdida vai para o store `conflicts`, com data e dispositivo.
 - _Ajustes › Versões substituídas_ lista os últimos 30 dias e permite restaurar com um clique (a restauração vira
-  uma nova gravação).
-- Caso comum tratado sem conflito: se só o `status` mudou nos dois lados, prevalece o mais recente e o
-  `statusHistory` dos dois é unido.
+  uma nova gravação). **Decidido (23/11/2026): entra na F5**, porque é a única proteção contra perda de edição.
+- **Decidido (23/11/2026): fora da F5.** Nesta fase, todo conflito de orçamento segue "prevalece o servidor" e a
+  versão local vai para _Versões substituídas_. A união de `statusHistory` fica para depois.
 
 ### 7.6 Numeração de orçamentos com vários dispositivos
 
@@ -429,6 +429,21 @@ documento fiscal, então não exige sequência sem lacunas. Isso deve ser explic
 
 O campo "Próximo número" da empresa passa a ser alterado por RPC. O índice único `(user_id, profile_id, number)`
 impede duplicidade.
+
+### 7.6.1 Fila e sincronização na F5 (decidido em 23/11/2026)
+
+- **Captura por diferença:** um módulo compara o store com a última versão sincronizada, por `id`, e enfileira
+  só o que mudou. As ações do store não mudam.
+- **Uma entrada por registro na fila:** várias edições offline do mesmo registro viram uma entrada com o último
+  estado e o `base_rev` original. Sem isso, o dispositivo entraria em conflito consigo mesmo.
+- **Lotes de até 50** pelo `aplicar_alteracoes`. `applied` remove da fila; `conflicts` vai para o store
+  `conflicts`; `rejected` fica marcado com o motivo e não é reenviado em loop.
+- **Pull** pelo `buscar_alteracoes`, com cursor por tabela (`updated_at` menos 10 s) e repetição enquanto
+  `has_more`.
+- **Quando sincroniza:** ao gravar (com atraso de 1 s), ao voltar a conexão, ao voltar para a aba e a cada 60 s.
+  Realtime fica para depois (decidido).
+- **Armazenamento:** IndexedDB `orcafacil:<userId>` com `records`, `outbox`, `conflicts` e `meta`.
+- **IDs:** na Cloud, o `id` é UUID gerado com `crypto.getRandomValues` (sem fallback não criptográfico).
 
 ### 7.7 Indicador de sincronização
 

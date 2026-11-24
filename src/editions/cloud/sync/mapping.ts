@@ -9,6 +9,18 @@ import type { RemoteChanges, Table } from './engine'
  * `activeProfileId` é preferência do dispositivo e não é sincronizado.
  */
 
+/** Registro atual do store para uma linha sincronizável (`null` se não existe mais). */
+export function findRecord(s: DataState, table: Table, id: string): Synced | null {
+  if (table === 'user_settings') return { id, units: s.units } as Synced
+  const list: Synced[] = {
+    company_profiles: s.profiles,
+    clients: s.clients,
+    catalog_items: s.catalog,
+    quotes: s.quotes,
+  }[table]
+  return list.find((x) => x.id === id) ?? null
+}
+
 /** Registros do store como linhas sincronizáveis. As unidades de medida viajam numa linha só (id = usuário). */
 export function toTables(s: DataState, userId: string): Record<Table, Synced[]> {
   return {

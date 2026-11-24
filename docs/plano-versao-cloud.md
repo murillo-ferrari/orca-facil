@@ -406,9 +406,14 @@ sequenceDiagram
 ### 7.5 Conflitos (decisão D8)
 
 - Unidade de conflito: o **registro inteiro** (um orçamento, um cliente).
-- A versão do servidor prevalece. A versão local perdida vai para o store `conflicts`, com data e dispositivo.
-- _Ajustes › Versões substituídas_ lista os últimos 30 dias e permite restaurar com um clique (a restauração vira
-  uma nova gravação). **Decidido (23/11/2026): entra na F5**, porque é a única proteção contra perda de edição.
+- A versão do servidor vale até a pessoa decidir. A versão local, a da nuvem e a base ficam no store `conflicts`.
+- **Resolução pela pessoa (decidido em 24/11/2026, no lugar de "versões substituídas"):** o conflito vira uma tela de
+  mescla no estilo dos editores de código (_Ajustes › Conflitos de sincronização_). Cada campo em que os dois lados
+  mudaram de forma diferente aparece em **diff lado a lado** (jsdiff): nuvem à esquerda em vermelho, sua versão à direita
+  em verde, palavras alteradas em destaque, e a pessoa escolhe um lado por campo. A mescla é em **três vias**
+  (versão-base × sua × nuvem): o que só um lado mudou não pergunta, e conflitos de campos diferentes se resolvem
+  sozinhos. Enquanto não houver decisão, vale a versão da nuvem. Sem decisão, o aviso some em 30 dias. Cobre também
+  "excluí aqui, editaram lá" e o inverso (a escolha de manter recria o item).
 - **Decidido (23/11/2026): fora da F5.** Nesta fase, todo conflito de orçamento segue "prevalece o servidor" e a
   versão local vai para _Versões substituídas_. A união de `statusHistory` fica para depois.
 
@@ -458,7 +463,7 @@ Achados na integração com o banco real, já tratados: (1) exclusão não pode 
 constraint); (2) o `nextNumber` da empresa é do servidor e fica fora da comparação, senão dois dispositivos se
 reenviam o perfil sem parar; (3) o servidor só guarda o `nextNumber` da criação da empresa, então o app sobe o próximo
 número acima do maior já usado nos orçamentos (`withNumberFloor`); (4) número repetido vira recusa `duplicado` e o
-orçamento é renumerado sozinho. **Pendente:** reserva em blocos (7.6), tela de Versões substituídas, Realtime.
+orçamento é renumerado sozinho. **Pendente:** reserva em blocos (7.6), aviso de limite do plano, Realtime.
 
 ### 7.7 Indicador de sincronização
 

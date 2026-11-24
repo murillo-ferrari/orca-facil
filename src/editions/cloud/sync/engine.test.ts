@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SyncEngine, TABLES, type RpcClient, type ServerRow, type SyncDb, type Table } from './engine'
+import { SyncEngine, TABLES, conflictKey, type RpcClient, type ServerRow, type SyncDb, type Table } from './engine'
 import type { Synced } from './diff'
 
 /** Servidor falso: mesma lógica dos RPCs (base_rev nulo = novo; rev diferente = conflito; paginação por updated_at). */
@@ -178,8 +178,18 @@ describe('SyncEngine', () => {
     expect(r.conflicts).toBe(1)
     expect(b.clients).toEqual([cli('1', 'Edição do A')])
     expect(b.engine.conflicts).toMatchObject([
-      { table: 'clients', id: '1', local: cli('1', 'Edição do B'), serverRev: 2 },
+      {
+        table: 'clients',
+        id: '1',
+        local: cli('1', 'Edição do B'),
+        server: cli('1', 'Edição do A'),
+        base: cli('1', 'Original'),
+        serverRev: 2,
+      },
     ])
+    // Resolver (ou descartar) tira o conflito da lista e grava
+    await b.engine.dismissConflict(conflictKey(b.engine.conflicts[0]))
+    expect(b.engine.conflicts).toEqual([])
   })
 
   it('exclusão local é enviada sem o campo data e vira exclusão no servidor', async () => {
@@ -207,6 +217,28 @@ describe('SyncEngine', () => {
 
     expect(b.clients).toEqual([cli('1', 'X editado')])
     expect(b.engine.conflicts[0].local).toBeNull()
+  })
+
+  it('recriar item excluído na nuvem: dismiss com revive faz o próximo envio desfazer a exclusão', async () => {
+    const server = new FakeServer()
+    const a = await device(server)
+    const b = await device(server)
+    a.set([cli('1', 'Original')])
+    await a.sync()
+    await b.sync()
+
+    a.set([]) // A exclui
+    await a.sync()
+    b.set([cli('1', 'Editado no B')]) // B edita sem saber
+    const r = await b.sync()
+    expect(r.conflicts).toBe(1)
+    expect(b.engine.conflicts[0]).toMatchObject({ server: null, local: cli('1', 'Editado no B') })
+
+    const key = conflictKey(b.engine.conflicts[0])
+    b.set([cli('1', 'Editado no B')]) // a pessoa escolheu manter o seu: o app recoloca o item
+    await b.engine.dismissConflict(key, { revive: true })
+    expect((await b.sync()).applied).toBe(1)
+    expect(server.rows.clients.get('1')).toMatchObject({ deleted_at: null, data: { name: 'Editado no B' } })
   })
 
   it('recusa do servidor (limite do plano) não é reenviada em laço; editar o registro tenta de novo', async () => {

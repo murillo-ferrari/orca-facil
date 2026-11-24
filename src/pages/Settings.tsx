@@ -9,6 +9,8 @@ import { toast } from '../components/toast'
 // Só na edição Cloud; no build Local este import some
 const AccountCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/auth/AccountCard')) : null
+const ConflictsCard =
+  import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/ConflictsCard')) : null
 
 function UnitsCard() {
   const units = useStore((s) => s.units)
@@ -170,6 +172,11 @@ export function SettingsPage() {
         {AccountCard && (
           <Suspense>
             <AccountCard />
+          </Suspense>
+        )}
+        {ConflictsCard && (
+          <Suspense>
+            <ConflictsCard />
           </Suspense>
         )}
         <UnitsCard />

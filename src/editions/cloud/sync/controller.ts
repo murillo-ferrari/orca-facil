@@ -4,9 +4,10 @@ import { DEFAULT_UNITS } from '../../../store/factories'
 import { useStore } from '../../../store/store'
 import { toast } from '../../../components/toast'
 import { supabase } from '../supabase'
-import { SyncEngine, TABLES, type RpcClient, type SyncDb } from './engine'
+import { SyncEngine, TABLES, conflictKey, type ConflictRecord, type RpcClient, type SyncDb } from './engine'
 import { openSyncDb } from './idb'
-import { applyRemote, renumberQuotes, toTables } from './mapping'
+import { applyRemote, findRecord, renumberQuotes, toTables } from './mapping'
+import { autoResolvable, planResolution, type Choice, type Rec } from './conflicts'
 
 /**
  * Liga o store ao motor de sincronização para o usuário logado. Um controlador por vez (singleton), porque o
@@ -22,8 +23,10 @@ export interface SyncUiState {
   pending: number
   /** alterações que o servidor recusou (ex.: limite do plano) */
   rejected: number
+  /** conflitos aguardando decisão da pessoa (tela de conflitos) */
+  conflicts: ConflictRecord[]
 }
-export const useSyncState = create<SyncUiState>(() => ({ phase: 'loading', pending: 0, rejected: 0 }))
+export const useSyncState = create<SyncUiState>(() => ({ phase: 'loading', pending: 0, rejected: 0, conflicts: [] }))
 const ui = (patch: Partial<SyncUiState>) => useSyncState.setState(patch)
 
 const SYNC_DELAY_MS = 1000
@@ -46,6 +49,8 @@ const rpcClient: RpcClient = {
 
 interface Running {
   syncNow: () => Promise<void>
+  resolve: (c: ConflictRecord, choices: Record<string, Choice>) => Promise<void>
+  dismiss: (c: ConflictRecord) => Promise<void>
   stop: () => Promise<void>
 }
 let current: Running | null = null
@@ -59,6 +64,10 @@ export function closeSync() {
 }
 export const stopSync = () => void closeSync()
 export const syncNow = () => current?.syncNow()
+/** Aplica a decisão da pessoa sobre um conflito (`choices`: campo → lado; `_item` para item inteiro) e envia. */
+export const resolveConflict = (c: ConflictRecord, choices: Record<string, Choice>) => current?.resolve(c, choices)
+/** Mantém a versão da nuvem (já no app) e tira o conflito da lista. */
+export const dismissConflict = (c: ConflictRecord) => current?.dismiss(c)
 
 function onOpenError(e: unknown) {
   console.error('sync: falha ao abrir a cópia local', e)
@@ -120,6 +129,19 @@ async function open(userId: string) {
     return inflight
   }
 
+  /** Conflitos que ainda precisam da pessoa; os de campos diferentes são mesclados sozinhos. */
+  const publishConflicts = () => ui({ conflicts: [...engine.conflicts] })
+
+  async function applyPlan(c: ConflictRecord, choices: Record<string, Choice>) {
+    const plan = planResolution(c, findRecord(useStore.getState(), c.table, c.id) as Rec | null, choices)
+    if (plan.apply) useStore.setState((s) => applyRemote(s, c.table, plan.apply!))
+    await engine.dismissConflict(conflictKey(c), { revive: plan.revive })
+  }
+
+  async function autoResolve() {
+    for (const c of [...engine.conflicts]) if (autoResolvable(c)) await applyPlan(c, {})
+  }
+
   async function runOnce() {
     running = true
     try {
@@ -144,14 +166,24 @@ async function open(userId: string) {
           toast('Número de orçamento já usado em outro dispositivo: o orçamento recebeu um novo número.', 'error')
         }
         if (r.conflicts) {
-          toast(
-            `${r.conflicts} ${r.conflicts === 1 ? 'item foi atualizado' : 'itens foram atualizados'} a partir de outro dispositivo. A sua versão está em Ajustes › Versões substituídas.`,
-            'error',
-          )
+          const before = engine.conflicts.length
+          await autoResolve()
+          const asking = engine.conflicts.length
+          const merged = before - asking
+          if (merged) again = true // a mescla automática gerou mudança local a enviar
+          if (asking) {
+            toast(
+              `${asking} ${asking === 1 ? 'item mudou' : 'itens mudaram'} em outro dispositivo e precisa da sua decisão. Veja em Ajustes › Conflitos de sincronização.`,
+              'error',
+            )
+          }
         }
         if (!again) break
       }
-      if (!stopped) ui({ phase: 'idle', pending: engine.pendingCount, rejected: engine.rejectedCount })
+      if (!stopped) {
+        publishConflicts()
+        ui({ phase: 'idle', pending: engine.pendingCount, rejected: engine.rejectedCount })
+      }
     } catch (e) {
       console.error('sync', e)
       if (!stopped) ui({ phase: navigator.onLine ? 'error' : 'offline', pending: engine.pendingCount })
@@ -177,6 +209,17 @@ async function open(userId: string) {
 
   current = {
     syncNow: run,
+    resolve: async (c, choices) => {
+      await inflight.catch(() => undefined)
+      await applyPlan(c, choices)
+      publishConflicts()
+      void run()
+    },
+    dismiss: async (c) => {
+      await inflight.catch(() => undefined)
+      await engine.dismissConflict(conflictKey(c))
+      publishConflicts()
+    },
     stop: async () => {
       stopped = true
       clearTimeout(timer)
@@ -190,10 +233,11 @@ async function open(userId: string) {
       await saveSnapshot().catch(() => undefined)
       db.close?.()
       useStore.setState(emptyData()) // os dados de uma conta não podem ficar na memória para a próxima
-      ui({ phase: 'loading', pending: 0, rejected: 0 })
+      ui({ phase: 'loading', pending: 0, rejected: 0, conflicts: [] })
       current = null
     },
   }
+  publishConflicts()
   ui({ phase: 'idle', pending: 0, rejected: 0 })
   void run()
 }

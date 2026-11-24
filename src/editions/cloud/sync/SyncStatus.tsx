@@ -1,4 +1,5 @@
-import { Cloud, CloudAlert, CloudCheck, CloudOff, RefreshCw } from 'lucide-react'
+import { Cloud, CloudAlert, CloudCheck, CloudOff, GitMerge, RefreshCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { syncNow, useSyncState } from './controller'
 import { cn } from '../../../components/styles'
 
@@ -9,6 +10,7 @@ export default function SyncStatus({ compact }: { compact?: boolean }) {
   const phase = useSyncState((s) => s.phase)
   const pending = useSyncState((s) => s.pending)
   const rejected = useSyncState((s) => s.rejected)
+  const conflicts = useSyncState((s) => s.conflicts.length)
 
   let Icon = CloudCheck
   let text = 'Sincronizado'
@@ -23,6 +25,10 @@ export default function SyncStatus({ compact }: { compact?: boolean }) {
     Icon = CloudAlert
     text = 'Erro ao sincronizar'
     tone = 'text-red-600'
+  } else if (conflicts) {
+    Icon = GitMerge
+    text = plural(conflicts, 'conflito para resolver', 'conflitos para resolver')
+    tone = 'text-amber-700'
   } else if (rejected) {
     Icon = CloudAlert
     text = plural(rejected, 'alteração não enviada', 'alterações não enviadas')
@@ -36,6 +42,11 @@ export default function SyncStatus({ compact }: { compact?: boolean }) {
     <div role="status" className={cn('flex items-center gap-2 text-xs', tone)} title={compact ? text : undefined}>
       <Icon size={compact ? 18 : 14} className={cn('shrink-0', phase === 'syncing' && 'motion-safe:animate-spin')} />
       <span className={cn(compact && 'sr-only')}>{text}</span>
+      {phase === 'idle' && conflicts > 0 && (
+        <Link to="/config" className="font-medium underline">
+          Resolver
+        </Link>
+      )}
       {phase === 'error' && (
         <button type="button" className="font-medium underline" onClick={() => void syncNow()}>
           Tentar de novo

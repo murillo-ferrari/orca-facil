@@ -40,15 +40,24 @@ export interface RemoteChanges {
   deletedIds: string[]
 }
 
-/** Versão local que perdeu para a do servidor; alimenta "Ajustes › Versões substituídas". */
+/**
+ * Conflito aguardando decisão: o mesmo registro mudou aqui e em outro dispositivo. A versão da nuvem já está no app
+ * (o servidor prevalece até a pessoa decidir); estes dados alimentam a tela "Conflitos de sincronização".
+ */
 export interface ConflictRecord {
   table: Table
   id: string
   at: string
-  /** `null` se a edição local era uma exclusão */
+  /** Sua versão. `null` se você excluiu o registro. */
   local: unknown
+  /** Versão da nuvem. `null` se foi excluída lá. `undefined` em registros gravados por versões antigas do app. */
+  server?: unknown
+  /** Última versão que este dispositivo conhecia (base da mescla). `null` se o registro era novo aqui. */
+  base?: unknown
   serverRev: number
 }
+
+export const conflictKey = (c: ConflictRecord) => `${c.table}:${c.id}:${c.at}`
 
 export interface SyncResult {
   applied: number
@@ -68,6 +77,8 @@ const BATCH = 50
 /** Cobre transações confirmadas fora de ordem; ler a mesma linha duas vezes é inofensivo (comparamos `rev`). */
 const OVERLAP_MS = 10_000
 const MAX_PAGES = 100
+/** Conflitos sem decisão são esquecidos depois deste prazo. */
+const CONFLICT_TTL_MS = 30 * 24 * 3600 * 1000
 
 /**
  * Campos que o servidor controla e que não contam como alteração. `nextNumber` da empresa: o servidor ignora o valor
@@ -111,7 +122,29 @@ export class SyncEngine {
       this.known[t] = new Map(((await this.db.get(`known:${t}`)) as [string, Known][] | undefined) ?? [])
     }
     this.cursors = ((await this.db.get('cursors')) as typeof this.cursors | undefined) ?? {}
-    this.conflicts.push(...(((await this.db.get('conflicts')) as ConflictRecord[] | undefined) ?? []))
+    const stored = ((await this.db.get('conflicts')) as ConflictRecord[] | undefined) ?? []
+    const cutoff = Date.now() - CONFLICT_TTL_MS
+    this.conflicts.push(...stored.filter((c) => Date.parse(c.at) >= cutoff))
+    if (this.conflicts.length !== stored.length) this.dirty.add('conflicts') // gravado junto da próxima gravação
+  }
+
+  /**
+   * Tira um conflito da lista (resolvido ou descartado). `revive`: a pessoa quer manter a própria versão de um item
+   * que foi excluído na nuvem; o motor passa a tratar a exclusão como a versão conhecida, e o próximo envio recria
+   * o item sobre ela (o servidor aceita desfazer a exclusão quando a versão-base confere).
+   */
+  dismissConflict(key: string, { revive = false } = {}) {
+    return this.lock(async () => {
+      const i = this.conflicts.findIndex((c) => conflictKey(c) === key)
+      if (i < 0) return
+      const [c] = this.conflicts.splice(i, 1)
+      this.dirty.add('conflicts')
+      if (revive) {
+        this.known[c.table].set(c.id, { rev: c.serverRev, data: '' })
+        this.dirty.add(c.table)
+      }
+      await this.persist()
+    })
   }
 
   /** Nunca sincronizou neste dispositivo (nenhum cursor gravado). */
@@ -239,11 +272,14 @@ export class SyncEngine {
       for (const x of res.conflicts) {
         const c = this.takePending(x.table, x.id)
         if (x.server) {
+          const known = this.known[x.table].get(x.id)
           this.conflicts.push({
             table: x.table,
             id: x.id,
             at: new Date().toISOString(),
             local: c?.deleted ? null : c?.data,
+            server: x.server.deleted_at ? null : x.server.data,
+            base: known ? (JSON.parse(known.data) as unknown) : null,
             serverRev: x.server.rev,
           })
           this.dirty.add('conflicts')

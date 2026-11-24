@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useId } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Crown } from 'lucide-react'
-import { Badge, Button, Card, CardHeader } from '../../../components/ui'
+import { ArrowRight, Check, Crown } from 'lucide-react'
+import { Badge, Button, Card, CardHeader, CardSkeleton } from '../../../components/ui'
 import { toast } from '../../../components/toast'
 import { confirmDialog } from '../../../components/confirm'
 import { formatCurrency } from '../../../lib/format'
@@ -14,6 +14,7 @@ import { callAssinatura, confirmSubscription, loadPlan, usePlan, watchPlan } fro
 export default function PlanCard() {
   const { loaded, view, use, prices, busy } = usePlan()
   useEffect(watchPlan, [])
+  const benefitsId = useId()
 
   async function cancel() {
     const ok = await confirmDialog({
@@ -28,31 +29,9 @@ export default function PlanCard() {
     }
   }
 
-  // Até a primeira leitura, não dá para saber o plano: mostrar "Grátis" seria um flash errado para quem é Pro
-  if (!loaded)
-    return (
-      <Card aria-busy="true">
-        <CardHeader
-          icon={<Crown size={18} />}
-          title={
-            <span className="flex items-center gap-2">
-              Plano <span className="h-5 w-16 rounded-full bg-slate-200 motion-safe:animate-pulse" aria-hidden />
-            </span>
-          }
-          description={
-            <>
-              <span className="sr-only">Carregando o plano…</span>
-              <span className="inline-block h-3.5 w-56 max-w-full rounded bg-slate-200 motion-safe:animate-pulse" />
-            </>
-          }
-        />
-        {/* Mesma altura do conteúdo carregado, para nada pular */}
-        <div className="space-y-3 p-4 sm:p-5" aria-hidden>
-          <div className="h-5 w-full rounded bg-slate-200 motion-safe:animate-pulse" />
-          <div className="h-10 w-56 max-w-full rounded-lg bg-slate-200 motion-safe:animate-pulse" />
-        </div>
-      </Card>
-    )
+  // Até a primeira leitura, não dá para saber o plano: mostrar "Grátis" seria um flash errado para quem é Pro.
+  // O mesmo skeleton do carregamento do código (Settings.tsx), para não trocar de altura entre os dois.
+  if (!loaded) return <CardSkeleton className="h-[218px] sm:h-[186px]" />
 
   return (
     <Card>
@@ -94,10 +73,30 @@ export default function PlanCard() {
             </div>
           </>
         )}
-        {view.canCancel && (
-          <Button variant="ghost" onClick={cancel} disabled={busy}>
-            Cancelar assinatura
-          </Button>
+        {view.pro && (
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 id={benefitsId} className="text-[15px] font-semibold text-slate-900">
+                Benefícios do seu plano
+              </h2>
+              <ul aria-labelledby={benefitsId} className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-700">
+                <li className="flex items-center gap-1.5">
+                  <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Orçamentos ilimitados
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Empresas ilimitadas
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Sincronização entre dispositivos
+                </li>
+              </ul>
+            </div>
+            {view.canCancel && (
+              <Button variant="danger" onClick={cancel} disabled={busy}>
+                Cancelar assinatura
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </Card>

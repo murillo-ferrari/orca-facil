@@ -24,7 +24,7 @@ const FAQ: [string, string][] = [
   ],
   [
     'Posso cancelar quando quiser?',
-    'Sim, em Ajustes › Plano. O Pro continua valendo até o fim do período já pago; depois, a conta volta ao plano grátis.',
+    'Sim, em Ajustes › Conta e plano. O Pro continua valendo até o fim do período já pago; depois, a conta volta ao plano grátis.',
   ],
   [
     'O que acontece com meus dados se eu voltar ao grátis?',

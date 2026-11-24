@@ -160,7 +160,7 @@ function Shell() {
           <Route path="/empresas/:id" element={<ProfileEditor />} />
           <Route path="/relatorios" element={<Reports />} />
           <Route path="/relatorios/:tab" element={<Reports />} />
-          <Route path="/config" element={<SettingsPage />} />
+          <Route path="/config/:tab?" element={<SettingsPage />} />
           {SubscriptionPage && (
             <Route
               path="/assinatura"

@@ -45,7 +45,7 @@ export default function AccountCard() {
         icon={<UserRound size={18} />}
         title="Conta"
         description={
-          user ? `${user.email}${providers.length ? ` · entra com ${providers.join(' e ')}` : ''}` : 'Carregando…'
+          user ? `${user.email}${providers.length ? ` · entrou com ${providers.join(' e ')}` : ''}` : 'Carregando…'
         }
       />
       <div className="flex flex-wrap gap-2 p-4 sm:p-5">

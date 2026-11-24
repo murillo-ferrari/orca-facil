@@ -1,11 +1,13 @@
-import { lazy, Suspense, useRef, useState } from 'react'
+import { lazy, Suspense, useRef, useState, type ReactNode } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { DatabaseBackup, Download, Plus, Ruler, RotateCcw, Trash2, Upload } from 'lucide-react'
 import { exportSnapshot, useStore } from '../store/store'
 import { BackupError, backupFileName, createBackup, parseBackup } from '../data/backup'
 import { uid } from '../store/factories'
-import { Button, Card, CardHeader, Input } from '../components/ui'
+import { Button, Card, CardHeader, CardSkeleton, Input } from '../components/ui'
 import { toast } from '../components/toast'
 import { confirmDialog } from '../components/confirm'
+import { cn } from '../components/styles'
 
 // Só na edição Cloud; no build Local este import some
 const AccountCard =
@@ -193,38 +195,71 @@ function BackupCard() {
   )
 }
 
+/** Cartão carregado sob demanda; `skeleton` reserva o espaço enquanto o código chega (sem, não ocupa nada). */
+const lazyCard = (Card: ReturnType<typeof lazy> | null, skeleton?: ReactNode) =>
+  Card && (
+    <Suspense fallback={skeleton}>
+      <Card />
+    </Suspense>
+  )
+
+// Alturas medidas dos cartões reais (celular 390px / computador), para o skeleton não pular ao trocar
+const PLAN_SKELETON = 'h-[218px] sm:h-[186px]'
+
+/** Abas de Ajustes (rotas, como em Relatórios). "Conta e plano" só existe na edição Cloud. */
+const TABS = [
+  ...(AccountCard ? [{ slug: '', label: 'Conta e plano' }] : []),
+  { slug: 'dados', label: 'Dados' },
+  { slug: 'outros', label: 'Outros' },
+]
+
 export function SettingsPage() {
+  const { tab = '' } = useParams()
+  // Endereço sem aba (ou aba inexistente) abre a primeira
+  const current = TABS.find((t) => t.slug === tab) ?? TABS[0]
+
   return (
     <>
       <h1 className="mb-6 text-2xl font-semibold tracking-tight text-slate-900">Ajustes</h1>
+
+      <nav
+        className="-mx-4 mb-5 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-slate-200 px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
+        aria-label="Ajustes"
+      >
+        {TABS.map((t) => (
+          <Link
+            key={t.slug}
+            to={t.slug ? `/config/${t.slug}` : '/config'}
+            aria-current={t === current ? 'page' : undefined}
+            className={cn(
+              '-mb-px border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition',
+              t === current
+                ? 'border-brand-600 text-brand-700'
+                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800',
+            )}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+
       <div className="space-y-5">
-        {AccountCard && (
-          <Suspense>
-            <AccountCard />
-          </Suspense>
+        {current.slug === '' && (
+          <>
+            {lazyCard(AccountCard, <CardSkeleton className="h-[262px] sm:h-[154px]" />)}
+            {lazyCard(PlanCard, <CardSkeleton className={PLAN_SKELETON} />)}
+            {/* Sem skeleton: quase sempre não mostra nada, e reservar espaço criaria o salto */}
+            {lazyCard(LimitCard)}
+          </>
         )}
-        {PlanCard && (
-          <Suspense>
-            <PlanCard />
-          </Suspense>
+        {current.slug === 'dados' && (
+          <>
+            {lazyCard(ConflictsCard, <CardSkeleton lines={2} className="h-[186px] sm:h-[154px]" />)}
+            {lazyCard(ImportCard, <CardSkeleton lines={2} className="h-[262px] sm:h-[210px]" />)}
+            <BackupCard />
+          </>
         )}
-        {ImportCard && (
-          <Suspense>
-            <ImportCard />
-          </Suspense>
-        )}
-        {LimitCard && (
-          <Suspense>
-            <LimitCard />
-          </Suspense>
-        )}
-        {ConflictsCard && (
-          <Suspense>
-            <ConflictsCard />
-          </Suspense>
-        )}
-        <UnitsCard />
-        <BackupCard />
+        {current.slug === 'outros' && <UnitsCard />}
       </div>
     </>
   )

@@ -272,7 +272,7 @@ async function open(userId: string) {
           if (merged) again = true // a mescla automática gerou mudança local a enviar
           if (asking) {
             toast(
-              `${asking} ${asking === 1 ? 'item mudou' : 'itens mudaram'} em outro dispositivo e precisa da sua decisão. Veja em Ajustes › Conflitos de sincronização.`,
+              `${asking} ${asking === 1 ? 'item mudou' : 'itens mudaram'} em outro dispositivo e precisa da sua decisão. Veja em Ajustes › Dados › Conflitos de sincronização.`,
               'error',
             )
           }

@@ -46,7 +46,7 @@ export default function SyncStatus({ compact }: { compact?: boolean }) {
       <Icon size={compact ? 18 : 14} className={cn('shrink-0', phase === 'syncing' && 'motion-safe:animate-spin')} />
       <span className={cn(compact && 'sr-only')}>{text}</span>
       {phase === 'idle' && (conflicts > 0 || (rejected > 0 && limit)) && (
-        <Link to="/config" className="font-medium underline">
+        <Link to={conflicts > 0 ? '/config/dados' : '/config'} className="font-medium underline">
           {conflicts > 0 ? 'Resolver' : 'Ver detalhes'}
         </Link>
       )}

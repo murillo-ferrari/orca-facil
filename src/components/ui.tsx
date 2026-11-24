@@ -118,6 +118,32 @@ export function Card({ className, children, ...props }: ComponentProps<'section'
   )
 }
 
+/**
+ * Cartão "carregando" com o formato de um Card + CardHeader, para o espaço ficar reservado e nada pular (CLS).
+ * `className`: altura do cartão real (ex. 'h-[262px] sm:h-[154px]'; medida no celular e no computador).
+ * `lines`: linhas de texto da descrição. Pulsa só com motion-safe.
+ */
+export function CardSkeleton({ lines = 1, className }: { lines?: number; className?: string }) {
+  const bar = 'rounded bg-slate-200 motion-safe:animate-pulse'
+  return (
+    <Card aria-busy="true" className={cn('overflow-hidden', className)}>
+      <span className="sr-only">Carregando…</span>
+      <div className="flex items-center gap-2.5 border-b border-slate-100 px-4 py-3.5 sm:px-5" aria-hidden>
+        <span className={cn(bar, 'h-[18px] w-[18px] shrink-0')} />
+        <div className="min-w-0 flex-1 space-y-1.5 py-0.5">
+          <div className={cn(bar, 'h-4 w-32')} />
+          {Array.from({ length: lines }, (_, i) => (
+            <div key={i} className={cn(bar, 'h-3.5', i === lines - 1 ? 'w-2/3' : 'w-full')} />
+          ))}
+        </div>
+      </div>
+      <div className="p-4 sm:p-5" aria-hidden>
+        <div className={cn(bar, 'h-10 w-56 max-w-full rounded-lg')} />
+      </div>
+    </Card>
+  )
+}
+
 export function CardHeader({
   title,
   description,

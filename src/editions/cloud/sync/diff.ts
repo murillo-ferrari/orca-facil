@@ -6,7 +6,6 @@
 /** Registro sincronizável, como o store o guarda (a `rev` do servidor fica à parte, em `Known`). */
 export interface Synced {
   id: string
-  [field: string]: unknown
 }
 
 /** Versão conhecida de cada registro: `rev` do servidor e o conteúdo enviado/recebido por último. */
@@ -23,12 +22,19 @@ export interface Change {
   data: unknown
 }
 
-/** Serialização estável: mesma estrutura, mesma string, independentemente da ordem das chaves. */
-export function fingerprint(value: unknown): string {
-  return JSON.stringify(value, (_key, v: unknown) =>
-    v && typeof v === 'object' && !Array.isArray(v)
-      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
-      : v,
+/**
+ * Serialização estável: mesma estrutura, mesma string, independentemente da ordem das chaves.
+ * `ignore`: campos de topo que o servidor controla e que não contam como alteração (ver IGNORE em engine.ts).
+ */
+export function fingerprint(value: unknown, ignore: readonly string[] = []): string {
+  const v =
+    ignore.length && value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).filter(([k]) => !ignore.includes(k)))
+      : value
+  return JSON.stringify(v, (_key, x: unknown) =>
+    x && typeof x === 'object' && !Array.isArray(x)
+      ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : x,
   )
 }
 
@@ -39,14 +45,18 @@ export function fingerprint(value: unknown): string {
  * - registro que sumiu da lista: entra como exclusão.
  * Registros sem diferença não geram nada, então reabrir o app não gera tráfego.
  */
-export function diffAgainstKnown(current: Synced[], known: Map<string, Known>): Change[] {
+export function diffAgainstKnown(
+  current: Synced[],
+  known: Map<string, Known>,
+  ignore: readonly string[] = [],
+): Change[] {
   const changes: Change[] = []
   const seen = new Set<string>()
 
   for (const item of current) {
     seen.add(item.id)
     const prev = known.get(item.id)
-    const print = fingerprint(item)
+    const print = fingerprint(item, ignore)
     if (prev && prev.data === print) continue
     changes.push({ id: item.id, baseRev: prev?.rev ?? 0, deleted: false, data: item })
   }

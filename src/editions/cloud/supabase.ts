@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
-import { STORAGE_KEY } from '../../data/schema'
+import { closeSync } from './sync/controller'
+import { deleteSyncDb } from './sync/idb'
 
 /**
  * Cliente Supabase da edição Cloud. As variáveis são exigidas no build (vite.config.ts).
@@ -13,13 +14,15 @@ export const supabase = createClient<Database>(
 )
 
 /**
- * Apaga os dados deste navegador e recarrega o app (volta para a tela de login).
- * ponytail: na F4 os dados ainda ficam no localStorage, compartilhado entre contas do mesmo navegador;
- * a F5 troca por cópia local separada por usuário (IndexedDB) e esta função passa a limpá-la.
+ * Sai e apaga a cópia local deste usuário neste navegador (IndexedDB), depois volta para a tela de login.
+ * Para o uso em computador compartilhado e para a exclusão de conta. Se houver alterações ainda não enviadas,
+ * elas se perdem: quem chama avisa a pessoa antes.
  */
 export async function signOutAndClearDevice() {
+  const { data } = await supabase.auth.getSession()
+  await closeSync()
+  if (data.session) await deleteSyncDb(data.session.user.id)
   await supabase.auth.signOut({ scope: 'local' })
-  localStorage.removeItem(STORAGE_KEY)
   sessionStorage.removeItem('gerador-orcamento:filtros-relatorios')
   location.assign('/')
 }

@@ -448,6 +448,18 @@ impede duplicidade.
   entrada velha para limpar. Os dados em si continuam no store zustand; ligar o store ao motor é a próxima etapa.
 - **IDs:** na Cloud, o `id` é UUID gerado com `crypto.getRandomValues` (sem fallback não criptográfico).
 
+**Ligação com o app (F5, como ficou):** `sync/controller.ts` abre a cópia local de quem entrou (`AuthGate` →
+`SyncProvider`), carrega o snapshot do IndexedDB no store e sincroniza ao gravar (atraso de 1 s), ao voltar a
+conexão, ao voltar para a aba e a cada 60 s. O snapshot do estado inteiro é gravado antes de cada gravação do motor,
+para a cópia local nunca ficar atrás da "versão conhecida". Ao sair, o store é esvaziado: os dados de uma conta
+nunca ficam na memória para a próxima.
+
+Achados na integração com o banco real, já tratados: (1) exclusão não pode enviar `data: null` (JSON null viola a
+constraint); (2) o `nextNumber` da empresa é do servidor e fica fora da comparação, senão dois dispositivos se
+reenviam o perfil sem parar; (3) o servidor só guarda o `nextNumber` da criação da empresa, então o app sobe o próximo
+número acima do maior já usado nos orçamentos (`withNumberFloor`); (4) número repetido vira recusa `duplicado` e o
+orçamento é renumerado sozinho. **Pendente:** reserva em blocos (7.6), tela de Versões substituídas, Realtime.
+
 ### 7.7 Indicador de sincronização
 
 No topo do app: "Sincronizado", "Sincronizando…", "Offline — N alterações pendentes" ou "Erro — tentar de novo".
@@ -455,6 +467,9 @@ Itens com envio pendente mostram um ícone discreto.
 
 ## 8. Migração da edição Local para a Cloud
 
+0. **Decidido (23/11/2026):** a edição Cloud **nunca envia nada sozinha**. Quem usa a edição Local grátis (só
+   `localStorage`, hoje no GitHub Pages, depois na versão free deste projeto) e assina a Cloud passa por um **passo
+   explícito de importação** para a nuvem (itens 1 a 4). Até esse passo existir (F6), a Cloud começa vazia.
 1. No primeiro login, se o navegador tiver dados da edição Local (`gerador-orcamento:v1`), oferecer
    **"Enviar meus dados para a nuvem"**.
 2. O mesmo fluxo aceita o **arquivo de backup JSON** (_Ajustes › Importar_) vindo de outro computador.

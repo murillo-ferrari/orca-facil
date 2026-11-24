@@ -5,7 +5,12 @@ import { localPersistence } from './local/persistence'
 export const EDITION = import.meta.env.VITE_EDITION
 
 /**
- * Persistência da edição atual. Hoje só existe a Local; a Cloud entra na fase F5 do plano
- * (docs/plano-versao-cloud.md, seção 7), carregada por import() dinâmico para não pesar no bundle Local.
+ * Persistência da edição atual: Local grava no localStorage. Na Cloud o store não grava por conta própria: a cópia local (IndexedDB, por usuário) é gravada pelo
+ * controlador de sincronização (editions/cloud/sync/controller.ts), que só sabe qual é o usuário depois do login.
  */
-export const persistence: DataPersistence = localPersistence
+const cloudPersistence: DataPersistence = {
+  edition: 'cloud',
+  storage: { getItem: () => null, setItem: () => undefined, removeItem: () => undefined },
+}
+
+export const persistence: DataPersistence = EDITION === 'cloud' ? cloudPersistence : localPersistence

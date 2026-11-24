@@ -20,6 +20,7 @@ export type Table = (typeof TABLES)[number]
 export interface SyncDb {
   get(key: string): Promise<unknown>
   set(key: string, value: unknown): Promise<void>
+  close?(): void
 }
 
 export interface RpcClient {
@@ -68,7 +69,13 @@ const BATCH = 50
 const OVERLAP_MS = 10_000
 const MAX_PAGES = 100
 
-const changePrint = (c: Change) => (c.deleted ? '\0excluído' : fingerprint(c.data))
+/**
+ * Campos que o servidor controla e que não contam como alteração. `nextNumber` da empresa: o servidor ignora o valor
+ * enviado em updates e sempre devolve o dele; comparar levaria dois dispositivos a se reenviarem o perfil sem parar.
+ */
+const IGNORE: Partial<Record<Table, string[]>> = { company_profiles: ['nextNumber'] }
+
+const changePrint = (table: Table, c: Change) => (c.deleted ? '\0excluído' : fingerprint(c.data, IGNORE[table]))
 
 export class SyncEngine {
   readonly conflicts: ConflictRecord[] = []
@@ -107,6 +114,16 @@ export class SyncEngine {
     this.conflicts.push(...(((await this.db.get('conflicts')) as ConflictRecord[] | undefined) ?? []))
   }
 
+  /** Nunca sincronizou neste dispositivo (nenhum cursor gravado). */
+  get fresh() {
+    return TABLES.every((t) => !this.cursors[t])
+  }
+
+  /** Alterações que o servidor recusou e que seguem paradas até o registro ser editado (ou o app reaberto). */
+  get rejectedCount() {
+    return this.rejected.size
+  }
+
   /** Alterações aguardando envio (para o indicador "N alterações pendentes"). */
   get pendingCount() {
     return TABLES.reduce((n, t) => n + this.pending[t].length, 0)
@@ -115,7 +132,9 @@ export class SyncEngine {
   /** Recalcula a fila de uma tabela a partir do estado atual do store. */
   capture(table: Table, current: Synced[]) {
     return this.lock(async () => {
-      this.pending[table] = diffAgainstKnown(current, this.known[table]).filter((c) => !this.isRejected(table, c))
+      this.pending[table] = diffAgainstKnown(current, this.known[table], IGNORE[table]).filter(
+        (c) => !this.isRejected(table, c),
+      )
     })
   }
 
@@ -137,7 +156,7 @@ export class SyncEngine {
     const key = `${table}:${c.id}`
     const print = this.rejected.get(key)
     if (print === undefined) return false
-    if (print === changePrint(c)) return true
+    if (print === changePrint(table, c)) return true
     this.rejected.delete(key) // o usuário mudou o registro: vale tentar de novo
     return false
   }
@@ -177,7 +196,7 @@ export class SyncEngine {
           out.deletedIds.push(row.id)
         }
       } else {
-        known.set(row.id, { rev: row.rev, data: fingerprint(row.data) })
+        known.set(row.id, { rev: row.rev, data: fingerprint(row.data, IGNORE[table]) })
         out.upserts.push({ id: row.id, data: row.data })
       }
     }
@@ -202,7 +221,8 @@ export class SyncEngine {
           id: c.id,
           base_rev: c.baseRev || null,
           deleted: c.deleted,
-          data: c.data,
+          // Na exclusão a chave `data` não pode ir (nem como null): o RPC leria JSON null e violaria a constraint
+          ...(c.deleted ? {} : { data: c.data }),
         })),
       })
       if (error) throw new Error(error.message)
@@ -212,7 +232,7 @@ export class SyncEngine {
         const c = this.takePending(a.table, a.id)
         if (!c) continue
         if (c.deleted) this.known[a.table].delete(a.id)
-        else this.known[a.table].set(a.id, { rev: a.rev, data: fingerprint(c.data) })
+        else this.known[a.table].set(a.id, { rev: a.rev, data: fingerprint(c.data, IGNORE[a.table]) })
         this.dirty.add(a.table)
         result.applied++
       }
@@ -237,7 +257,7 @@ export class SyncEngine {
       }
       for (const r of res.rejected) {
         const c = this.takePending(r.table, r.id)
-        if (c) this.rejected.set(`${r.table}:${r.id}`, changePrint(c))
+        if (c) this.rejected.set(`${r.table}:${r.id}`, changePrint(r.table, c))
         result.rejected.push({ table: r.table, id: r.id, reason: r.reason })
       }
 

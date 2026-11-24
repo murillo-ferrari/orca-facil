@@ -30,7 +30,10 @@ class FakeServer implements RpcClient {
     }[]) {
       const rows = this.rows[c.table]
       const cur = rows.get(c.id)
-      if (this.refuse.has(c.id)) {
+      if ('data' in c && c.data === null) {
+        // Igual ao banco: JSON null não é SQL NULL e viola a constraint "data é objeto"
+        out.rejected.push({ table: c.table, id: c.id, reason: 'dados_invalidos' })
+      } else if (this.refuse.has(c.id)) {
         out.rejected.push({ table: c.table, id: c.id, reason: 'limite_do_plano' })
       } else if ((c.base_rev === null && cur) || (c.base_rev !== null && cur?.rev !== c.base_rev)) {
         out.conflicts.push({ table: c.table, id: c.id, server: cur ?? null })
@@ -110,7 +113,7 @@ async function device(server: FakeServer, db = memoryDb(), pageSize?: number) {
   }
 }
 
-const cli = (id: string, name: string): Synced => ({ id, name })
+const cli = (id: string, name: string) => ({ id, name })
 
 describe('SyncEngine', () => {
   it('envia registro novo e não trata o eco como novidade', async () => {
@@ -177,6 +180,16 @@ describe('SyncEngine', () => {
     expect(b.engine.conflicts).toMatchObject([
       { table: 'clients', id: '1', local: cli('1', 'Edição do B'), serverRev: 2 },
     ])
+  })
+
+  it('exclusão local é enviada sem o campo data e vira exclusão no servidor', async () => {
+    const server = new FakeServer()
+    const a = await device(server)
+    a.set([cli('1', 'Ana')])
+    await a.sync()
+    a.set([])
+    expect(await a.sync()).toMatchObject({ applied: 1, rejected: [] })
+    expect(server.rows.clients.get('1')?.deleted_at).not.toBeNull()
   })
 
   it('exclusão local de registro alterado em outro dispositivo é conflito, e o registro volta', async () => {

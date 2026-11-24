@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { diffAgainstKnown, fingerprint, type Known, type Synced } from './diff'
+import { diffAgainstKnown, fingerprint, type Known } from './diff'
 
-const item = (id: string, nome: string): Synced => ({ id, nome })
+const item = (id: string, nome: string) => ({ id, nome })
 
 describe('fingerprint', () => {
   it('ignora a ordem das chaves', () => {

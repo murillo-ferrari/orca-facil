@@ -18,6 +18,7 @@ import { Reports } from './pages/Reports'
 // A comparação direta com import.meta.env deixa o build Local sem o código da Cloud (e sem o Supabase).
 const CLOUD = import.meta.env.VITE_EDITION === 'cloud'
 const AuthGate = CLOUD ? lazy(() => import('./editions/cloud/auth/AuthGate')) : null
+const SyncStatus = CLOUD ? lazy(() => import('./editions/cloud/sync/SyncStatus')) : null
 const Router = CLOUD ? BrowserRouter : HashRouter
 
 const NAV = [
@@ -106,7 +107,15 @@ function Shell() {
             </NavLink>
           ))}
         </nav>
-        <p className="mt-auto px-5 py-4 text-xs text-slate-400">Seus dados ficam salvos neste navegador.</p>
+        <div className="mt-auto px-5 py-4">
+          {SyncStatus ? (
+            <Suspense>
+              <SyncStatus />
+            </Suspense>
+          ) : (
+            <p className="text-xs text-slate-400">Seus dados ficam salvos neste navegador.</p>
+          )}
+        </div>
       </aside>
 
       {/* Topo mobile */}
@@ -117,6 +126,11 @@ function Shell() {
         <div className="min-w-0 flex-1">
           <ProfileSwitcher />
         </div>
+        {SyncStatus && (
+          <Suspense>
+            <SyncStatus compact />
+          </Suspense>
+        )}
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 print:max-w-none print:p-0">

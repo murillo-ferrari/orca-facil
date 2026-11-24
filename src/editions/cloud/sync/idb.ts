@@ -22,7 +22,16 @@ export function openSyncDb(userId: string): Promise<SyncDb> {
       resolve({
         get: (key) => run('readonly', (s) => s.get(key)),
         set: async (key, value) => void (await run('readwrite', (s) => s.put(value, key))),
+        close: () => db.close(),
       })
     }
+  })
+}
+
+/** Apaga a cópia local de um usuário ("Sair e apagar dados deste dispositivo", exclusão de conta). */
+export function deleteSyncDb(userId: string): Promise<void> {
+  return new Promise((resolve) => {
+    const req = indexedDB.deleteDatabase(`orcafacil:${userId}`)
+    req.onsuccess = req.onerror = req.onblocked = () => resolve()
   })
 }

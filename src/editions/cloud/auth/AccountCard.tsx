@@ -4,6 +4,7 @@ import type { User } from '@supabase/supabase-js'
 import { Button, Card, CardHeader } from '../../../components/ui'
 import { toast } from '../../../components/toast'
 import { signOutAndClearDevice, supabase } from '../supabase'
+import { useSyncState } from '../sync/controller'
 
 const PROVIDERS: Record<string, string> = { email: 'código por e-mail', google: 'Google' }
 
@@ -11,6 +12,7 @@ const PROVIDERS: Record<string, string> = { email: 'código por e-mail', google:
 export default function AccountCard() {
   const [user, setUser] = useState<User | null>(null)
   const [busy, setBusy] = useState(false)
+  const pending = useSyncState((s) => s.pending + s.rejected)
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null))
@@ -45,7 +47,11 @@ export default function AccountCard() {
         </Button>
         <Button
           onClick={() =>
-            window.confirm('Sair e apagar os dados guardados neste navegador?') && void signOutAndClearDevice()
+            window.confirm(
+              pending
+                ? `Há ${pending} alteração(ões) que ainda NÃO foram enviadas para a nuvem e serão perdidas. Sair e apagar mesmo assim?`
+                : 'Sair e apagar os dados guardados neste navegador? Eles continuam na sua conta.',
+            ) && void signOutAndClearDevice()
           }
           disabled={busy}
         >

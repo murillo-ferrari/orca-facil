@@ -5,6 +5,7 @@ import { BackupError, backupFileName, createBackup, parseBackup } from '../data/
 import { uid } from '../store/factories'
 import { Button, Card, CardHeader, Input } from '../components/ui'
 import { toast } from '../components/toast'
+import { confirmDialog } from '../components/confirm'
 
 // Só na edição Cloud; no build Local este import some
 const AccountCard =
@@ -46,7 +47,14 @@ function UnitsCard() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => window.confirm('Restaurar a lista padrão de unidades?') && resetUnits()}
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: 'Restaurar unidades',
+                message: 'Restaurar a lista padrão de unidades?',
+                confirmLabel: 'Restaurar',
+              })
+              if (ok) resetUnits()
+            }}
           >
             <RotateCcw size={14} /> Restaurar padrão
           </Button>
@@ -133,7 +141,13 @@ function BackupCard() {
       toast(e instanceof BackupError ? e.message : 'Arquivo de backup inválido', 'error')
       return
     }
-    if (!window.confirm('Importar este backup vai SUBSTITUIR todos os dados atuais. Continuar?')) return
+    const ok = await confirmDialog({
+      title: 'Importar backup',
+      message: 'Importar este backup vai SUBSTITUIR todos os dados atuais. Continuar?',
+      confirmLabel: 'Substituir tudo',
+      danger: true,
+    })
+    if (!ok) return
     importData(data)
     toast('Backup restaurado')
   }

@@ -54,7 +54,9 @@ npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
 - **UI:** usar os componentes de `src/components/ui.tsx` (`Button`, `Input`, `Select`, `Field`, `TextField`, `Card`,
   `CardHeader`, `Modal`, `Segmented`, `EmptyState`, `Badge`); `cn` e `inputClass` vêm de `components/styles.ts`.
   Cores da marca: tokens `brand-*` em `src/index.css`. Notificações com `toast()` de `components/toast.ts` (exibidas
-  pelo `<Toaster/>`). Confirmações destrutivas com `window.confirm`.
+  pelo `<Toaster/>`). **Confirmações em modal, nunca `window.confirm`/`alert`/`prompt`:**
+  `if (await confirmDialog({ title, message, confirmLabel, danger }))` de `components/confirm.ts` (o `<ConfirmHost/>`
+  fica no `App.tsx`). Ações destrutivas levam `danger: true` (botão vermelho e foco no "Cancelar").
 - **Arquivos `.tsx` exportam só componentes** (regra de _fast refresh_ do lint): funções e constantes compartilhadas
   vão para `.ts` próprios (ex.: `styles.ts`, `toast.ts`, `reports/describeFilters.ts`, `lib/format.ts`).
 - **Renderização pura:** nada de `new Date()`/`Math.random()` no corpo do componente; use `useState(() => …)`,
@@ -85,7 +87,7 @@ npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
   `AddressFields ownData`) e `off` nos dados de **clientes**; `aria-sort` só na coluna ordenada + `role="status"`
   anunciando a ordenação, tabela em região rolável nomeada (`DataTable` exige `label`); animações de movimento só
   com `motion-safe:`; região "Notificações" para os toasts e toasts disparados só depois de fechar modais.
-- **Padrões a seguir:** modal = `<Modal>` (nunca `role="dialog"`/`aria-modal`/focus trap manuais); dados de terceiros
+- **Padrões a seguir:** modal = `<Modal>` (nunca `role="dialog"`/`aria-modal`/focus trap manuais) e confirmação = `confirmDialog()`; dados de terceiros
   com `autoComplete="off"`; nada de `overflow: hidden` no `body` para travar rolagem; movimento novo dentro de
   `motion-safe:` (ou `@media (prefers-reduced-motion: no-preference)`); `npm run -s mwg:scan` deve continuar só com os
   2 falsos positivos conhecidos (cópia de `Map` em `reports/data.ts`).

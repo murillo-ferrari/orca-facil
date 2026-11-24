@@ -11,6 +11,7 @@ import { DocumentField } from '../components/DocumentField'
 import { NumberInput } from '../components/NumberInput'
 import { Button, Card, CardHeader, Field, PageHeader, Select, Textarea, TextField } from '../components/ui'
 import { toast } from '../components/toast'
+import { confirmDialog } from '../components/confirm'
 
 const PIX_TYPES: PixKeyType[] = ['CNPJ', 'CPF', 'E-mail', 'Telefone', 'Aleatória']
 
@@ -46,11 +47,11 @@ export function ProfileEditor() {
     navigate('/empresas')
   }
 
-  function handleDelete() {
-    const msg = quoteCount
+  async function handleDelete() {
+    const message = quoteCount
       ? `Esta empresa possui ${quoteCount} orçamento(s). Eles continuarão salvos, mas sem os dados da empresa. Excluir mesmo assim?`
       : 'Excluir esta empresa?'
-    if (!window.confirm(msg)) return
+    if (!(await confirmDialog({ title: 'Excluir empresa', message, confirmLabel: 'Excluir', danger: true }))) return
     deleteProfile(p.id)
     toast('Empresa excluída')
     navigate('/empresas')

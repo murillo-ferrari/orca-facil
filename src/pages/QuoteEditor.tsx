@@ -43,6 +43,7 @@ import {
 } from '../components/ui'
 import { cn } from '../components/styles'
 import { toast } from '../components/toast'
+import { confirmDialog } from '../components/confirm'
 import { downloadQuotePdf, renderQuotePdf } from '../pdf/exportPdf'
 
 const VALIDITY_PRESETS = [7, 15, 30, 60]
@@ -336,8 +337,14 @@ export function QuoteEditor() {
             title="Excluir"
             aria-label="Excluir orçamento"
             className="hover:text-red-600"
-            onClick={() => {
-              if (window.confirm(`Excluir o orçamento ${q.number}?`)) {
+            onClick={async () => {
+              const ok = await confirmDialog({
+                title: 'Excluir orçamento',
+                message: `Excluir o orçamento ${q.number}?`,
+                confirmLabel: 'Excluir',
+                danger: true,
+              })
+              if (ok) {
                 deleteQuote(q.id)
                 toast('Orçamento excluído')
                 navigate('/')

@@ -13,6 +13,7 @@ import { cn } from '../components/styles'
 import { ClientFormModal } from '../components/ClientFormModal'
 import { QuoteRow } from '../components/QuoteRow'
 import { toast } from '../components/toast'
+import { confirmDialog } from '../components/confirm'
 
 export function ClientDetail() {
   const { id } = useParams()
@@ -77,11 +78,11 @@ export function ClientDetail() {
     if (quoteId) navigate(`/orcamentos/${quoteId}`)
   }
 
-  function handleDelete() {
-    const msg = quotes.length
+  async function handleDelete() {
+    const message = quotes.length
       ? `Excluir o cliente “${c.name}”? Os ${quotes.length} orçamento(s) dele continuam salvos.`
       : `Excluir o cliente “${c.name}”?`
-    if (!window.confirm(msg)) return
+    if (!(await confirmDialog({ title: 'Excluir cliente', message, confirmLabel: 'Excluir', danger: true }))) return
     deleteClient(c.id)
     toast('Cliente excluído')
     navigate('/clientes')

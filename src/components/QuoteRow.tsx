@@ -9,6 +9,7 @@ import { STATUS } from '../lib/status'
 import { downloadQuotePdf } from '../pdf/exportPdf'
 import { Badge, Button } from './ui'
 import { toast } from './toast'
+import { confirmDialog } from './confirm'
 
 /** Linha de orçamento usada nas listas (orçamentos e página do cliente) */
 export function QuoteRow({
@@ -98,8 +99,14 @@ export function QuoteRow({
           aria-label="Excluir"
           title="Excluir"
           className="hidden hover:text-red-600 sm:inline-flex"
-          onClick={() => {
-            if (window.confirm(`Excluir o orçamento ${q.number}?`)) {
+          onClick={async () => {
+            const ok = await confirmDialog({
+              title: 'Excluir orçamento',
+              message: `Excluir o orçamento ${q.number}?`,
+              confirmLabel: 'Excluir',
+              danger: true,
+            })
+            if (ok) {
               deleteQuote(q.id)
               toast('Orçamento excluído')
             }

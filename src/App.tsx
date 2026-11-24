@@ -3,6 +3,7 @@ import { BrowserRouter, HashRouter, NavLink, Route, Routes, useNavigate } from '
 import { BarChart3, Building2, FileText, Package, Settings, Users, ChevronsUpDown, Plus } from 'lucide-react'
 import { useStore, useActiveProfile } from './store/store'
 import { Toaster } from './components/Toaster'
+import { ConfirmHost } from './components/ConfirmHost'
 import { cn } from './components/styles'
 import { QuotesList } from './pages/QuotesList'
 import { QuoteEditor } from './pages/QuoteEditor'
@@ -169,6 +170,7 @@ function Shell() {
         ))}
       </nav>
       <Toaster />
+      <ConfirmHost />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Textarea, Te
 import { NumberInput } from '../components/NumberInput'
 import { UnitSelect } from '../components/UnitSelect'
 import { toast } from '../components/toast'
+import { confirmDialog } from '../components/confirm'
 
 const newCatalogItem = (): CatalogItem => ({
   id: uid(),
@@ -103,8 +104,14 @@ export function Catalog() {
                   variant="ghost"
                   aria-label="Excluir"
                   className="hover:text-red-600"
-                  onClick={() => {
-                    if (window.confirm(`Remover “${c.description}” do catálogo?`)) {
+                  onClick={async () => {
+                    const ok = await confirmDialog({
+                      title: 'Remover serviço',
+                      message: `Remover “${c.description}” do catálogo?`,
+                      confirmLabel: 'Remover',
+                      danger: true,
+                    })
+                    if (ok) {
                       remove(c.id)
                       toast('Serviço removido')
                     }

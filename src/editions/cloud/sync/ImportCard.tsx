@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { CloudUpload, FileUp } from 'lucide-react'
 import { Button, Card, CardHeader } from '../../../components/ui'
 import { toast } from '../../../components/toast'
+import { confirmDialog } from '../../../components/confirm'
 import { BackupError, parseBackup } from '../../../data/backup'
 import { STORAGE_KEY } from '../../../data/schema'
 import { importLocal } from './controller'
@@ -18,8 +19,12 @@ export default function ImportCard() {
 
   async function send(data: ReturnType<typeof fromBackup>, label: string, clearLocal: boolean) {
     const counts = describeCounts(countsOf(data))
-    if (!window.confirm(`Enviar ${counts} (${label}) para a sua conta? Eles serão somados aos dados que ela já tem.`))
-      return
+    const ok = await confirmDialog({
+      title: 'Enviar dados para a nuvem',
+      message: `Enviar ${counts} (${label}) para a sua conta? Eles serão somados aos dados que ela já tem.`,
+      confirmLabel: 'Enviar',
+    })
+    if (!ok) return
     setBusy(true)
     const r = await importLocal(data)
     setBusy(false)

@@ -136,6 +136,8 @@ orca-facil/
     ├── components/
     │   ├── ui.tsx              base: botão, campos, card, modal, abas segmentadas, estado vazio
     │   ├── styles.ts           `cn` (junta classes) e `inputClass` (estilo dos campos)
+    │   ├── confirm.ts          `confirmDialog()`: pede confirmação em modal (no lugar de `window.confirm`)
+    │   ├── ConfirmHost.tsx     exibe o modal das confirmações (montado uma vez no App)
     │   ├── toast.ts            `toast()`: dispara notificações de qualquer lugar
     │   ├── Toaster.tsx         exibe as notificações
     │   ├── DateField.tsx       campo de data com calendário em pt-BR

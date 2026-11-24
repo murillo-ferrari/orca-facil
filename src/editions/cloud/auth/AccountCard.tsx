@@ -3,6 +3,7 @@ import { LogOut, Trash2, UserRound } from 'lucide-react'
 import type { User } from '@supabase/supabase-js'
 import { Button, Card, CardHeader } from '../../../components/ui'
 import { toast } from '../../../components/toast'
+import { confirmDialog } from '../../../components/confirm'
 import { signOutAndClearDevice, supabase } from '../supabase'
 import { useSyncState } from '../sync/controller'
 
@@ -19,7 +20,13 @@ export default function AccountCard() {
   }, [])
 
   async function deleteAccount() {
-    if (!window.confirm('Excluir a conta e TODOS os dados na nuvem? Esta ação não pode ser desfeita.')) return
+    const ok = await confirmDialog({
+      title: 'Excluir conta',
+      message: 'Excluir a conta e TODOS os dados na nuvem? Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir conta',
+      danger: true,
+    })
+    if (!ok) return
     setBusy(true)
     const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' })
     if (error) {
@@ -46,13 +53,17 @@ export default function AccountCard() {
           <LogOut size={16} /> Sair
         </Button>
         <Button
-          onClick={() =>
-            window.confirm(
-              pending
+          onClick={async () => {
+            const ok = await confirmDialog({
+              title: 'Sair e apagar dados deste dispositivo',
+              message: pending
                 ? `Há ${pending} alteração(ões) que ainda NÃO foram enviadas para a nuvem e serão perdidas. Sair e apagar mesmo assim?`
                 : 'Sair e apagar os dados guardados neste navegador? Eles continuam na sua conta.',
-            ) && void signOutAndClearDevice()
-          }
+              confirmLabel: 'Sair e apagar',
+              danger: !!pending,
+            })
+            if (ok) void signOutAndClearDevice()
+          }}
           disabled={busy}
         >
           <LogOut size={16} /> Sair e apagar dados deste dispositivo

@@ -291,8 +291,9 @@ export function QuoteEditor() {
         <ArrowLeft size={16} /> Orçamentos
       </button>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
+      {/* Faixa fixa no topo: é o único lugar para mudar o status. top-18 = altura do topo mobile (App.tsx) */}
+      <div className="sticky top-18 z-10 -mx-4 mb-4 flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:top-0 lg:-mx-8 lg:px-8 print:static print:border-0">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
             Orçamento <span className="font-mono text-xl text-slate-500">{q.number}</span>
           </h1>
@@ -313,9 +314,9 @@ export function QuoteEditor() {
               ))}
             </Select>
           </div>
-          <span className="text-xs text-slate-400">Salvo automaticamente</span>
+          <span className="hidden text-xs text-slate-400 sm:inline">Salvo automaticamente</span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Button
             variant="ghost"
             size="icon"

@@ -120,7 +120,8 @@ function Shell() {
       </aside>
 
       {/* Topo mobile */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-2.5 backdrop-blur lg:hidden print:hidden">
+      {/* h-18 fixa: a faixa do editor de orçamento gruda logo abaixo (top-18) */}
+      <header className="sticky top-0 z-20 flex h-18 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur lg:hidden print:hidden">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
           <FileText size={16} />
         </div>

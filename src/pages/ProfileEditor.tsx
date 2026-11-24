@@ -295,21 +295,25 @@ export function ProfileEditor() {
         </Card>
       </div>
 
-      <div className="sticky bottom-[64px] z-10 mt-6 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur lg:bottom-4">
-        {!isNew ? (
-          <Button variant="danger" onClick={handleDelete}>
-            <Trash2 size={16} /> <span className="hidden sm:inline">Excluir</span>
-          </Button>
-        ) : (
-          <span />
-        )}
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={() => navigate('/empresas')}>
-            Cancelar
-          </Button>
-          <Button variant="primary" onClick={handleSave}>
-            <Save size={16} /> Salvar empresa
-          </Button>
+      {/* Barra fixa no rodapé, igual à do editor de orçamento */}
+      <div className="h-16" aria-hidden />
+      <div className="fixed inset-x-0 bottom-[57px] z-10 border-t border-slate-200 bg-white/95 backdrop-blur lg:bottom-0 lg:left-64 print:hidden">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
+          {!isNew ? (
+            <Button variant="danger" onClick={handleDelete}>
+              <Trash2 size={16} /> <span className="hidden sm:inline">Excluir</span>
+            </Button>
+          ) : (
+            <span />
+          )}
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => navigate('/empresas')}>
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={handleSave}>
+              <Save size={16} /> Salvar empresa
+            </Button>
+          </div>
         </div>
       </div>
     </>

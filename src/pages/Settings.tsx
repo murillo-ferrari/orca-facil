@@ -9,6 +9,8 @@ import { toast } from '../components/toast'
 // Só na edição Cloud; no build Local este import some
 const AccountCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/auth/AccountCard')) : null
+const ImportCard =
+  import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/ImportCard')) : null
 const LimitCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/LimitCard')) : null
 const ConflictsCard =
@@ -141,26 +143,35 @@ function BackupCard() {
       <CardHeader
         icon={<DatabaseBackup size={18} />}
         title="Backup dos dados"
-        description="Seus dados ficam salvos apenas neste navegador. Exporte um backup para guardar ou levar para outro computador."
+        description={
+          ImportCard
+            ? 'Exporte uma cópia dos seus dados em um arquivo, para guardar ou levar para outro computador.'
+            : 'Seus dados ficam salvos apenas neste navegador. Exporte um backup para guardar ou levar para outro computador.'
+        }
       />
       <div className="flex flex-wrap gap-2 p-4 sm:p-5">
         <Button variant="primary" onClick={handleExport}>
           <Download size={16} /> Exportar backup
         </Button>
-        <Button onClick={() => fileRef.current?.click()}>
-          <Upload size={16} /> Importar backup
-        </Button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) handleImport(f)
-            e.target.value = ''
-          }}
-        />
+        {/* Na Cloud, "substituir tudo" excluiria dados na nuvem; a importação por arquivo fica em "Enviar dados para a nuvem" */}
+        {!ImportCard && (
+          <>
+            <Button onClick={() => fileRef.current?.click()}>
+              <Upload size={16} /> Importar backup
+            </Button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) handleImport(f)
+                e.target.value = ''
+              }}
+            />
+          </>
+        )}
       </div>
     </Card>
   )
@@ -174,6 +185,11 @@ export function SettingsPage() {
         {AccountCard && (
           <Suspense>
             <AccountCard />
+          </Suspense>
+        )}
+        {ImportCard && (
+          <Suspense>
+            <ImportCard />
           </Suspense>
         )}
         {LimitCard && (

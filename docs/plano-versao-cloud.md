@@ -494,6 +494,21 @@ Itens com envio pendente mostram um ícone discreto.
 Limites do plano grátis **não** bloqueiam a importação (o limite vale para criar novos orçamentos), para não punir
 quem migra.
 
+**Como ficou (F6, 24/11/2026):**
+- **Aviso no primeiro login, com confirmação** (`MigrationPrompt`): aparece depois da primeira sincronização, para já
+  saber se a conta tem dados, e diz o que será enviado ("2 empresas, 14 clientes e 32 orçamentos"). "Agora não" lembra
+  a escolha por conta neste navegador. Depois de enviar, a cópia da edição Local no navegador é removida.
+- **Ajustes › Enviar dados para a nuvem** (`ImportCard`): segunda chance e porta para o arquivo de backup. Na Cloud o
+  "Importar backup" que **substitui** tudo some, porque apagaria dados na nuvem; a importação por arquivo sempre **soma**.
+- **União, nunca substituição** (`mergeLocalIntoCloud`): mesmo `id` fica com o `updatedAt` mais recente (empate: a
+  nuvem); orçamento local com número já usado por outro orçamento da nuvem recebe número novo; `nextNumber` fica com o
+  maior dos dois lados; unidades de símbolo novo são acrescentadas.
+- **Fora do limite do plano:** migração `20261124110000` cria a função `importar_dados`, que liga `app.importando` só
+  dentro dela, marca os orçamentos como `imported` (não contam no limite do mês) e aceita mais empresas que o limite.
+  Não vira atalho: só funciona em conta **sem orçamentos próprios**, tem teto de 5.000 orçamentos e 20 empresas, e a
+  coluna `imported` é definida pelo servidor (insert direto nunca nasce importado; update não a muda).
+- **Pendente:** excluir conta já existe (F4); exportar já existe (Ajustes › Exportar backup, mesmo formato).
+
 ## 9. Planos, limites e cobrança
 
 ### 9.1 Proposta de planos (decisão D5 — valores são hipóteses)
@@ -631,7 +646,7 @@ Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úte
 | ✅ **F3 · Banco** (concluída em 18/11/2026; `staging` online em 23/11/2026) | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, 78 testes pgTAP + job no CI, tipos TypeScript gerados | 2–3 dias |
 | 🟡 **F4 · Autenticação** (código pronto e testado no banco local em 23/11/2026; falta configurar o projeto online) | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
 | **F5 · Sincronização** | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes | 4–6 dias |
-| **F6 · Migração e conta** | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
+| 🟡 **F6 · Migração e conta** (código pronto e testado no banco local em 24/11/2026; falta aplicar a migração no `staging`) | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
 | **F7 · Planos e cobrança** | Tela de planos/uso, checkout, webhook do provedor, inadimplência, testes no sandbox | 3–5 dias |
 | **F8 · Segurança e LGPD** | Cabeçalhos/CSP, revisão de RLS, Termos e Política (+ revisão jurídica), página de status | 1–2 dias |
 | **F9 · Produção** | Supabase Pro em São Paulo, domínio e DNS (app + e-mail), Google OAuth publicado, Cloudflare Pages, Sentry, pipelines | 1–2 dias |

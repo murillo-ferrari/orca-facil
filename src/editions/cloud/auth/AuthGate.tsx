@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../supabase'
 import { Login } from './Login'
 import SyncProvider from '../sync/SyncProvider'
+import MigrationPrompt from '../sync/MigrationPrompt'
 
 /** Edição Cloud: sem sessão, qualquer rota mostra o login; com sessão, o app normal. */
 export default function AuthGate({ children }: { children: ReactNode }) {
@@ -19,5 +20,10 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   if (session === undefined) return null
   if (!session) return <Login />
   if (pathname === '/auth/callback') return <Navigate to="/" replace />
-  return <SyncProvider userId={session.user.id}>{children}</SyncProvider>
+  return (
+    <SyncProvider userId={session.user.id}>
+      {children}
+      <MigrationPrompt userId={session.user.id} />
+    </SyncProvider>
+  )
 }

@@ -132,6 +132,8 @@ persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem
   protegidas por gatilho, usar `set local session_replication_role = replica`.
 - Projeto online vinculado: `orca-facil` (staging, ref `tqysyqwzqyuiwbudnfqc`). CLI v3: comandos remotos exigem
   `--remote` (ex.: `npx supabase db push --remote --dry-run` antes de aplicar); sem ele, o alvo é o banco local.
+- `importar_dados` (RPC) importa dados da edição Local sem contar no limite do plano (só em conta sem orçamentos
+  próprios); `quotes.imported` é definida pelo servidor. Ver seção 8 do plano.
 - Docker Desktop precisa estar rodando. Container do banco: `supabase_db_orca-facil` (porta 54322).
 
 ## Regras de negócio

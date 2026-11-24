@@ -189,6 +189,17 @@ export class SyncEngine {
     })
   }
 
+  /**
+   * Envia a fila pela função de importação do servidor (`importar_dados`): ela não conta os orçamentos no limite do
+   * plano. Mesma fila, mesmo tratamento de aplicado/conflito/recusa. Chamar `capture` antes, com os dados já no store.
+   */
+  importAll(): Promise<SyncResult> {
+    return this.lock(async () => {
+      const pushed = await this.push('importar_dados')
+      return { ...pushed, pulled: await this.pull() }
+    })
+  }
+
   /** Envia a fila e depois busca as novidades. Chamadas simultâneas esperam a anterior terminar. */
   sync(): Promise<SyncResult> {
     return this.lock(async () => {
@@ -259,13 +270,13 @@ export class SyncEngine {
     return n
   }
 
-  private async push() {
+  private async push(rpcName = 'aplicar_alteracoes') {
     const result = { applied: 0, conflicts: 0, rejected: [] as SyncResult['rejected'] }
     for (;;) {
       const batch = TABLES.flatMap((table) => this.pending[table].map((change) => ({ table, change }))).slice(0, BATCH)
       if (!batch.length) return result
 
-      const { data, error } = await this.client.rpc('aplicar_alteracoes', {
+      const { data, error } = await this.client.rpc(rpcName, {
         // O servidor identifica "registro novo" por base_rev nulo; nosso 0 significa o mesmo
         p_changes: batch.map(({ table, change: c }) => ({
           table,

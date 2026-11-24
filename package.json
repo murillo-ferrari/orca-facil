@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "VITE_EDITION=local vite",
     "dev:cloud": "VITE_EDITION=cloud vite",
     "build": "tsc -b && VITE_EDITION=local vite build",
     "build:cloud": "tsc -b && VITE_EDITION=cloud vite build",

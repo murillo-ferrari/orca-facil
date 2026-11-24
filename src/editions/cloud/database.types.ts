@@ -160,6 +160,7 @@ export type Database = {
           data: NonNullable<Json>
           deleted_at: string | null
           id: string
+          imported: boolean
           inserted_at: string
           issue_date: string
           number: string
@@ -174,6 +175,7 @@ export type Database = {
           data: NonNullable<Json>
           deleted_at?: string | null
           id: string
+          imported?: boolean
           inserted_at?: string
           issue_date: string
           number: string
@@ -187,6 +189,7 @@ export type Database = {
           data?: NonNullable<Json>
           deleted_at?: string | null
           id?: string
+          imported?: boolean
           inserted_at?: string
           issue_date?: string
           number?: string
@@ -279,6 +282,7 @@ export type Database = {
       aplicar_alteracoes: { Args: { p_changes: Json }; Returns: Json }
       buscar_alteracoes: { Args: { p_desde?: string; p_limite?: number }; Returns: Json }
       definir_proximo_numero: { Args: { p_empresa: string; p_proximo: number }; Returns: number }
+      importar_dados: { Args: { p_changes: Json }; Returns: Json }
       reservar_numeros_orcamento: { Args: { p_empresa: string; p_quantidade?: number }; Returns: number }
       uso_do_plano: { Args: Record<PropertyKey, never>; Returns: Json }
     }

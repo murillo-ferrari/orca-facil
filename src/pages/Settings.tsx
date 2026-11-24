@@ -12,6 +12,8 @@ const AccountCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/auth/AccountCard')) : null
 const ImportCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/ImportCard')) : null
+const PlanCard =
+  import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/billing/PlanCard')) : null
 const LimitCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/LimitCard')) : null
 const ConflictsCard =
@@ -199,6 +201,11 @@ export function SettingsPage() {
         {AccountCard && (
           <Suspense>
             <AccountCard />
+          </Suspense>
+        )}
+        {PlanCard && (
+          <Suspense>
+            <PlanCard />
           </Suspense>
         )}
         {ImportCard && (

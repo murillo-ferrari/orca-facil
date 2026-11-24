@@ -25,20 +25,20 @@ a experiência atual: o app continua rápido e funciona sem internet.
 
 ## 2. Decisões que dependem de você
 
-Decididas em 18/11/2026: **D1, D2 e D3**, além de backend e autenticação (Supabase + Supabase Auth). As demais têm
-recomendação e podem ser definidas até a fase indicada na seção 17.
+Decididas em 18/11/2026: **D1, D2 e D3**, além de backend e autenticação (Supabase + Supabase Auth). D4, D5, D6, D7, D8 e D10
+foram decididas durante a F4–F7. Pendente: D9 (nome).
 
 | # | Decisão | Opções | Recomendação |
 |---|---|---|---|
 | D1 | **Licença** do repositório público | MIT · AGPL-3.0 | ✅ **AGPL-3.0** — quem hospedar uma versão modificada do app como serviço precisa publicar o código |
 | D2 | **Código da Cloud** no mesmo repositório público? | Mesmo repo · repo privado separado | ✅ **Mesmo repositório**, com as edições escolhidas por variável de build; segredos fora do código |
 | D3 | **Domínio** | — | ✅ **`orcafacil.murilloferrari.tech`** (subdomínio no Cloudflare; trocado em 23/11/2026 no lugar de `orcafacil.com.br`). App nesse endereço, e-mails de login de `login@orcafacil.murilloferrari.tech` |
-| D4 | **Provedor de pagamento** | Asaas · Mercado Pago · Stripe · Paddle (detalhes na seção 9.2) | **Asaas** se você tiver CNPJ (Pix, boleto, cartão e emissão de NFS-e); **Paddle** se quiser que outra empresa fature e cuide dos impostos |
-| D5 | **Planos e limites** | Ver seção 9.1 | Grátis com limite de volume; Pro sem limites |
-| D6 | **Formas de login** | E-mail com código · Google · Apple · senha | **E-mail com código de 6 dígitos + Google** (sem senha para esquecer) |
+| D4 | **Provedor de pagamento** | Asaas · Mercado Pago · Stripe · Paddle (detalhes na seção 9.2) | ✅ **Mercado Pago** (assinaturas _preapproval_; decidido em 24/11/2026) |
+| D5 | **Planos e limites** | Ver seção 9.1 | ✅ Grátis: 15 orçamentos novos/mês e 1 empresa; **Pro: R$ 9,99/mês ou R$ 99,99/ano**, ilimitado (24/11/2026) |
+| D6 | **Formas de login** | E-mail com código · Google · Apple · senha | ✅ **E-mail com código de 6 dígitos + Google** (feito na F4) |
 | D10 | **Serviço de envio de e-mail (SMTP)** | Resend · Brevo · Amazon SES · Postmark · ZeptoMail | ✅ **Resend** (decidido em 23/11/2026) |
-| D7 | **Nível de offline** | Só online · leitura offline · leitura e escrita offline | **Leitura e escrita offline**: o público trabalha na casa do cliente, muitas vezes sem sinal |
-| D8 | **Conflito** entre dispositivos | Última gravação vence · diálogo de escolha · mesclar | **Última gravação vence**, guardando a versão perdida para restaurar (seção 7.5) |
+| D7 | **Nível de offline** | Só online · leitura offline · leitura e escrita offline | ✅ **Leitura e escrita offline** (feito na F5) |
+| D8 | **Conflito** entre dispositivos | Última gravação vence · diálogo de escolha · mesclar | ✅ **Mescla em três vias** com diff lado a lado; vale a nuvem até a pessoa decidir (seção 7.5, decidido em 24/11/2026) |
 | D9 | **Nome do produto** | — | **Orçafácil**, acompanhando o domínio; confirmar quando o registro for concluído |
 
 ## 3. Etapa 1 — Publicação da edição Local (pré-requisito)
@@ -511,16 +511,15 @@ quem migra.
 
 ## 9. Planos, limites e cobrança
 
-### 9.1 Proposta de planos (decisão D5 — valores são hipóteses)
+### 9.1 Planos (decisão D5, 24/11/2026)
 
 | | Local | Cloud Grátis | Cloud Pro |
 |---|---|---|---|
-| Preço | R$ 0 | R$ 0 | ex.: R$ 19,90/mês ou R$ 199/ano |
-| Orçamentos novos por mês | ilimitados | ex.: 15 | ilimitados |
+| Preço | R$ 0 | R$ 0 | **R$ 9,99/mês ou R$ 99,99/ano** (tabela `plan_prices`) |
+| Orçamentos novos por mês | ilimitados | 15 | ilimitados |
 | Empresas (perfis) | ilimitadas | 1 | ilimitadas |
 | Dispositivos sincronizados | — | ilimitados | ilimitados |
 | Relatórios, PDF, catálogo, clientes | sim | sim | sim |
-| Restaurar versões substituídas | — | 7 dias | 30 dias |
 | Futuro (fora deste plano): link público do orçamento com aceite online, envio por e-mail, logo no PDF | — | — | sim |
 
 Critério: o grátis precisa ser útil de verdade (quem orça pouco não paga). O Pro é para quem vive de orçamento.
@@ -568,6 +567,40 @@ sequenceDiagram
 - **Cancelamento:** vale até o fim do período pago.
 - **Webhooks:** verificar assinatura/token, registrar em `billing_events` (com `event_id` único, o que dá
   idempotência), responder rápido e reprocessar se falhar.
+
+### 9.4 Como ficou (F7, Mercado Pago)
+
+- **Preços no banco** (`plan_prices`: `mensal` 9,99 / 1 mês, `anual` 99,99 / 12 meses). A função lê o valor daqui; o
+  app nunca informa valor. Mudar preço = `UPDATE` (vale para assinaturas novas). `subscriptions.billing_interval`
+  guarda a periodicidade em vigor.
+- **Edge Function `assinatura`** (JWT conferido no código): `assinar` cria uma _preapproval_ pendente
+  (`external_reference` = `user_id`, `back_url` = `APP_URL/config`) e devolve o `init_point` (checkout do Mercado
+  Pago); `confirmar` procura as assinaturas do usuário (`/preapproval/search?external_reference=`) e grava a
+  autorizada, sem depender do webhook (chamada ao voltar do checkout, com `?preapproval_id=`, e pelo botão "Já
+  assinei"); `cancelar` faz `PUT status=cancelled`, relê a assinatura e grava já. Gravação sempre por `upsert`
+  (`saveSubscription`): contas criadas antes do gatilho `handle_new_user` não tinham linha em `subscriptions`.
+- **Edge Function `mercadopago-webhook`** (sem JWT): confere `x-signature` (HMAC-SHA256 de
+  `id:<data.id>;request-id:<x-request-id>;ts:<ts>;`, igual ao `WebhookSignatureValidator` do SDK oficial), registra
+  em `billing_events` e **não confia no corpo**: busca a _preapproval_ na API (tópico `subscription_preapproval`, ou via
+  `/authorized_payments/{id}` no `subscription_authorized_payment`) e grava o estado. Reprocessar é inofensivo.
+- **Mapeamento** (`supabase/functions/_shared/mercadopago.ts`, testado no Vitest): `authorized` → Pro ativo até
+  `next_payment_date`; `paused` → `past_due`; `cancelled` → `canceled` (vale até o fim do período pago). Pendente,
+  `external_reference` inválido ou valor/moeda fora da tabela de preços não vira Pro. Mudança de status de uma
+  assinatura antiga não derruba a atual.
+- **Telas** (`editions/cloud/billing/`, plano compartilhado em `planStore.ts`): página **`/assinatura`** com cards
+  Grátis × Pro, período mensal/anual, tabela de comparação e perguntas frequentes; CTA "Seja Pro" na sidebar (acima
+  do status de sincronização) e botão "Pro" no topo do celular, só para quem não é Pro; _Ajustes › Plano_ com uso,
+  "Conhecer o Pro", "Já assinei" e "Cancelar assinatura". Skeleton até a primeira leitura (sem flash de "Grátis").
+- **Configurar no Supabase** (secrets das funções): `MP_ACCESS_TOKEN` (credencial de teste no `staging`),
+  `MP_WEBHOOK_SECRET` (gerada no painel do Mercado Pago ao salvar o webhook), `APP_URL` (precisa ser `https`
+  público: o Mercado Pago recusa `back_url` local) e, **só no `staging`**, `MP_TEST_PAYER_EMAIL` (com credencial de
+  teste, o pagador tem de ser o comprador de teste, `test_user_<id>@testuser.com`). Webhook no painel:
+  `https://<ref>.supabase.co/functions/v1/mercadopago-webhook`, tópicos de Assinaturas.
+- **Testado no `staging` (24/11/2026):** assinatura mensal com comprador e cartão de teste, confirmada por "Já
+  assinei" (Pro até 24/12/2026). **Pendente:** o webhook não recebeu nenhuma notificação (conferir aplicação/modo/
+  eventos no painel do Mercado Pago); cancelamento, renovação e atraso. Conferir lá: se a assinatura aceita Pix/boleto ou só cartão/saldo, e se `frequency=12` +
+  `months` aparece como anual no checkout.
+- **Fora da F7:** cancelar a assinatura ao excluir a conta (`delete-account`) e nota fiscal (NFS-e) da venda.
 
 ## 10. Segurança
 
@@ -644,10 +677,10 @@ Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úte
 | ✅ **F1 · Fundação** (concluída em 18/11/2026) | Vitest com 95 testes das regras atuais; camada `src/data/` + `src/editions/` sem mudar comportamento; variável `VITE_EDITION` validada no build; fonte Inter local; CI (`ci.yml`) | 2–3 dias |
 | ✅ **F2 · Etapa 1 publicada** (18/11/2026) | LICENSE, README, workflow do Pages, repositório público | 0,5–1 dia |
 | ✅ **F3 · Banco** (concluída em 18/11/2026; `staging` online em 23/11/2026) | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, 78 testes pgTAP + job no CI, tipos TypeScript gerados | 2–3 dias |
-| 🟡 **F4 · Autenticação** (código pronto e testado no banco local em 23/11/2026; falta configurar o projeto online) | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
-| **F5 · Sincronização** | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes | 4–6 dias |
-| 🟡 **F6 · Migração e conta** (código pronto e testado no banco local em 24/11/2026; falta aplicar a migração no `staging`) | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
-| **F7 · Planos e cobrança** | Tela de planos/uso, checkout, webhook do provedor, inadimplência, testes no sandbox | 3–5 dias |
+| ✅ **F4 · Autenticação** (concluída em 24/11/2026, inclusive no projeto online) | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
+| ✅ **F5 · Sincronização** (concluída em 24/11/2026; Realtime ficou para depois) | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes | 4–6 dias |
+| ✅ **F6 · Migração e conta** (concluída em 24/11/2026; migração aplicada no `staging`) | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
+| 🟡 **F7 · Planos e cobrança** (assinatura funcionando no `staging` em 24/11/2026; falta o webhook chegar) | Tela de planos/uso, checkout, webhook do provedor, inadimplência, testes no sandbox | 3–5 dias |
 | **F8 · Segurança e LGPD** | Cabeçalhos/CSP, revisão de RLS, Termos e Política (+ revisão jurídica), página de status | 1–2 dias |
 | **F9 · Produção** | Supabase Pro em São Paulo, domínio e DNS (app + e-mail), Google OAuth publicado, Cloudflare Pages, Sentry, pipelines | 1–2 dias |
 | **F10 · Beta e lançamento** | Beta fechado (5–10 autônomos reais), correções, landing page, lançamento | 1–2 semanas de calendário |
@@ -704,11 +737,12 @@ infraestrutura (considerando taxas e câmbio).
 3. ~~Executar a F2 e publicar a edição Local~~ (feito: <https://murillo-ferrari.github.io/orca-facil/>).
 4. ~~F3 (banco)~~ (feito). Projeto `staging` criado (`orca-facil`, ref `tqysyqwzqyuiwbudnfqc`) e migrações
    aplicadas em 23/11/2026 com `supabase db push --remote` (na CLI v3, sem `--remote` o alvo é o banco local).
-5. **F4 (autenticação)** em andamento. Código feito: `src/editions/cloud/` (`supabase.ts`, `auth/AuthGate`, `Login`,
-   `AccountCard` em Ajustes), `supabase/templates/codigo.html`, `supabase/functions/delete-account`. Diferenças do
-   esboço: não há rota `/entrar` (sem sessão, qualquer rota mostra o login) nem `/conta` (a conta fica em Ajustes).
-   Falta no projeto online: SMTP do Resend + DNS, modelos de e-mail, URLs de retorno, Google OAuth, Turnstile e o
-   deploy da função `delete-account`.
+5. ~~F4 (autenticação)~~ (feito em 24/11/2026). Diferenças do esboço: não há rota `/entrar` (sem sessão, qualquer
+   rota mostra o login) nem `/conta` (a conta fica em Ajustes). Projeto online configurado: SMTP do Resend + DNS,
+   modelos de e-mail, URLs de retorno, Google OAuth, Turnstile e função `delete-account`.
+6. ~~F5 (sincronização) e F6 (migração da Local)~~ (feito em 24/11/2026; migrações aplicadas no `staging`).
+7. **F7 (planos e cobrança)** em andamento: código pronto e testado no banco local (seção 9.4). Falta configurar
+   o webhook no painel do Mercado Pago e testar cancelamento, renovação e o plano anual (seção 9.4).
 
 ## Fontes consultadas (novembro de 2026)
 

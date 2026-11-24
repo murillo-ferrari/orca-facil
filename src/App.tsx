@@ -20,6 +20,8 @@ import { Reports } from './pages/Reports'
 const CLOUD = import.meta.env.VITE_EDITION === 'cloud'
 const AuthGate = CLOUD ? lazy(() => import('./editions/cloud/auth/AuthGate')) : null
 const SyncStatus = CLOUD ? lazy(() => import('./editions/cloud/sync/SyncStatus')) : null
+const UpgradeCta = CLOUD ? lazy(() => import('./editions/cloud/billing/UpgradeCta')) : null
+const SubscriptionPage = CLOUD ? lazy(() => import('./editions/cloud/billing/SubscriptionPage')) : null
 const Router = CLOUD ? BrowserRouter : HashRouter
 
 const NAV = [
@@ -108,7 +110,14 @@ function Shell() {
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto px-5 py-4">
+        {UpgradeCta && (
+          <div className="mt-auto px-3">
+            <Suspense>
+              <UpgradeCta />
+            </Suspense>
+          </div>
+        )}
+        <div className={cn('px-5 py-4', !UpgradeCta && 'mt-auto')}>
           {SyncStatus ? (
             <Suspense>
               <SyncStatus />
@@ -128,6 +137,11 @@ function Shell() {
         <div className="min-w-0 flex-1">
           <ProfileSwitcher />
         </div>
+        {UpgradeCta && (
+          <Suspense>
+            <UpgradeCta compact />
+          </Suspense>
+        )}
         {SyncStatus && (
           <Suspense>
             <SyncStatus compact />
@@ -147,6 +161,16 @@ function Shell() {
           <Route path="/relatorios" element={<Reports />} />
           <Route path="/relatorios/:tab" element={<Reports />} />
           <Route path="/config" element={<SettingsPage />} />
+          {SubscriptionPage && (
+            <Route
+              path="/assinatura"
+              element={
+                <Suspense>
+                  <SubscriptionPage />
+                </Suspense>
+              }
+            />
+          )}
           <Route path="*" element={<QuotesList />} />
         </Routes>
       </main>

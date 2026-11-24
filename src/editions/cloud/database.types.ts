@@ -155,6 +155,25 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_prices: {
+        Row: {
+          amount: number
+          billing_interval: string
+          months: number
+        }
+        ComputedFields: never
+        Insert: {
+          amount: number
+          billing_interval: string
+          months: number
+        }
+        Update: {
+          amount?: number
+          billing_interval?: string
+          months?: number
+        }
+        Relationships: []
+      }
       quotes: {
         Row: {
           data: NonNullable<Json>
@@ -203,6 +222,7 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_interval: string | null
           current_period_end: string | null
           plan: string
           provider: string | null
@@ -214,6 +234,7 @@ export type Database = {
         }
         ComputedFields: never
         Insert: {
+          billing_interval?: string | null
           current_period_end?: string | null
           plan?: string
           provider?: string | null
@@ -224,6 +245,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          billing_interval?: string | null
           current_period_end?: string | null
           plan?: string
           provider?: string | null
@@ -234,6 +256,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: 'subscriptions_billing_interval_fkey'
+            columns: ['billing_interval']
+            isOneToOne: false
+            referencedRelation: 'plan_prices'
+            referencedColumns: ['billing_interval']
+          },
           {
             foreignKeyName: 'subscriptions_plan_fkey'
             columns: ['plan']

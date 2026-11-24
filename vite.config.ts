@@ -27,7 +27,8 @@ export default defineConfig(({ mode }) => {
     // A lib de PDF é grande, mas só é carregada sob demanda
     build: { chunkSizeWarningLimit: 1500 },
     test: {
-      include: ['src/**/*.test.{ts,tsx}'],
+      // Também as regras puras das Edge Functions (supabase/functions/_shared)
+      include: ['src/**/*.test.{ts,tsx}', 'supabase/functions/_shared/*.test.ts'],
       environment: 'node',
       // Testes que usam localStorage declaram `// @vitest-environment happy-dom` no topo
     },

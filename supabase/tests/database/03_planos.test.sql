@@ -1,7 +1,7 @@
 -- Planos e limites: o grátis bloqueia acima do limite no servidor; o Pro libera.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(16);
 
 insert into auth.users (id, email, aud, role) values
   ('a0000000-0000-4000-8000-000000000001', 'ana@teste.local', 'authenticated', 'authenticated');
@@ -89,6 +89,15 @@ set local role authenticated;
 select is(public.uso_do_plano() ->> 'plano', 'free', 'depois de 7 dias de atraso volta ao grátis');
 select is((select count(*)::int from public.company_profiles where deleted_at is null), 2,
   'voltar ao grátis não apaga nada (só bloqueia criar acima do limite)');
+
+-- ---------------------------------------------------------------- Preços (F7)
+set local role authenticated;
+select is((select array_agg(amount::text order by months) from public.plan_prices), array['9.99', '99.99'],
+  'Pro: R$ 9,99/mês e R$ 99,99/ano');
+select throws_ok($$update public.plan_prices set amount = 0.01$$, '42501', null, 'usuário não altera preços');
+select throws_ok($$update public.subscriptions set billing_interval = 'anual'$$, '42501', null,
+  'usuário não altera a própria assinatura');
+select throws_ok($$select * from public.billing_events$$, '42501', null, 'usuário não lê eventos de cobrança');
 
 select * from finish();
 rollback;

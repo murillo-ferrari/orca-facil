@@ -129,7 +129,10 @@ persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem
 - RPCs do app: `aplicar_alteracoes`, `buscar_alteracoes`, `reservar_numeros_orcamento`, `definir_proximo_numero`,
   `uso_do_plano`. Auxiliares `security definer` ficam no schema `private` (não exposto pela API).
 - Limites (grátis: 15 orçamentos novos/mês, 1 empresa) na tabela `plan_limits`; aplicados nas policies de INSERT.
-- Testes: `npm run db:test` (78 pgTAP, também no CI). Ao mudar o banco: migração + teste + `npm run db:types`
+- Cobrança (F7): preços em `plan_prices`; Edge Functions `assinatura` (assinar/cancelar) e `mercadopago-webhook`
+  (só ele e o cancelamento gravam `subscriptions`). Regras puras em `supabase/functions/_shared/mercadopago.ts`,
+  testadas pelo Vitest. Secrets: `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `APP_URL`.
+- Testes: `npm run db:test` (91 pgTAP, também no CI). Ao mudar o banco: migração + teste + `npm run db:types`
   (o CI falha se `src/editions/cloud/database.types.ts` estiver desatualizado). Nos testes, para mexer em colunas
   protegidas por gatilho, usar `set local session_replication_role = replica`.
 - Projeto online vinculado: `orca-facil` (staging, ref `tqysyqwzqyuiwbudnfqc`). CLI v3: comandos remotos exigem
@@ -223,8 +226,8 @@ Ideia do usuário em duas etapas, detalhada em **`docs/plano-versao-cloud.md`** 
 
 Decididas: **D1 licença AGPL-3.0**, **D2 código da Cloud no mesmo repositório público** (edição escolhida por
 `VITE_EDITION`), **D3 domínio `orcafacil.murilloferrari.tech`** (trocado em 23/11/2026; e-mail de login
-`login@orcafacil.murilloferrari.tech`), **D10 Resend** (SMTP). Pendentes: D4 pagamento, D5 planos, D6 login, D7 offline,
-D8 conflitos, D9 nome (tende a "Orçafácil") — ver seção 2 do plano.
+`login@orcafacil.murilloferrari.tech`), **D10 Resend** (SMTP), **D6 código por e-mail + Google**, **D7 leitura e escrita offline**,
+**D8 mescla em três vias**, **D4 Mercado Pago**, **D5 Pro R$ 9,99/mês ou R$ 99,99/ano**. Pendente: D9 nome (tende a "Orçafácil") — ver seção 2 do plano.
 
 ## Histórico (resumo)
 
@@ -241,5 +244,10 @@ D8 conflitos, D9 nome (tende a "Orçafácil") — ver seção 2 do plano.
    Projeto `staging` online (`orca-facil`, ref `tqysyqwzqyuiwbudnfqc`) com as migrações aplicadas em 23/11/2026.
 10. **Modern Web Guidance incorporado:** skill do projeto, scripts `mwg`, política de navegadores e correções de
    acessibilidade/modernização (ver seção própria).
-11. **F4 (autenticação) — código pronto:** login por código e Google, Turnstile, conta em Ajustes, `delete-account`,
-    modelo de e-mail; testado no banco local. Falta configurar o projeto online (ver item 5 da seção 17 do plano).
+11. **F4 (autenticação) concluída:** login por código e Google, Turnstile, conta em Ajustes, `delete-account`,
+    modelo de e-mail; projeto online configurado (24/11/2026).
+12. **F5 (sincronização) e F6 (importação da Local) concluídas** (24/11/2026): IndexedDB, fila por diferença, reserva
+    de números em blocos, tela de conflitos com mescla em três vias, `importar_dados`; migrações no `staging`.
+13. **F7 (planos e cobrança)** — assinatura funcionando no `staging`: `plan_prices`, funções `assinatura`
+    (assinar/confirmar/cancelar) e `mercadopago-webhook`, página `/assinatura`, CTA na sidebar e _Ajustes › Plano_.
+    Falta o webhook chegar e testar cancelamento/renovação (seção 9.4 do plano).

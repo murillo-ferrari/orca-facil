@@ -51,8 +51,9 @@ function merge<T extends { id: string }>(
 }
 
 /**
- * Aplica ao store o que veio do servidor. A numeração nunca anda para trás: o servidor só conhece o último valor
- * que algum dispositivo informou, e um dispositivo pode já ter usado números além dele.
+ * Aplica ao store o que veio do servidor. O `nextNumber` da empresa NÃO vem do servidor depois que ela existe aqui:
+ * o contador do servidor aponta para o próximo bloco livre, não para o bloco deste dispositivo, e seguir esse valor
+ * faria o dispositivo usar números reservados por outro (ver numbering.ts).
  */
 export function applyRemote(s: DataState, table: Table, changes: RemoteChanges): Partial<DataState> {
   switch (table) {
@@ -63,7 +64,7 @@ export function applyRemote(s: DataState, table: Table, changes: RemoteChanges):
     case 'company_profiles': {
       const profiles = merge<CompanyProfile>(s.profiles, changes, (local, remote) => ({
         ...remote,
-        nextNumber: Math.max(local.nextNumber, remote.nextNumber),
+        nextNumber: local.nextNumber,
       }))
       const stillThere = profiles.some((p) => p.id === s.activeProfileId)
       return { profiles, activeProfileId: stillThere ? s.activeProfileId : (profiles[0]?.id ?? null) }
@@ -72,27 +73,26 @@ export function applyRemote(s: DataState, table: Table, changes: RemoteChanges):
       return { clients: merge<Client>(s.clients, changes) }
     case 'catalog_items':
       return { catalog: merge<CatalogItem>(s.catalog, changes) }
-    case 'quotes': {
-      const quotes = merge<Quote>(s.quotes, changes)
-      const profiles = withNumberFloor(s.profiles, quotes)
-      return profiles.some((p, i) => p !== s.profiles[i]) ? { quotes, profiles } : { quotes }
-    }
+    case 'quotes':
+      return { quotes: merge<Quote>(s.quotes, changes) }
   }
 }
 
-/**
- * Piso da numeração: o próximo número de cada empresa fica acima do maior número já usado nos orçamentos
- * (formato prefixo + dígitos). O servidor só guarda o `nextNumber` de quando a empresa foi criada, então sem isso
- * um dispositivo novo repetiria números que outro já usou. Mantém as referências quando nada muda.
- */
+/** Maior número já usado pelos orçamentos da empresa (formato prefixo + dígitos); 0 se nenhum. */
+export function maxUsedNumber(profile: CompanyProfile, quotes: Quote[]): number {
+  let max = 0
+  for (const q of quotes) {
+    if (q.profileId !== profile.id || !q.number.startsWith(profile.numberPrefix)) continue
+    const rest = q.number.slice(profile.numberPrefix.length)
+    if (/^\d+$/.test(rest)) max = Math.max(max, Number(rest))
+  }
+  return max
+}
+
+/** Próximo número acima do maior já usado (usado só ao renumerar orçamentos recusados por número repetido). */
 export function withNumberFloor(profiles: CompanyProfile[], quotes: Quote[]): CompanyProfile[] {
   return profiles.map((p) => {
-    let max = 0
-    for (const q of quotes) {
-      if (q.profileId !== p.id || !q.number.startsWith(p.numberPrefix)) continue
-      const rest = q.number.slice(p.numberPrefix.length)
-      if (/^\d+$/.test(rest)) max = Math.max(max, Number(rest))
-    }
+    const max = maxUsedNumber(p, quotes)
     return max >= p.nextNumber ? { ...p, nextNumber: max + 1 } : p
   })
 }

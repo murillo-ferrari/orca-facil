@@ -6,7 +6,9 @@ import { toast } from '../../../components/toast'
 import { supabase } from '../supabase'
 import { SyncEngine, TABLES, conflictKey, type ConflictRecord, type RpcClient, type SyncDb } from './engine'
 import { openSyncDb } from './idb'
-import { applyRemote, findRecord, renumberQuotes, toTables } from './mapping'
+import { applyRemote, findRecord, maxUsedNumber, renumberQuotes, toTables } from './mapping'
+import { reserveBlock, type Blocks, type NumberingRpc } from './numbering'
+import type { PlanUse } from './limits'
 import { autoResolvable, planResolution, type Choice, type Rec } from './conflicts'
 
 /**
@@ -25,8 +27,18 @@ export interface SyncUiState {
   rejected: number
   /** conflitos aguardando decisão da pessoa (tela de conflitos) */
   conflicts: ConflictRecord[]
+  /** recusas por limite do plano (quais tabelas) e o uso do plano, para explicar o motivo */
+  limitTables: ('quotes' | 'company_profiles')[]
+  planUse: PlanUse | null
 }
-export const useSyncState = create<SyncUiState>(() => ({ phase: 'loading', pending: 0, rejected: 0, conflicts: [] }))
+export const useSyncState = create<SyncUiState>(() => ({
+  phase: 'loading',
+  pending: 0,
+  rejected: 0,
+  conflicts: [],
+  limitTables: [],
+  planUse: null,
+}))
 const ui = (patch: Partial<SyncUiState>) => useSyncState.setState(patch)
 
 const SYNC_DELAY_MS = 1000
@@ -45,6 +57,19 @@ const emptyData = () => ({
 // supabase.rpc é tipado por função; o motor só precisa do formato genérico
 const rpcClient: RpcClient = {
   rpc: (fn, args) => supabase.rpc(fn as never, args as never) as unknown as ReturnType<RpcClient['rpc']>,
+}
+
+async function call<T>(fn: string, args: Record<string, unknown>) {
+  const { data, error } = await rpcClient.rpc(fn, args)
+  if (error) throw new Error(error.message)
+  return data as T
+}
+
+const numberingRpc: NumberingRpc = {
+  reserve: (profileId, quantity) =>
+    call<number>('reservar_numeros_orcamento', { p_empresa: profileId, p_quantidade: quantity }),
+  setNext: async (profileId, next) =>
+    void (await call<number>('definir_proximo_numero', { p_empresa: profileId, p_proximo: next })),
 }
 
 interface Running {
@@ -110,6 +135,47 @@ async function open(userId: string) {
   let again = false
   let timer: ReturnType<typeof setTimeout> | undefined
 
+  /** Empresa → fim do bloco reservado. Só em memória: ao reabrir, a primeira reserva recomeça depois do bloco antigo. */
+  const blocks: Blocks = {}
+
+  /** Repõe os blocos de números das empresas já sincronizadas. Falha de rede não impede o resto. */
+  async function reserveNumbers() {
+    for (const profile of useStore.getState().profiles) {
+      if (!engine.isSynced('company_profiles', profile.id)) continue // o servidor ainda não conhece a empresa
+      try {
+        const used = maxUsedNumber(profile, useStore.getState().quotes)
+        const r = await reserveBlock(numberingRpc, profile, blocks[profile.id], used)
+        if (!r) continue
+        blocks[profile.id] = r.end
+        // Só sobe: o contador do servidor reflete blocos de outros dispositivos
+        if (r.nextNumber > profile.nextNumber) {
+          useStore.setState((st) => ({
+            profiles: st.profiles.map((p) => (p.id === profile.id ? { ...p, nextNumber: r.nextNumber } : p)),
+          }))
+        }
+      } catch (e) {
+        console.error('numeração', e)
+      }
+    }
+  }
+
+  /** Uso do plano e quais recusas são por limite, para o aviso explicar o motivo. */
+  async function refreshLimits() {
+    const items = engine.rejectedItems.filter((x) => x.reason === 'limite_do_plano')
+    const limitTables = [...new Set(items.map((x) => x.table))].filter(
+      (t): t is 'quotes' | 'company_profiles' => t === 'quotes' || t === 'company_profiles',
+    )
+    let planUse = useSyncState.getState().planUse
+    if (limitTables.length) {
+      try {
+        planUse = await call<PlanUse>('uso_do_plano', {})
+      } catch {
+        /* sem o uso, o aviso fica sem os números */
+      }
+    }
+    ui({ limitTables, planUse })
+  }
+
   const captureAll = async () => {
     const rows = toTables(useStore.getState(), userId)
     for (const t of TABLES) await engine.capture(t, rows[t])
@@ -157,6 +223,7 @@ async function open(userId: string) {
         if (engine.fresh) await engine.sync()
         await captureAll()
         const r = await engine.sync()
+        await reserveNumbers()
 
         const duplicates = r.rejected.filter((x) => x.table === 'quotes' && x.reason === 'duplicado').map((x) => x.id)
         const patch = duplicates.length ? renumberQuotes(useStore.getState(), duplicates) : null
@@ -182,6 +249,7 @@ async function open(userId: string) {
       }
       if (!stopped) {
         publishConflicts()
+        await refreshLimits()
         ui({ phase: 'idle', pending: engine.pendingCount, rejected: engine.rejectedCount })
       }
     } catch (e) {
@@ -233,7 +301,7 @@ async function open(userId: string) {
       await saveSnapshot().catch(() => undefined)
       db.close?.()
       useStore.setState(emptyData()) // os dados de uma conta não podem ficar na memória para a próxima
-      ui({ phase: 'loading', pending: 0, rejected: 0, conflicts: [] })
+      ui({ phase: 'loading', pending: 0, rejected: 0, conflicts: [], limitTables: [], planUse: null })
       current = null
     },
   }

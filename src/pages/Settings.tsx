@@ -9,6 +9,8 @@ import { toast } from '../components/toast'
 // Só na edição Cloud; no build Local este import some
 const AccountCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/auth/AccountCard')) : null
+const LimitCard =
+  import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/LimitCard')) : null
 const ConflictsCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/ConflictsCard')) : null
 
@@ -172,6 +174,11 @@ export function SettingsPage() {
         {AccountCard && (
           <Suspense>
             <AccountCard />
+          </Suspense>
+        )}
+        {LimitCard && (
+          <Suspense>
+            <LimitCard />
           </Suspense>
         )}
         {ConflictsCard && (

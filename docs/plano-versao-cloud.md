@@ -463,7 +463,13 @@ Achados na integração com o banco real, já tratados: (1) exclusão não pode 
 constraint); (2) o `nextNumber` da empresa é do servidor e fica fora da comparação, senão dois dispositivos se
 reenviam o perfil sem parar; (3) o servidor só guarda o `nextNumber` da criação da empresa, então o app sobe o próximo
 número acima do maior já usado nos orçamentos (`withNumberFloor`); (4) número repetido vira recusa `duplicado` e o
-orçamento é renumerado sozinho. **Pendente:** reserva em blocos (7.6), aviso de limite do plano, Realtime.
+orçamento é renumerado sozinho. **Reserva em blocos (7.6), como ficou:** cada dispositivo reserva 5 números por empresa (`reservar_numeros_orcamento`)
+e repõe quando sobram menos de 2. O `nextNumber` local não segue mais o contador do servidor (que aponta para o
+próximo bloco livre); só sobe. Se o servidor está atrás do uso local, o app leva o contador adiante com
+`definir_proximo_numero`. Se o bloco acabar offline, vale o plano B: o servidor recusa o número repetido e o orçamento
+é renumerado (o número provisório com PDF bloqueado do item 4 do plano **não** foi feito).
+**Aviso de limite do plano:** recusas por `limite_do_plano` aparecem em Ajustes com o motivo e o uso (`uso_do_plano`).
+**Pendente:** Realtime.
 
 ### 7.7 Indicador de sincronização
 

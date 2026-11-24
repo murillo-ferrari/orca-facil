@@ -1,6 +1,7 @@
 import { Cloud, CloudAlert, CloudCheck, CloudOff, GitMerge, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { syncNow, useSyncState } from './controller'
+import { limitNotice } from './limits'
 import { cn } from '../../../components/styles'
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`
@@ -11,6 +12,7 @@ export default function SyncStatus({ compact }: { compact?: boolean }) {
   const pending = useSyncState((s) => s.pending)
   const rejected = useSyncState((s) => s.rejected)
   const conflicts = useSyncState((s) => s.conflicts.length)
+  const limit = useSyncState((s) => limitNotice(s.limitTables, null)?.short ?? '')
 
   let Icon = CloudCheck
   let text = 'Sincronizado'
@@ -31,7 +33,8 @@ export default function SyncStatus({ compact }: { compact?: boolean }) {
     tone = 'text-amber-700'
   } else if (rejected) {
     Icon = CloudAlert
-    text = plural(rejected, 'alteração não enviada', 'alterações não enviadas')
+    // Com limite do plano, diz o motivo; sem ele, só a contagem
+    text = limit || plural(rejected, 'alteração não enviada', 'alterações não enviadas')
     tone = 'text-amber-700'
   } else if (pending) {
     Icon = Cloud
@@ -42,9 +45,9 @@ export default function SyncStatus({ compact }: { compact?: boolean }) {
     <div role="status" className={cn('flex items-center gap-2 text-xs', tone)} title={compact ? text : undefined}>
       <Icon size={compact ? 18 : 14} className={cn('shrink-0', phase === 'syncing' && 'motion-safe:animate-spin')} />
       <span className={cn(compact && 'sr-only')}>{text}</span>
-      {phase === 'idle' && conflicts > 0 && (
+      {phase === 'idle' && (conflicts > 0 || (rejected > 0 && limit)) && (
         <Link to="/config" className="font-medium underline">
-          Resolver
+          {conflicts > 0 ? 'Resolver' : 'Ver detalhes'}
         </Link>
       )}
       {phase === 'error' && (

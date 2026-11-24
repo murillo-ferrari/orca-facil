@@ -258,6 +258,32 @@ describe('SyncEngine', () => {
     expect((await a.sync()).applied).toBe(1)
   })
 
+  it('recusa informa o motivo, e excluir o registro recusado limpa a recusa', async () => {
+    const server = new FakeServer()
+    server.refuse.add('1')
+    const a = await device(server)
+    a.set([cli('1', 'Ana')])
+    await a.sync()
+    expect(a.engine.rejectedItems).toEqual([{ table: 'clients', id: '1', reason: 'limite_do_plano' }])
+    expect(a.engine.isSynced('clients', '1')).toBe(false)
+
+    a.set([]) // a pessoa desiste do item que o plano não aceitou
+    await a.sync()
+    expect(a.engine.rejectedCount).toBe(0)
+    expect(a.engine.rejectedItems).toEqual([])
+  })
+
+  it('isSynced vale depois de enviar e de receber', async () => {
+    const server = new FakeServer()
+    const a = await device(server)
+    a.set([cli('1', 'Ana')])
+    await a.sync()
+    expect(a.engine.isSynced('clients', '1')).toBe(true)
+    server.put('clients', '2', cli('2', 'Bia'))
+    await a.sync()
+    expect(a.engine.isSynced('clients', '2')).toBe(true)
+  })
+
   it('pagina o pull até acabar', async () => {
     const server = new FakeServer()
     for (let i = 0; i < 5; i++) server.put('clients', String(i), cli(String(i), `C${i}`))

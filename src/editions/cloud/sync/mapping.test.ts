@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DataState } from '../../../data/schema'
-import { applyRemote, renumberQuotes, toTables } from './mapping'
+import { applyRemote, maxUsedNumber, renumberQuotes, toTables } from './mapping'
 
 const state = (patch: object = {}) =>
   ({ profiles: [], activeProfileId: null, clients: [], units: [], catalog: [], quotes: [], ...patch }) as DataState
@@ -38,11 +38,10 @@ describe('applyRemote', () => {
     ])
   })
 
-  it('a numeração da empresa nunca anda para trás', () => {
-    const s = state({ profiles: [profile('p', 10)], activeProfileId: 'p' })
-    const r = applyRemote(s, 'company_profiles', up(profile('p', 4)))
-    expect(r.profiles?.[0].nextNumber).toBe(10)
-    expect(applyRemote(s, 'company_profiles', up(profile('p', 12))).profiles?.[0].nextNumber).toBe(12)
+  it('a numeração local da empresa não segue o contador do servidor (que aponta para outro bloco)', () => {
+    const s = state({ profiles: [profile('p', 3)], activeProfileId: 'p' })
+    expect(applyRemote(s, 'company_profiles', up(profile('p', 40))).profiles?.[0].nextNumber).toBe(3)
+    expect(applyRemote(s, 'company_profiles', up(profile('p', 1))).profiles?.[0].nextNumber).toBe(3)
   })
 
   it('empresa nova vinda do servidor mantém o número do servidor e vira a ativa se não havia nenhuma', () => {
@@ -64,18 +63,22 @@ describe('applyRemote', () => {
 })
 
 describe('numeração', () => {
-  it('orçamento vindo do servidor eleva o próximo número da empresa acima do maior usado', () => {
+  it('orçamento vindo do servidor não mexe no próximo número (ele é governado pelo bloco reservado)', () => {
     const s = state({ profiles: [profile('p', 1)], activeProfileId: 'p' })
-    const r = applyRemote(s, 'quotes', up(quote('a', 'p', 'ORC-0007'), quote('b', 'p', 'ORC-0003')))
-    expect(r.profiles?.[0].nextNumber).toBe(8)
+    const r = applyRemote(s, 'quotes', up(quote('a', 'p', 'ORC-0007')))
+    expect(r.profiles).toBeUndefined()
   })
 
-  it('não mexe nas empresas quando o próximo número já está acima, nem em números de outro formato', () => {
-    const s = state({ profiles: [profile('p', 9)], activeProfileId: 'p' })
-    expect(applyRemote(s, 'quotes', up(quote('a', 'p', 'ORC-0007'))).profiles).toBeUndefined()
-    expect(
-      applyRemote(s, 'quotes', up(quote('b', 'p', 'XYZ-0099'), quote('c', 'p', 'ORC-abc'))).profiles,
-    ).toBeUndefined()
+  it('maxUsedNumber lê só números no formato da empresa', () => {
+    const p = profile('p', 1) as never
+    const qs = [
+      quote('a', 'p', 'ORC-0007'),
+      quote('b', 'p', 'ORC-0003'),
+      quote('c', 'p', 'XYZ-0099'),
+      quote('d', 'p', 'ORC-x'),
+    ]
+    expect(maxUsedNumber(p, qs as never)).toBe(7)
+    expect(maxUsedNumber(p, [])).toBe(0)
   })
 
   it('renumera os recusados com os próximos números, depois dos já existentes', () => {

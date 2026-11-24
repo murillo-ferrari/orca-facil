@@ -97,7 +97,7 @@ export class SyncEngine {
   private pending = Object.fromEntries(TABLES.map((t) => [t, [] as Change[]])) as Record<Table, Change[]>
   private cursors: Partial<Record<Table, string>> = {}
   /** Recusados pelo servidor (ex.: limite do plano), com o conteúdo recusado. Só em memória: reabrir tenta de novo. */
-  private rejected = new Map<string, string>()
+  private rejected = new Map<string, { print: string; reason: string }>()
   private dirty = new Set<Table | 'cursors' | 'conflicts'>()
   private chain: Promise<unknown> = Promise.resolve()
   private pageSize: number
@@ -157,6 +157,19 @@ export class SyncEngine {
     return this.rejected.size
   }
 
+  /** As mesmas alterações, com o motivo da recusa (ex.: `limite_do_plano`). */
+  get rejectedItems() {
+    return [...this.rejected].map(([key, r]) => {
+      const i = key.indexOf(':')
+      return { table: key.slice(0, i) as Table, id: key.slice(i + 1), reason: r.reason }
+    })
+  }
+
+  /** O servidor já conhece este registro (foi enviado ou recebido). */
+  isSynced(table: Table, id: string) {
+    return this.known[table].has(id)
+  }
+
   /** Alterações aguardando envio (para o indicador "N alterações pendentes"). */
   get pendingCount() {
     return TABLES.reduce((n, t) => n + this.pending[t].length, 0)
@@ -165,6 +178,11 @@ export class SyncEngine {
   /** Recalcula a fila de uma tabela a partir do estado atual do store. */
   capture(table: Table, current: Synced[]) {
     return this.lock(async () => {
+      // Recusa de um registro que não existe mais aqui (excluído antes de ser aceito) não vale mais
+      const ids = new Set(current.map((x) => x.id))
+      for (const key of [...this.rejected.keys()]) {
+        if (key.startsWith(`${table}:`) && !ids.has(key.slice(table.length + 1))) this.rejected.delete(key)
+      }
       this.pending[table] = diffAgainstKnown(current, this.known[table], IGNORE[table]).filter(
         (c) => !this.isRejected(table, c),
       )
@@ -187,9 +205,9 @@ export class SyncEngine {
 
   private isRejected(table: Table, c: Change) {
     const key = `${table}:${c.id}`
-    const print = this.rejected.get(key)
-    if (print === undefined) return false
-    if (print === changePrint(table, c)) return true
+    const rejected = this.rejected.get(key)
+    if (rejected === undefined) return false
+    if (rejected.print === changePrint(table, c)) return true
     this.rejected.delete(key) // o usuário mudou o registro: vale tentar de novo
     return false
   }
@@ -293,7 +311,7 @@ export class SyncEngine {
       }
       for (const r of res.rejected) {
         const c = this.takePending(r.table, r.id)
-        if (c) this.rejected.set(`${r.table}:${r.id}`, changePrint(r.table, c))
+        if (c) this.rejected.set(`${r.table}:${r.id}`, { print: changePrint(r.table, c), reason: r.reason })
         result.rejected.push({ table: r.table, id: r.id, reason: r.reason })
       }
 

@@ -288,6 +288,9 @@ async function open(userId: string) {
       console.error('sync', e)
       if (!stopped) ui({ phase: navigator.onLine ? 'error' : 'offline', pending: engine.pendingCount })
     } finally {
+      // Offline ou com erro o motor não grava nada, e a cópia local ficaria sem as edições: ao reabrir o app elas
+      // sumiriam (o store voltaria ao snapshot antigo, igual à versão conhecida) e nem conflito haveria.
+      await saveSnapshot().catch((e) => console.error('sync: snapshot', e))
       running = false
       if (again && !stopped) timer = setTimeout(run, SYNC_DELAY_MS)
     }
@@ -300,7 +303,9 @@ async function open(userId: string) {
   const unsubscribe = useStore.subscribe(() => {
     if (!suppress) schedule()
   })
-  const onVisible = () => document.visibilityState === 'visible' && void run()
+  // Ao esconder a aba (celular trocando de app, que pode ser encerrado depois) grava a cópia local na hora,
+  // sem esperar o atraso de 1 s do envio
+  const onVisible = () => void (document.visibilityState === 'visible' ? run() : saveSnapshot())
   const onOnline = () => void run()
   const poll = setInterval(onVisible, POLL_MS)
   window.addEventListener('online', onOnline)

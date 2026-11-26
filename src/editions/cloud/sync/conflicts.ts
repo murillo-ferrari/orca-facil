@@ -82,7 +82,7 @@ export const TABLE_LABEL: Record<Table, string> = {
   user_settings: 'Ajustes',
   company_profiles: 'Empresa',
   clients: 'Cliente',
-  catalog_items: 'Serviço',
+  catalog_items: 'Catálogo',
   quotes: 'Orçamento',
 }
 
@@ -189,7 +189,7 @@ export function titleOf(table: Table, rec: Rec | null): string {
     case 'company_profiles':
       return text('label') || text('tradeName') || text('legalName') || 'Empresa'
     case 'catalog_items':
-      return text('description') || 'Serviço'
+      return text('description') || 'Item do catálogo'
     case 'user_settings':
       return 'Unidades de medida'
   }

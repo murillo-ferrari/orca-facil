@@ -47,18 +47,18 @@ export function Catalog() {
     setTried(true)
     if (!editing.description.trim()) return
     save(editing)
-    toast(isNew ? 'Serviço adicionado ao catálogo' : 'Serviço atualizado')
+    toast(isNew ? 'Item adicionado ao catálogo' : 'Item atualizado')
     setEditing(null)
   }
 
   return (
     <>
       <PageHeader
-        title="Catálogo de serviços"
+        title="Catálogo"
         description="Itens que você orça com frequência, com unidade e preço já definidos."
         actions={
           <Button variant="primary" onClick={() => open(newCatalogItem())}>
-            <Plus size={16} /> Novo serviço
+            <Plus size={16} /> Novo item
           </Button>
         }
       />
@@ -67,10 +67,10 @@ export function Catalog() {
         <EmptyState
           icon={<Package size={22} />}
           title="Catálogo vazio"
-          description="Adicione serviços aqui ou salve itens direto do editor de orçamento para reutilizá-los com um clique."
+          description="Adicione itens aqui ou salve direto do editor de orçamento para reutilizá-los com um clique."
           action={
             <Button variant="primary" onClick={() => open(newCatalogItem())}>
-              <Plus size={16} /> Adicionar serviço
+              <Plus size={16} /> Adicionar item
             </Button>
           }
         />
@@ -80,7 +80,7 @@ export function Catalog() {
             <Search size={16} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
             <Input
               className="pl-9"
-              placeholder="Buscar serviço…"
+              placeholder="Buscar no catálogo…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -106,14 +106,14 @@ export function Catalog() {
                   className="hover:text-red-600"
                   onClick={async () => {
                     const ok = await confirmDialog({
-                      title: 'Remover serviço',
+                      title: 'Remover item',
                       message: `Remover “${c.description}” do catálogo?`,
                       confirmLabel: 'Remover',
                       danger: true,
                     })
                     if (ok) {
                       remove(c.id)
-                      toast('Serviço removido')
+                      toast('Item removido do catálogo')
                     }
                   }}
                 >
@@ -129,7 +129,7 @@ export function Catalog() {
       <Modal
         open={!!editing}
         onClose={() => setEditing(null)}
-        title={isNew ? 'Novo serviço' : 'Editar serviço'}
+        title={isNew ? 'Novo item do catálogo' : 'Editar item do catálogo'}
         footer={
           <>
             <Button variant="ghost" onClick={() => setEditing(null)}>

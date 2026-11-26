@@ -27,7 +27,7 @@ const Router = CLOUD ? BrowserRouter : HashRouter
 const NAV = [
   { to: '/', label: 'Orçamentos', icon: FileText, end: true },
   { to: '/clientes', label: 'Clientes', icon: Users },
-  { to: '/servicos', label: 'Serviços', icon: Package },
+  { to: '/catalogo', label: 'Catálogo', icon: Package },
   { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
   { to: '/empresas', label: 'Empresas', icon: Building2 },
   { to: '/ajustes', label: 'Ajustes', icon: Settings },
@@ -155,7 +155,7 @@ function Shell() {
           <Route path="/orcamentos/:id" element={<QuoteEditor />} />
           <Route path="/clientes" element={<Clients />} />
           <Route path="/clientes/:id" element={<ClientDetail />} />
-          <Route path="/servicos" element={<Catalog />} />
+          <Route path="/catalogo" element={<Catalog />} />
           <Route path="/empresas" element={<Profiles />} />
           <Route path="/empresas/:id" element={<ProfileEditor />} />
           <Route path="/relatorios" element={<Reports />} />

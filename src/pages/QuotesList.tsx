@@ -128,7 +128,7 @@ export function QuotesList() {
             <>
               Crie o primeiro agora.{' '}
               {(!clientsCount || !catalogCount) &&
-                'Dica: cadastrar clientes e serviços frequentes deixa o preenchimento ainda mais rápido.'}
+                'Dica: cadastrar clientes e itens frequentes do catálogo deixa o preenchimento ainda mais rápido.'}
             </>
           }
           action={
@@ -137,8 +137,8 @@ export function QuotesList() {
                 <Plus size={16} /> Criar orçamento
               </Button>
               {!catalogCount && (
-                <Button onClick={() => navigate('/servicos')}>
-                  <Package size={16} /> Cadastrar serviços
+                <Button onClick={() => navigate('/catalogo')}>
+                  <Package size={16} /> Cadastrar no catálogo
                 </Button>
               )}
               {!clientsCount && (

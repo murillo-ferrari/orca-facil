@@ -45,12 +45,12 @@ export const countsOf = (d: Pick<DataState, 'profiles' | 'clients' | 'catalog' |
   quotes: d.quotes.length,
 })
 
-/** Texto para a confirmação: "2 empresas, 14 clientes, 3 serviços e 32 orçamentos". */
+/** Texto para a confirmação: "2 empresas, 14 clientes, 3 itens do catálogo e 32 orçamentos". */
 export function describeCounts(c: Counts): string {
   const parts = [
     c.profiles && `${c.profiles} ${c.profiles === 1 ? 'empresa' : 'empresas'}`,
     c.clients && `${c.clients} ${c.clients === 1 ? 'cliente' : 'clientes'}`,
-    c.catalog && `${c.catalog} ${c.catalog === 1 ? 'serviço' : 'serviços'}`,
+    c.catalog && `${c.catalog} ${c.catalog === 1 ? 'item do catálogo' : 'itens do catálogo'}`,
     c.quotes && `${c.quotes} ${c.quotes === 1 ? 'orçamento' : 'orçamentos'}`,
   ].filter(Boolean) as string[]
   if (parts.length < 2) return parts[0] ?? 'nenhum dado'

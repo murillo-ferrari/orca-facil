@@ -220,7 +220,7 @@ function CatalogPicker({
     >
       {catalog.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-500">
-          Seu catálogo está vazio. Use “Salvar no catálogo” no menu de um item ou cadastre em Serviços.
+          Seu catálogo está vazio. Use “Salvar no catálogo” no menu de um item ou cadastre pela página Catálogo.
         </p>
       ) : (
         <>
@@ -229,7 +229,7 @@ function CatalogPicker({
             <Input
               className="pl-9"
               autoFocus
-              placeholder="Buscar serviço…"
+              placeholder="Buscar no catálogo…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />

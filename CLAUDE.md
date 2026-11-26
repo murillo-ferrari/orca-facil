@@ -174,7 +174,7 @@ Abas: Visão geral, Follow-up (`follow-up`), Clientes (`clientes`), Serviços (`
   "fechados no período". Ambas estão rotuladas na tela.
 - **Follow-up** ignora período e status (mostra todos os `enviado`): vencidos, vencendo em N dias (7/15/30) e demais.
   Botão _Cobrar_ abre `https://wa.me/55<telefone>` com mensagem pronta; botões marcam aprovado/recusado.
-- **Serviços:** agrupa por `cat:<catalogId>` ou `txt:<descrição normalizada>` (sem acentos, minúsculas, espaços
+- **Serviços** (a aba dos relatórios mantém o nome; no resto do app é "Catálogo"): agrupa por `cat:<catalogId>` ou `txt:<descrição normalizada>` (sem acentos, minúsculas, espaços
   únicos); considera só enviados; valores dos itens **antes** de desconto/acréscimo; compara preço médio praticado
   com o preço atual do catálogo.
 - **CSV** (`csv.ts`): separador `;`, vírgula decimal, BOM UTF-8 (formato do Excel em português). Colunas vêm do
@@ -249,7 +249,7 @@ Decididas: **D1 licença AGPL-3.0**, **D2 código da Cloud no mesmo repositório
 9. **F3 (banco) concluída localmente:** migrações, RLS, planos, sincronização, 78 testes pgTAP, tipos gerados.
    Projeto `staging` online (`orca-facil`, ref `tqysyqwzqyuiwbudnfqc`) com as migrações aplicadas em 23/11/2026.
 10. **Modern Web Guidance incorporado:** skill do projeto, scripts `mwg`, política de navegadores e correções de
-   acessibilidade/modernização (ver seção própria).
+    acessibilidade/modernização (ver seção própria).
 11. **F4 (autenticação) concluída:** login por código e Google, Turnstile, conta em Ajustes, `delete-account`,
     modelo de e-mail; projeto online configurado (24/11/2026).
 12. **F5 (sincronização) e F6 (importação da Local) concluídas** (24/11/2026): IndexedDB, fila por diferença, reserva

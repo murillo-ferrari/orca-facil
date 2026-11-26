@@ -80,7 +80,7 @@ export interface CatalogItem {
 
 export interface QuoteItem {
   id: string
-  /** Serviço do catálogo de onde o item veio (permite agrupar nos relatórios mesmo com descrição editada) */
+  /** Item do catálogo de onde o item veio (permite agrupar nos relatórios mesmo com descrição editada) */
   catalogId: string | null
   description: string
   details: string

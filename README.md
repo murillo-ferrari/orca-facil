@@ -18,7 +18,7 @@ Seus dados ficam só no seu navegador. Para levá-los a outro computador, use _A
 - **Datas:** calendário em pt-BR; validade com atalhos (7/15/30/60 dias) que acompanham a data de emissão.
 - **Preenchimento rápido:** `Tab` passa por descrição → unidade → qtd → preço; `Enter` no preço cria o próximo item;
   a descrição sugere itens do catálogo enquanto você digita.
-- **Clientes e catálogo de serviços** reutilizáveis, salvos direto do editor.
+- **Clientes e catálogo** reutilizáveis, salvos direto do editor.
 - **PDF** com layout sóbrio, gerado no navegador (a biblioteca só carrega na hora de gerar), com rodapé e numeração de páginas.
 - **Backup:** exporte/importe todos os dados em JSON em _Ajustes_.
 - **Página do cliente** com histórico de orçamentos, resumo e taxa de aprovação.
@@ -155,7 +155,7 @@ orca-facil/
     │   ├── QuoteEditor.tsx     editor de orçamento                (/orcamentos/:id)
     │   ├── Clients.tsx         lista de clientes                  (/clientes)
     │   ├── ClientDetail.tsx    página do cliente com histórico    (/clientes/:id)
-    │   ├── Catalog.tsx         catálogo de serviços               (/servicos)
+    │   ├── Catalog.tsx         catálogo                           (/catalogo)
     │   ├── Reports.tsx         relatórios, abas e filtros         (/relatorios e /relatorios/:tab)
     │   ├── Profiles.tsx        perfis de empresa                  (/empresas)
     │   ├── ProfileEditor.tsx   cadastro/edição de empresa         (/empresas/:id)

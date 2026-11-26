@@ -85,7 +85,7 @@ describe('contagens', () => {
       '1 empresa, 14 clientes e 32 orçamentos',
     )
     expect(describeCounts({ profiles: 0, clients: 1, catalog: 0, quotes: 0 })).toBe('1 cliente')
-    expect(describeCounts({ profiles: 2, clients: 0, catalog: 3, quotes: 0 })).toBe('2 empresas e 3 serviços')
+    expect(describeCounts({ profiles: 2, clients: 0, catalog: 3, quotes: 0 })).toBe('2 empresas e 3 itens do catálogo')
     expect(describeCounts({ profiles: 0, clients: 0, catalog: 0, quotes: 0 })).toBe('nenhum dado')
   })
 

@@ -36,6 +36,26 @@ export async function mp<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const getPreapproval = (id: string) => mp<Preapproval>(`/preapproval/${encodeURIComponent(id)}`)
 
 /**
+ * Cancela a assinatura no Mercado Pago (para de cobrar). A documentação mostra as duas grafias do status
+ * ("cancelled" no SDK oficial, "canceled" no guia de gerenciamento), então tenta uma e cai para a outra.
+ * Assinatura que já está cancelada conta como sucesso.
+ */
+export async function cancelPreapproval(id: string) {
+  let last: unknown
+  for (const status of ['cancelled', 'canceled']) {
+    try {
+      await mp(`/preapproval/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify({ status }) })
+      return
+    } catch (e) {
+      last = e
+    }
+  }
+  const pre = await getPreapproval(id).catch(() => null)
+  if (pre && ['cancelled', 'canceled'].includes(pre.status)) return
+  throw last
+}
+
+/**
  * Grava o plano do usuário. Upsert: contas criadas antes do gatilho de cadastro (handle_new_user) não têm linha em
  * subscriptions, e um update simples não alteraria nada sem dar erro.
  */

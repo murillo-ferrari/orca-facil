@@ -32,6 +32,7 @@ export const usePlan = create<PlanState>(() => EMPTY)
 
 let inflight: Promise<void> | null = null
 let returnChecked = false
+let reconciled = false
 
 /** Lê plano, preços e uso. Chamadas simultâneas compartilham a mesma leitura. */
 export function loadPlan() {
@@ -50,12 +51,30 @@ export function loadPlan() {
       supabase.from('plan_prices').select('billing_interval, amount'),
       supabase.rpc('uso_do_plano'),
     ])
-    usePlan.setState({
-      loaded: true,
-      view: planView(s.data as Subscription | null, Date.now(), (iso) => formatDate(iso)),
-      prices: Object.fromEntries((p.data ?? []).map((x) => [x.billing_interval, Number(x.amount)])),
-      use: u.data as PlanState['use'],
-    })
+    const apply = (sub: unknown) =>
+      usePlan.setState({
+        loaded: true,
+        view: planView(sub as Subscription | null, Date.now(), (iso) => formatDate(iso)),
+        prices: Object.fromEntries((p.data ?? []).map((x) => [x.billing_interval, Number(x.amount)])),
+        use: u.data as PlanState['use'],
+      })
+    apply(s.data)
+
+    // Quem já assina: uma vez por sessão, confere no Mercado Pago (cancelamento, pausa ou atraso feitos pelo painel
+    // do Mercado Pago não chegam sozinhos se o webhook falhar). Silencioso: erro aqui não incomoda ninguém.
+    if (!reconciled && s.data?.plan === 'pro') {
+      reconciled = true
+      const { error } = await supabase.functions.invoke('assinatura', { method: 'POST', body: { acao: 'confirmar' } })
+      if (!error)
+        apply(
+          (
+            await supabase
+              .from('subscriptions')
+              .select('plan, status, billing_interval, current_period_end')
+              .maybeSingle()
+          ).data,
+        )
+    }
   })().finally(() => (inflight = null))
   return inflight
 }
@@ -98,5 +117,8 @@ export function watchPlan() {
 
 // Trocar de conta não pode herdar o plano da anterior
 supabase.auth.onAuthStateChange((event) => {
-  if (event === 'SIGNED_OUT') usePlan.setState(EMPTY)
+  if (event === 'SIGNED_OUT') {
+    usePlan.setState(EMPTY)
+    reconciled = false
+  }
 })

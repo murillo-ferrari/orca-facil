@@ -117,3 +117,21 @@ export async function verifySignature(
   for (let i = 0; i < hex.length; i++) diff |= hex.charCodeAt(i) ^ v1.charCodeAt(i)
   return diff === 0
 }
+
+/**
+ * Entre as assinaturas do usuário no Mercado Pago (busca por `external_reference`), escolhe a que vale para o plano:
+ * uma autorizada (a mais recente do resultado vence se houver duas) ou, na falta, a que já estava gravada
+ * (`current`), para refletir pausa, atraso ou cancelamento feitos fora do app. null = nada a gravar.
+ */
+export function pickSubscription(
+  found: Preapproval[],
+  prices: PlanPrice[],
+  userId: string,
+  current: string | null,
+  now = Date.now(),
+) {
+  const all = found
+    .map((p) => subscriptionFromPreapproval(p, prices, current, now))
+    .filter((c): c is NonNullable<typeof c> => c?.userId === userId)
+  return all.find((c) => c.patch.status === 'active') ?? all.find((c) => c.patch.provider_subscription_id === current)
+}

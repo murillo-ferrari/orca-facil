@@ -229,7 +229,7 @@ export function SettingsPage() {
         {TABS.map((t) => (
           <Link
             key={t.slug}
-            to={t.slug ? `/config/${t.slug}` : '/config'}
+            to={t.slug ? `/ajustes/${t.slug}` : '/ajustes'}
             aria-current={t === current ? 'page' : undefined}
             className={cn(
               '-mb-px border-b-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition',

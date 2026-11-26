@@ -156,9 +156,9 @@ persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem
   antiga, aprovados ÷ (aprovados + recusados), foi descartada por inflar a taxa.)
 - **Vencido:** status `enviado` com `validUntil` anterior a hoje.
 
-## Ajustes (`src/pages/Settings.tsx`, rota `/config` e `/config/:tab`)
+## Ajustes (`src/pages/Settings.tsx`, rota `/ajustes` e `/ajustes/:tab`)
 
-Abas como em Relatórios (links de rota, não `role="tablist"`): **Conta e plano** (`/config`, só na Cloud: conta,
+Abas como em Relatórios (links de rota, não `role="tablist"`): **Conta e plano** (`/ajustes`, só na Cloud: conta,
 plano, aviso de limite), **Dados** (`dados`: enviar para a nuvem, conflitos, backup; é a primeira aba na edição Local)
 e **Outros** (`outros`: unidades de medida). Aba inexistente abre a primeira.
 

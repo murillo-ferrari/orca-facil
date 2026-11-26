@@ -1,6 +1,12 @@
 import { createHmac } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { subscriptionFromPreapproval, verifySignature, type PlanPrice, type Preapproval } from './mercadopago'
+import {
+  pickSubscription,
+  subscriptionFromPreapproval,
+  verifySignature,
+  type PlanPrice,
+  type Preapproval,
+} from './mercadopago'
 
 const PRICES: PlanPrice[] = [
   { billing_interval: 'mensal', amount: 9.99, months: 1 },
@@ -59,6 +65,21 @@ describe('subscriptionFromPreapproval', () => {
     expect(r?.patch.status).toBe('canceled')
     expect(r?.patch).not.toHaveProperty('current_period_end')
     expect(subscriptionFromPreapproval(pre({ status: 'paused' }), PRICES, 'pre1')?.patch.status).toBe('past_due')
+  })
+})
+
+describe('pickSubscription', () => {
+  it('prefere a autorizada; sem ela, reflete o estado da que já estava gravada', () => {
+    const old = pre({ id: 'velha', status: 'cancelled', next_payment_date: null })
+    const novaAtiva = pre({ id: 'nova' })
+    expect(pickSubscription([old, novaAtiva], PRICES, USER, 'velha')?.patch.provider_subscription_id).toBe('nova')
+    expect(pickSubscription([old], PRICES, USER, 'velha')?.patch.status).toBe('canceled')
+  })
+
+  it('ignora pendentes, assinaturas de outro usuário e canceladas que não são a atual', () => {
+    expect(pickSubscription([pre({ status: 'pending' })], PRICES, USER, null)).toBeUndefined()
+    expect(pickSubscription([pre({})], PRICES, 'a0000000-0000-4000-8000-000000000002', null)).toBeUndefined()
+    expect(pickSubscription([pre({ id: 'x', status: 'cancelled' })], PRICES, USER, 'outra')).toBeUndefined()
   })
 })
 

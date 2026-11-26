@@ -70,7 +70,7 @@ export default function SubscriptionPage() {
             <p className="flex-1 text-sm text-slate-800">
               <strong>Você já é {view.title}.</strong> {view.detail}
             </p>
-            <Link to="/config" className="text-sm font-medium text-brand-700 underline">
+            <Link to="/ajustes" className="text-sm font-medium text-brand-700 underline">
               Gerenciar em Ajustes
             </Link>
           </div>

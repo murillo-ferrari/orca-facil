@@ -6,8 +6,17 @@
 //
 // O valor cobrado vem da tabela plan_prices, nunca do app. O plano muda pelo webhook ou aqui (confirmar/cancelar),
 // sempre a partir do estado lido na API do Mercado Pago e com a chave de serviço.
-import { subscriptionFromPreapproval, type Preapproval } from '../_shared/mercadopago.ts'
-import { admin, cors, getPreapproval, getPrices, mp, reply, saveSubscription } from '../_shared/server.ts'
+import { pickSubscription, subscriptionFromPreapproval, type Preapproval } from '../_shared/mercadopago.ts'
+import {
+  admin,
+  cancelPreapproval,
+  cors,
+  getPreapproval,
+  getPrices,
+  mp,
+  reply,
+  saveSubscription,
+} from '../_shared/server.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
@@ -39,7 +48,9 @@ Deno.serve(async (req) => {
           // ponytail: só no staging. Com credencial de teste, o pagador precisa ser o comprador de teste do
           // Mercado Pago; em produção este secret não existe e vale o e-mail da conta.
           payer_email: Deno.env.get('MP_TEST_PAYER_EMAIL') || user.email,
-          back_url: `${Deno.env.get('APP_URL')}/config`,
+          back_url: `${Deno.env.get('APP_URL')}/ajustes`,
+          // Para assinaturas o Mercado Pago só avisa na URL passada aqui (o cadastro em "Suas integrações" não vale)
+          notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercadopago-webhook`,
           status: 'pending',
           auto_recurring: {
             frequency: price.months,
@@ -52,27 +63,27 @@ Deno.serve(async (req) => {
       return reply(200, { url: pre.init_point })
     }
 
-    // Não depende do webhook: procura no Mercado Pago as assinaturas deste usuário (external_reference = user_id,
-    // definido só por esta função) e grava a autorizada. Chamado ao voltar do checkout e pelo botão "Já assinei".
+    // Não depende do webhook: lê no Mercado Pago as assinaturas deste usuário (external_reference = user_id, definido
+    // só por esta função) e grava o estado: autorizada vira Pro; a já gravada reflete pausa/atraso/cancelamento
+    // feitos fora do app. Chamado ao voltar do checkout, pelo botão "Já assinei" e uma vez por sessão (assinantes).
     if (body.acao === 'confirmar') {
       const found = await mp<{ results?: Preapproval[] }>(
         `/preapproval/search?external_reference=${encodeURIComponent(user.id)}`,
       )
-      const prices = await getPrices(db)
-      const change = (found.results ?? [])
-        .map((p) => subscriptionFromPreapproval(p, prices, sub?.provider_subscription_id ?? null))
-        .find((c) => c?.userId === user.id && c.patch.status === 'active')
+      const change = pickSubscription(
+        found.results ?? [],
+        await getPrices(db),
+        user.id,
+        sub?.provider_subscription_id ?? null,
+      )
       if (change) await saveSubscription(db, user.id, change.patch)
-      return reply(200, { pro: !!change })
+      return reply(200, { pro: change?.patch.status === 'active' })
     }
 
     if (body.acao === 'cancelar') {
       const id = sub?.provider_subscription_id
       if (!id || sub.status === 'canceled') return reply(409, { error: 'sem_assinatura' })
-      await mp(`/preapproval/${encodeURIComponent(id)}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status: 'cancelled' }),
-      })
+      await cancelPreapproval(id)
       // Grava já (sem esperar o webhook), a partir do estado real no Mercado Pago
       const change = subscriptionFromPreapproval(await getPreapproval(id), await getPrices(db), id)
       if (change?.userId === user.id) await saveSubscription(db, user.id, change.patch)

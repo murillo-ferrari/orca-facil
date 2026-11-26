@@ -30,7 +30,7 @@ const NAV = [
   { to: '/servicos', label: 'Serviços', icon: Package },
   { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
   { to: '/empresas', label: 'Empresas', icon: Building2 },
-  { to: '/config', label: 'Ajustes', icon: Settings },
+  { to: '/ajustes', label: 'Ajustes', icon: Settings },
 ]
 
 function ProfileSwitcher() {
@@ -160,7 +160,7 @@ function Shell() {
           <Route path="/empresas/:id" element={<ProfileEditor />} />
           <Route path="/relatorios" element={<Reports />} />
           <Route path="/relatorios/:tab" element={<Reports />} />
-          <Route path="/config/:tab?" element={<SettingsPage />} />
+          <Route path="/ajustes/:tab?" element={<SettingsPage />} />
           {SubscriptionPage && (
             <Route
               path="/assinatura"

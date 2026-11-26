@@ -159,7 +159,7 @@ orca-facil/
     │   ├── Reports.tsx         relatórios, abas e filtros         (/relatorios e /relatorios/:tab)
     │   ├── Profiles.tsx        perfis de empresa                  (/empresas)
     │   ├── ProfileEditor.tsx   cadastro/edição de empresa         (/empresas/:id)
-    │   └── Settings.tsx        unidades e backup                  (/config)
+    │   └── Settings.tsx        unidades e backup                  (/ajustes)
     │
     ├── pdf/
     │   ├── QuotePdf.tsx        layout do PDF do orçamento (@react-pdf/renderer)

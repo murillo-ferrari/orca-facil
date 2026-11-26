@@ -574,7 +574,7 @@ sequenceDiagram
   app nunca informa valor. Mudar preço = `UPDATE` (vale para assinaturas novas). `subscriptions.billing_interval`
   guarda a periodicidade em vigor.
 - **Edge Function `assinatura`** (JWT conferido no código): `assinar` cria uma _preapproval_ pendente
-  (`external_reference` = `user_id`, `back_url` = `APP_URL/config`) e devolve o `init_point` (checkout do Mercado
+  (`external_reference` = `user_id`, `back_url` = `APP_URL/ajustes`) e devolve o `init_point` (checkout do Mercado
   Pago); `confirmar` procura as assinaturas do usuário (`/preapproval/search?external_reference=`) e grava a
   autorizada, sem depender do webhook (chamada ao voltar do checkout, com `?preapproval_id=`, e pelo botão "Já
   assinei"); `cancelar` faz `PUT status=cancelled`, relê a assinatura e grava já. Gravação sempre por `upsert`

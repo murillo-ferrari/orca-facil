@@ -6,6 +6,9 @@ select plan(17);
 insert into auth.users (id, email, aud, role) values
   ('a0000000-0000-4000-8000-000000000001', 'ana@teste.local', 'authenticated', 'authenticated');
 
+-- Na nuvem só escreve quem tem Pro: o teste promove os usuários (o servidor grava a assinatura)
+update public.subscriptions set plan = 'pro', status = 'active', current_period_end = now() + interval '30 days';
+
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "a0000000-0000-4000-8000-000000000001", "role": "authenticated"}';
 

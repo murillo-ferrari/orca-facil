@@ -7,6 +7,9 @@ insert into auth.users (id, email, aud, role) values
   ('a0000000-0000-4000-8000-000000000001', 'ana@teste.local', 'authenticated', 'authenticated'),
   ('b0000000-0000-4000-8000-000000000002', 'bia@teste.local', 'authenticated', 'authenticated');
 
+-- Na nuvem só escreve quem tem Pro: o teste promove os usuários (o servidor grava a assinatura)
+update public.subscriptions set plan = 'pro', status = 'active', current_period_end = now() + interval '30 days';
+
 -- Documento de orçamento mínimo
 create function pg_temp.orcamento(p_id uuid, p_numero text, p_status text default 'rascunho')
 returns jsonb language sql as $$
@@ -75,11 +78,11 @@ select is(jsonb_array_length((select v from r where k = 'lote7') -> 'applied'), 
 select is((select v from r where k = 'lote7') -> 'rejected' -> 0 ->> 'reason', 'dados_invalidos', 'status inválido é rejeitado como dados_invalidos');
 select is((select v from r where k = 'lote7') -> 'rejected' -> 1 ->> 'reason', 'dados_invalidos', 'tabela desconhecida é rejeitada');
 
--- Limite do plano aparece como motivo claro (grátis: 1 empresa)
+-- Pro não tem limite de empresas: a segunda é aplicada
 insert into r values ('lote8', public.aplicar_alteracoes(jsonb_build_array(jsonb_build_object(
   'table', 'company_profiles', 'id', 'a1000000-0000-4000-8000-000000000002', 'base_rev', null,
   'data', '{"id": "a1000000-0000-4000-8000-000000000002", "label": "Segunda"}'::jsonb))));
-select is((select v from r where k = 'lote8') -> 'rejected' -> 0 ->> 'reason', 'limite_do_plano', 'limite do plano tem motivo próprio');
+select is(jsonb_array_length((select v from r where k = 'lote8') -> 'applied'), 1, 'Pro: a segunda empresa é aplicada, sem limite');
 
 select throws_ok(
   $$select public.aplicar_alteracoes((select jsonb_agg(jsonb_build_object('table', 'clients')) from generate_series(1, 501)))$$,
@@ -100,7 +103,7 @@ select is(jsonb_array_length((select v from r where k = 'pull3') -> 'quotes' -> 
 -- ---------------------------------------------------------------- numeração
 select is(public.reservar_numeros_orcamento('a1000000-0000-4000-8000-000000000001', 3), 41, 'reserva devolve o primeiro do bloco');
 select is(public.reservar_numeros_orcamento('a1000000-0000-4000-8000-000000000001'), 44, 'a próxima reserva continua de onde parou');
-select is((select data ->> 'nextNumber' from public.company_profiles), '45', 'o documento da empresa acompanha (outros dispositivos recebem)');
+select is((select data ->> 'nextNumber' from public.company_profiles where id = 'a1000000-0000-4000-8000-000000000001'), '45', 'o documento da empresa acompanha (outros dispositivos recebem)');
 select is(public.definir_proximo_numero('a1000000-0000-4000-8000-000000000001', 100), 100, 'próximo número pode ser definido');
 
 -- Outra pessoa não reserva números na empresa da Ana nem a enxerga nos conflitos

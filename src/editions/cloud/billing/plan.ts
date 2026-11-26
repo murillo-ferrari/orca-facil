@@ -23,7 +23,7 @@ const GRACE_MS = 7 * 24 * 60 * 60 * 1000
 export function planView(sub: Subscription | null, now: number, fmtDate: (iso: string) => string): PlanView {
   const end = sub?.current_period_end ? Date.parse(sub.current_period_end) : null
   const pro = sub?.plan === 'pro' && (end === null || end + GRACE_MS > now)
-  if (!sub || !pro) return { pro: false, title: 'Grátis', detail: null, canCancel: false }
+  if (!sub || !pro) return { pro: false, title: 'Sem plano', detail: null, canCancel: false }
 
   const title = `Pro${sub.billing_interval ? ` ${sub.billing_interval}` : ''}`
   const date = sub.current_period_end ? fmtDate(sub.current_period_end) : null
@@ -33,7 +33,7 @@ export function planView(sub: Subscription | null, now: number, fmtDate: (iso: s
     return {
       pro,
       title,
-      detail: 'Pagamento pendente. Regularize no Mercado Pago para não voltar ao plano grátis.',
+      detail: 'Pagamento pendente. Regularize no Mercado Pago para não perder a sincronização.',
       canCancel: true,
     }
   return { pro, title, detail: date ? `Renova em ${date}.` : null, canCancel: true }

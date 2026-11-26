@@ -20,6 +20,7 @@ import { Reports } from './pages/Reports'
 const CLOUD = import.meta.env.VITE_EDITION === 'cloud'
 const AuthGate = CLOUD ? lazy(() => import('./editions/cloud/auth/AuthGate')) : null
 const SyncStatus = CLOUD ? lazy(() => import('./editions/cloud/sync/SyncStatus')) : null
+const NeedsPlanBanner = CLOUD ? lazy(() => import('./editions/cloud/billing/NeedsPlanBanner')) : null
 const UpgradeCta = CLOUD ? lazy(() => import('./editions/cloud/billing/UpgradeCta')) : null
 const SubscriptionPage = CLOUD ? lazy(() => import('./editions/cloud/billing/SubscriptionPage')) : null
 const Router = CLOUD ? BrowserRouter : HashRouter
@@ -150,6 +151,11 @@ function Shell() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 print:max-w-none print:p-0">
+        {NeedsPlanBanner && (
+          <Suspense>
+            <NeedsPlanBanner />
+          </Suspense>
+        )}
         <Routes>
           <Route path="/" element={<QuotesList />} />
           <Route path="/orcamentos/:id" element={<QuoteEditor />} />

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Modal } from '../../../components/ui'
 import { toast } from '../../../components/toast'
 import { STORAGE_KEY } from '../../../data/schema'
 import { useStore } from '../../../store/store'
+import { usePlan, watchPlan } from '../billing/planStore'
 import { importLocal, useSyncState } from './controller'
 import {
   countsOf,
@@ -21,12 +22,15 @@ import {
 export default function MigrationPrompt({ userId }: { userId: string }) {
   const synced = useSyncState((s) => s.synced)
   const accountHasData = useStore((s) => hasContent(s))
+  // Só oferece com plano Pro: sem ele o servidor recusaria o envio
+  const pro = usePlan((s) => s.view.pro)
+  useEffect(watchPlan, [])
   const [dismissed, setDismissed] = useState(false)
   const [busy, setBusy] = useState(false)
   // Lido uma vez ao montar; só aparece depois da primeira sincronização (a conta já é conhecida)
   const [local] = useState(() => (isMigrationDeclined(userId) ? null : readLocalEdition()))
 
-  if (!synced || dismissed || !local) return null
+  if (!synced || !pro || dismissed || !local) return null
   const data = local // referência não nula para dentro de send()
   const counts = describeCounts(countsOf(data))
   const decline = () => {
@@ -50,8 +54,8 @@ export default function MigrationPrompt({ userId }: { userId: string }) {
     }
     setDismissed(true)
     toast(
-      r.limited
-        ? `Dados enviados. ${r.limited} item(ns) passaram do limite do plano e ficaram só neste dispositivo.`
+      r.refused
+        ? `${r.refused} item(ns) não foram enviados: a nuvem exige o plano Pro. Seus dados continuam neste dispositivo.`
         : 'Dados enviados para a sua conta',
     )
   }
@@ -74,7 +78,7 @@ export default function MigrationPrompt({ userId }: { userId: string }) {
     >
       <div className="space-y-3 text-sm text-slate-700">
         <p>
-          Encontramos neste navegador dados da versão gratuita: <strong>{counts}</strong>.
+          Encontramos neste navegador dados da versão no aparelho (grátis): <strong>{counts}</strong>.
         </p>
         <p>
           {accountHasData

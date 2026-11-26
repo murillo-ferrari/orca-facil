@@ -9,6 +9,9 @@ insert into auth.users (id, email, aud, role) values
   ('a0000000-0000-4000-8000-000000000001', 'ana@teste.local', 'authenticated', 'authenticated'),
   ('b0000000-0000-4000-8000-000000000002', 'bia@teste.local', 'authenticated', 'authenticated');
 
+-- Na nuvem só escreve quem tem Pro: o teste promove os usuários (o servidor grava a assinatura)
+update public.subscriptions set plan = 'pro', status = 'active', current_period_end = now() + interval '30 days';
+
 -- ---------------------------------------------------------------- Ana cria dados
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "a0000000-0000-4000-8000-000000000001", "role": "authenticated"}';
@@ -26,7 +29,7 @@ select is((select count(*)::int from public.quotes), 1, 'Ana vê o próprio orç
 select is((select user_id from public.quotes), 'a0000000-0000-4000-8000-000000000001'::uuid,
   'o dono é definido pelo servidor, sem o app enviar user_id');
 select is((select count(*)::int from public.user_settings), 1, 'Ana vê as próprias configurações (criadas no cadastro)');
-select is((select plan from public.subscriptions), 'free', 'Ana começa no plano grátis');
+select is((select plan from public.subscriptions), 'pro', 'Ana tem plano Pro (promovida no teste)');
 
 -- ---------------------------------------------------------------- Bia tenta acessar
 set local request.jwt.claims to '{"sub": "b0000000-0000-4000-8000-000000000002", "role": "authenticated"}';

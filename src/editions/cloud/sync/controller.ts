@@ -9,7 +9,6 @@ import { openSyncDb } from './idb'
 import { applyRemote, findRecord, maxUsedNumber, renumberQuotes, toTables } from './mapping'
 import { mergeLocalIntoCloud } from './migration'
 import { reserveBlock, type Blocks, type NumberingRpc } from './numbering'
-import type { PlanUse } from './limits'
 import { autoResolvable, planResolution, type Choice, type Rec } from './conflicts'
 
 /**
@@ -28,9 +27,8 @@ export interface SyncUiState {
   rejected: number
   /** conflitos aguardando decisão da pessoa (tela de conflitos) */
   conflicts: ConflictRecord[]
-  /** recusas por limite do plano (quais tabelas) e o uso do plano, para explicar o motivo */
-  limitTables: ('quotes' | 'company_profiles')[]
-  planUse: PlanUse | null
+  /** o servidor recusou gravar por falta de plano Pro (conta nova ou assinatura vencida); a conta só lê */
+  needsPlan: boolean
   /** a primeira sincronização deste login terminou (já se sabe o que a conta tem) */
   synced: boolean
 }
@@ -39,8 +37,7 @@ export const useSyncState = create<SyncUiState>(() => ({
   pending: 0,
   rejected: 0,
   conflicts: [],
-  limitTables: [],
-  planUse: null,
+  needsPlan: false,
   synced: false,
 }))
 const ui = (patch: Partial<SyncUiState>) => useSyncState.setState(patch)
@@ -79,8 +76,8 @@ const numberingRpc: NumberingRpc = {
 export interface ImportResult {
   /** o envio terminou sem erro */
   ok: boolean
-  /** itens que o servidor recusou por limite do plano */
-  limited: number
+  /** itens que o servidor recusou por falta de plano Pro */
+  refused: number
 }
 
 interface Running {
@@ -155,9 +152,6 @@ async function open(userId: string) {
   /** Empresa → fim do bloco reservado. Só em memória: ao reabrir, a primeira reserva recomeça depois do bloco antigo. */
   const blocks: Blocks = {}
 
-  /** O próximo envio usa a função de importação do servidor (não conta no limite). Só em memória. */
-  let importPending = false
-
   /** Repõe os blocos de números das empresas já sincronizadas. Falha de rede não impede o resto. */
   async function reserveNumbers() {
     for (const profile of useStore.getState().profiles) {
@@ -179,21 +173,9 @@ async function open(userId: string) {
     }
   }
 
-  /** Uso do plano e quais recusas são por limite, para o aviso explicar o motivo. */
-  async function refreshLimits() {
-    const items = engine.rejectedItems.filter((x) => x.reason === 'limite_do_plano')
-    const limitTables = [...new Set(items.map((x) => x.table))].filter(
-      (t): t is 'quotes' | 'company_profiles' => t === 'quotes' || t === 'company_profiles',
-    )
-    let planUse = useSyncState.getState().planUse
-    if (limitTables.length) {
-      try {
-        planUse = await call<PlanUse>('uso_do_plano', {})
-      } catch {
-        /* sem o uso, o aviso fica sem os números */
-      }
-    }
-    ui({ limitTables, planUse })
+  /** Sem plano Pro o servidor recusa toda gravação (`sem_permissao`): avisa em vez de falhar em silêncio. */
+  function refreshPlanState() {
+    ui({ needsPlan: engine.rejectedItems.some((x) => x.reason === 'sem_permissao') })
   }
 
   const captureAll = async () => {
@@ -242,19 +224,7 @@ async function open(userId: string) {
         // Dispositivo novo: traz o que o servidor já tem ANTES de enviar, senão as unidades padrão viram "conflito"
         if (engine.fresh) await engine.sync()
         await captureAll()
-        let r
-        if (importPending) {
-          importPending = false
-          try {
-            r = await engine.importAll()
-          } catch (e) {
-            // Conta com orçamentos próprios: a importação sem limite não vale; segue o envio normal
-            if (!(e instanceof Error && e.message.includes('já tem orçamentos'))) throw e
-            r = await engine.sync()
-          }
-        } else {
-          r = await engine.sync()
-        }
+        const r = await engine.sync()
         await reserveNumbers()
 
         const duplicates = r.rejected.filter((x) => x.table === 'quotes' && x.reason === 'duplicado').map((x) => x.id)
@@ -281,7 +251,7 @@ async function open(userId: string) {
       }
       if (!stopped) {
         publishConflicts()
-        await refreshLimits()
+        refreshPlanState()
         ui({ phase: 'idle', pending: engine.pendingCount, rejected: engine.rejectedCount, synced: true })
       }
     } catch (e) {
@@ -323,7 +293,6 @@ async function open(userId: string) {
     importLocal: async (data) => {
       await inflight.catch(() => undefined)
       const now = useStore.getState()
-      importPending = now.quotes.length === 0 // conta sem orçamentos: importa sem contar no limite
       suppress = true
       try {
         useStore.setState(mergeLocalIntoCloud(pickData(now), data))
@@ -333,7 +302,7 @@ async function open(userId: string) {
       await run()
       return {
         ok: useSyncState.getState().phase === 'idle',
-        limited: engine.rejectedItems.filter((x) => x.reason === 'limite_do_plano').length,
+        refused: engine.rejectedItems.filter((x) => x.reason === 'sem_permissao').length,
       }
     },
     dismiss: async (c) => {
@@ -354,7 +323,7 @@ async function open(userId: string) {
       await saveSnapshot().catch(() => undefined)
       db.close?.()
       useStore.setState(emptyData()) // os dados de uma conta não podem ficar na memória para a próxima
-      ui({ phase: 'loading', pending: 0, rejected: 0, conflicts: [], limitTables: [], planUse: null, synced: false })
+      ui({ phase: 'loading', pending: 0, rejected: 0, conflicts: [], needsPlan: false, synced: false })
       current = null
     },
   }

@@ -9,14 +9,13 @@ class FakeServer implements RpcClient {
     Map<string, ServerRow>
   >
   clock = 0
-  calls = { push: 0, pull: 0, imported: 0 }
-  /** ids que o servidor recusa por limite do plano */
+  calls = { push: 0, pull: 0 }
+  /** ids que o servidor recusa por falta de plano Pro */
   refuse = new Set<string>()
   private stamp = () => new Date(Date.UTC(2026, 0, 1) + ++this.clock * 1000).toISOString()
 
   rpc(fn: string, args: Record<string, unknown>) {
-    const push = fn === 'aplicar_alteracoes' || fn === 'importar_dados'
-    if (fn === 'importar_dados') this.calls.imported++
+    const push = fn === 'aplicar_alteracoes'
     return Promise.resolve({ data: push ? this.apply(args) : this.pull(args), error: null })
   }
 
@@ -36,7 +35,7 @@ class FakeServer implements RpcClient {
         // Igual ao banco: JSON null não é SQL NULL e viola a constraint "data é objeto"
         out.rejected.push({ table: c.table, id: c.id, reason: 'dados_invalidos' })
       } else if (this.refuse.has(c.id)) {
-        out.rejected.push({ table: c.table, id: c.id, reason: 'limite_do_plano' })
+        out.rejected.push({ table: c.table, id: c.id, reason: 'sem_permissao' })
       } else if ((c.base_rev === null && cur) || (c.base_rev !== null && cur?.rev !== c.base_rev)) {
         out.conflicts.push({ table: c.table, id: c.id, server: cur ?? null })
       } else {
@@ -243,13 +242,13 @@ describe('SyncEngine', () => {
     expect(server.rows.clients.get('1')).toMatchObject({ deleted_at: null, data: { name: 'Editado no B' } })
   })
 
-  it('recusa do servidor (limite do plano) não é reenviada em laço; editar o registro tenta de novo', async () => {
+  it('recusa do servidor (sem plano Pro) não é reenviada em laço; editar o registro tenta de novo', async () => {
     const server = new FakeServer()
     server.refuse.add('1')
     const a = await device(server)
     a.set([cli('1', 'Ana')])
     const r = await a.sync()
-    expect(r.rejected).toEqual([{ table: 'clients', id: '1', reason: 'limite_do_plano' }])
+    expect(r.rejected).toEqual([{ table: 'clients', id: '1', reason: 'sem_permissao' }])
 
     const enviadas = server.calls.push
     await a.sync()
@@ -266,7 +265,7 @@ describe('SyncEngine', () => {
     const a = await device(server)
     a.set([cli('1', 'Ana')])
     await a.sync()
-    expect(a.engine.rejectedItems).toEqual([{ table: 'clients', id: '1', reason: 'limite_do_plano' }])
+    expect(a.engine.rejectedItems).toEqual([{ table: 'clients', id: '1', reason: 'sem_permissao' }])
     expect(a.engine.isSynced('clients', '1')).toBe(false)
 
     a.set([]) // a pessoa desiste do item que o plano não aceitou
@@ -284,21 +283,6 @@ describe('SyncEngine', () => {
     server.put('clients', '2', cli('2', 'Bia'))
     await a.sync()
     expect(a.engine.isSynced('clients', '2')).toBe(true)
-  })
-
-  it('importAll envia pela função de importação e deixa tudo sincronizado', async () => {
-    const server = new FakeServer()
-    const a = await device(server)
-    a.set([cli('1', 'Ana'), cli('2', 'Bia')])
-    await a.engine.capture('clients', a.clients)
-    const r = await a.engine.importAll()
-    expect(r).toMatchObject({ applied: 2, conflicts: 0, rejected: [] })
-    expect(server.calls.imported).toBeGreaterThan(0)
-    expect(server.rows.clients.size).toBe(2)
-    // Depois de importar, o ciclo normal não reenvia nada
-    const antes = server.calls.push
-    await a.sync()
-    expect(server.calls.push).toBe(antes)
   })
 
   it('pagina o pull até acabar', async () => {

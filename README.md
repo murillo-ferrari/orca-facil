@@ -1,11 +1,14 @@
 # Orçafácil — gerador de orçamentos de serviços
 
 Ferramenta web para profissionais autônomos criarem orçamentos e exportarem em PDF.
-Tudo roda no navegador: não há servidor nem login, e os dados ficam salvos no `localStorage`.
+Duas edições, do mesmo código:
 
-**Use agora, de graça:** <https://murillo-ferrari.github.io/orca-facil/>
-
-Seus dados ficam só no seu navegador. Para levá-los a outro computador, use _Ajustes › Exportar backup_.
+- **Local (grátis):** roda no navegador, sem servidor nem login; os dados ficam no `localStorage` do aparelho.
+  **Use agora, de graça:** <https://murillo-ferrari.github.io/orca-facil/>. Para levar os dados a outro computador, use
+  _Ajustes › Dados › Exportar backup_.
+- **Cloud (plano Pro):** login (código por e-mail ou Google), dados na nuvem sincronizados entre celular e computador,
+  funciona sem internet e envia para a nuvem o que você já tinha no grátis. Assinatura pelo Mercado Pago
+  (R$ 9,99/mês ou R$ 99,99/ano). Na nuvem só existe o Pro: o grátis é a edição Local.
 
 ## Funcionalidades
 
@@ -53,7 +56,7 @@ npm run check        # tudo que o CI roda: formatação, lint, tipos e testes
 npm run build        # gera o site estático em dist/
 ```
 
-### Banco de dados da edição Cloud (em desenvolvimento)
+### Edição Cloud (Supabase)
 
 Requer [Docker](https://www.docker.com/) rodando. O Supabase local sobe em contêineres:
 
@@ -65,8 +68,15 @@ npm run db:types     # regenera src/editions/cloud/database.types.ts a partir do
 npm run db:stop
 ```
 
-A edição é escolhida no build pela variável `VITE_EDITION` (padrão `local`; veja `.env.example`). A edição `cloud`
-ainda não existe e o build recusa esse valor com uma mensagem explicativa.
+A edição é escolhida no build pela variável `VITE_EDITION` (padrão `local`; veja `.env.example`). A `cloud` exige
+`VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` (o `npm run db:start` mostra os valores do banco local):
+
+```bash
+npm run build:cloud  # compila a edição Cloud
+```
+
+As funções de servidor (Mercado Pago e exclusão de conta) ficam em `supabase/functions/` e usam os secrets
+`MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` e `APP_URL` (veja `docs/plano-versao-cloud.md`, seção 9.4).
 
 O build usa caminhos relativos e rotas com `#`, então a pasta `dist/` funciona em qualquer hospedagem estática
 (Netlify, Vercel, GitHub Pages) ou subpasta.
@@ -98,9 +108,11 @@ orca-facil/
 │   ├── ci.yml                  formatação, lint, tipos, testes, build e testes do banco a cada push/PR
 │   └── pages.yml               publica a edição Local no GitHub Pages a cada push na main
 ├── public/favicon.svg
-├── supabase/                   banco da edição Cloud (Postgres no Supabase)
+├── supabase/                   banco e servidor da edição Cloud (Postgres e Edge Functions no Supabase)
 │   ├── config.toml             configuração do Supabase local
-│   ├── migrations/             tabelas, regras de acesso (RLS), planos e funções de sincronização
+│   ├── migrations/             tabelas, regras de acesso (RLS), plano Pro, preços e funções de sincronização
+│   ├── functions/              assinatura, mercadopago-webhook, delete-account e _shared (regras puras, testadas)
+│   ├── templates/              modelo do e-mail com o código de login
 │   └── tests/database/         testes do banco (pgTAP)
 ├── docs/
 │   ├── plano-versao-cloud.md   plano da edição Cloud (login, sincronização entre dispositivos, planos)
@@ -120,7 +132,13 @@ orca-facil/
     ├── editions/               o que muda entre as edições
     │   ├── index.ts            edição atual (VITE_EDITION) e sua persistência
     │   ├── local/persistence.ts  edição Local: localStorage
-    │   └── cloud/database.types.ts  tipos TypeScript gerados do banco (npm run db:types)
+    │   └── cloud/              edição Cloud (nunca entra no bundle da Local)
+    │       ├── supabase.ts     cliente Supabase e "sair e apagar dados deste dispositivo"
+    │       ├── database.types.ts  tipos gerados do banco (npm run db:types)
+    │       ├── auth/           login por código e Google (Login, AuthGate), conta em Ajustes
+    │       ├── landing/        página inicial para quem não tem sessão (Landing, Showcase)
+    │       ├── billing/        plano Pro: página /assinatura, cartão em Ajustes, CTA, faixa "sem plano", planStore
+    │       └── sync/           sincronização: motor, fila por diferença, conflitos, numeração, importação da Local
     │
     ├── store/
     │   ├── store.ts            estado global (zustand) e ações; a persistência vem de src/editions
@@ -146,6 +164,7 @@ orca-facil/
     │   ├── AddressFields.tsx   endereço com preenchimento pelo CEP
     │   ├── ClientFields.tsx    campos de cliente (usados no cadastro e no orçamento)
     │   ├── ClientFormModal.tsx modal de cadastro/edição de cliente
+    │   ├── Faq.tsx             perguntas frequentes em <details> (landing e /assinatura)
     │   ├── ItemsEditor.tsx     itens do orçamento: sugestões do catálogo, atalhos de teclado, menu do item
     │   ├── UnitSelect.tsx      seletor de unidade (mostra só a sigla quando fechado)
     │   └── QuoteRow.tsx        linha de orçamento nas listas (PDF, duplicar, excluir)
@@ -159,7 +178,7 @@ orca-facil/
     │   ├── Reports.tsx         relatórios, abas e filtros         (/relatorios e /relatorios/:tab)
     │   ├── Profiles.tsx        perfis de empresa                  (/empresas)
     │   ├── ProfileEditor.tsx   cadastro/edição de empresa         (/empresas/:id)
-    │   └── Settings.tsx        unidades e backup                  (/ajustes)
+    │   └── Settings.tsx        abas: conta e plano (Cloud), dados, outros  (/ajustes e /ajustes/:tab)
     │
     ├── pdf/
     │   ├── QuotePdf.tsx        layout do PDF do orçamento (@react-pdf/renderer)

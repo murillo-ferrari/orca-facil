@@ -16,15 +16,13 @@ interface PlanState {
   loaded: boolean
   view: PlanView
   prices: Partial<Record<Interval, number>>
-  use: { orcamentos_no_mes: number; limite_orcamentos_no_mes: number | null } | null
   busy: boolean
 }
 
 const EMPTY: PlanState = {
   loaded: false,
-  view: { pro: false, title: 'Grátis', detail: null, canCancel: false },
+  view: { pro: false, title: 'Sem plano', detail: null, canCancel: false },
   prices: {},
-  use: null,
   busy: false,
 }
 
@@ -46,17 +44,15 @@ export function loadPlan() {
         if (data?.pro) toast('Plano Pro ativo. Obrigado!')
       }
     }
-    const [s, p, u] = await Promise.all([
+    const [s, p] = await Promise.all([
       supabase.from('subscriptions').select('plan, status, billing_interval, current_period_end').maybeSingle(),
       supabase.from('plan_prices').select('billing_interval, amount'),
-      supabase.rpc('uso_do_plano'),
     ])
     const apply = (sub: unknown) =>
       usePlan.setState({
         loaded: true,
         view: planView(sub as Subscription | null, Date.now(), (iso) => formatDate(iso)),
         prices: Object.fromEntries((p.data ?? []).map((x) => [x.billing_interval, Number(x.amount)])),
-        use: u.data as PlanState['use'],
       })
     apply(s.data)
 

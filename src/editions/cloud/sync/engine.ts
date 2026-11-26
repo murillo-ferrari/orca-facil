@@ -96,7 +96,7 @@ export class SyncEngine {
   >
   private pending = Object.fromEntries(TABLES.map((t) => [t, [] as Change[]])) as Record<Table, Change[]>
   private cursors: Partial<Record<Table, string>> = {}
-  /** Recusados pelo servidor (ex.: limite do plano), com o conteúdo recusado. Só em memória: reabrir tenta de novo. */
+  /** Recusados pelo servidor (ex.: sem plano Pro), com o conteúdo recusado. Só em memória: reabrir tenta de novo. */
   private rejected = new Map<string, { print: string; reason: string }>()
   private dirty = new Set<Table | 'cursors' | 'conflicts'>()
   private chain: Promise<unknown> = Promise.resolve()
@@ -157,7 +157,7 @@ export class SyncEngine {
     return this.rejected.size
   }
 
-  /** As mesmas alterações, com o motivo da recusa (ex.: `limite_do_plano`). */
+  /** As mesmas alterações, com o motivo da recusa (ex.: `sem_permissao`). */
   get rejectedItems() {
     return [...this.rejected].map(([key, r]) => {
       const i = key.indexOf(':')
@@ -186,17 +186,6 @@ export class SyncEngine {
       this.pending[table] = diffAgainstKnown(current, this.known[table], IGNORE[table]).filter(
         (c) => !this.isRejected(table, c),
       )
-    })
-  }
-
-  /**
-   * Envia a fila pela função de importação do servidor (`importar_dados`): ela não conta os orçamentos no limite do
-   * plano. Mesma fila, mesmo tratamento de aplicado/conflito/recusa. Chamar `capture` antes, com os dados já no store.
-   */
-  importAll(): Promise<SyncResult> {
-    return this.lock(async () => {
-      const pushed = await this.push('importar_dados')
-      return { ...pushed, pulled: await this.pull() }
     })
   }
 
@@ -270,13 +259,13 @@ export class SyncEngine {
     return n
   }
 
-  private async push(rpcName = 'aplicar_alteracoes') {
+  private async push() {
     const result = { applied: 0, conflicts: 0, rejected: [] as SyncResult['rejected'] }
     for (;;) {
       const batch = TABLES.flatMap((table) => this.pending[table].map((change) => ({ table, change }))).slice(0, BATCH)
       if (!batch.length) return result
 
-      const { data, error } = await this.client.rpc(rpcName, {
+      const { data, error } = await this.client.rpc('aplicar_alteracoes', {
         // O servidor identifica "registro novo" por base_rev nulo; nosso 0 significa o mesmo
         p_changes: batch.map(({ table, change: c }) => ({
           table,

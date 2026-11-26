@@ -12,8 +12,8 @@ const sub = (s: Partial<Subscription>): Subscription => ({
 })
 
 describe('planView', () => {
-  it('grátis sem assinatura ou com plano free', () => {
-    expect(planView(null, NOW, fmt)).toMatchObject({ pro: false, title: 'Grátis', canCancel: false })
+  it('sem assinatura ou com plano free: sem plano', () => {
+    expect(planView(null, NOW, fmt)).toMatchObject({ pro: false, title: 'Sem plano', canCancel: false })
     expect(planView(sub({ plan: 'free' }), NOW, fmt).pro).toBe(false)
   })
 
@@ -34,7 +34,7 @@ describe('planView', () => {
     })
   })
 
-  it('atrasado avisa durante a tolerância de 7 dias e depois volta ao grátis', () => {
+  it('atrasado avisa durante a tolerância de 7 dias e depois fica sem plano', () => {
     const late = sub({ current_period_end: '2026-11-20T12:00:00Z' })
     expect(planView(late, NOW, fmt)).toMatchObject({ pro: true, detail: expect.stringContaining('pendente') })
     expect(planView(sub({ current_period_end: '2026-11-10T12:00:00Z' }), NOW, fmt).pro).toBe(false)

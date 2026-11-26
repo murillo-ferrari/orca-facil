@@ -38,11 +38,11 @@ const FAQ: [string, ReactNode][] = [
   ],
   [
     'Já uso o grátis. Posso passar para o Pro?',
-    'Sim. No primeiro acesso com a conta, o app oferece enviar para a nuvem os dados que estão no navegador, ou de um arquivo de backup. Nada é substituído.',
+    'Sim. Assine o Pro e, no primeiro acesso, o app oferece enviar para a nuvem os dados que estão no navegador, ou de um arquivo de backup. Nada é substituído.',
   ],
   [
     'Posso cancelar o Pro quando quiser?',
-    'Sim. O Pro continua valendo até o fim do período já pago. Seus dados não são apagados e você pode exportar um backup e seguir no grátis.',
+    'Sim. O Pro continua valendo até o fim do período já pago. Seus dados não são apagados: você pode exportar um backup em arquivo e continuar no grátis, no aparelho.',
   ],
   [
     'O código é aberto?',

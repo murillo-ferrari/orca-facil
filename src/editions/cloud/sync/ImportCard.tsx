@@ -5,6 +5,7 @@ import { toast } from '../../../components/toast'
 import { confirmDialog } from '../../../components/confirm'
 import { BackupError, parseBackup } from '../../../data/backup'
 import { STORAGE_KEY } from '../../../data/schema'
+import { usePlan } from '../billing/planStore'
 import { importLocal } from './controller'
 import { countsOf, describeCounts, fromBackup, readLocalEdition } from './migration'
 
@@ -16,6 +17,7 @@ export default function ImportCard() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [hasLocal, setHasLocal] = useState(() => readLocalEdition() !== null)
+  const pro = usePlan((s) => s.view.pro)
 
   async function send(data: ReturnType<typeof fromBackup>, label: string, clearLocal: boolean) {
     const counts = describeCounts(countsOf(data))
@@ -41,8 +43,8 @@ export default function ImportCard() {
       setHasLocal(false)
     }
     toast(
-      r.limited
-        ? `Dados enviados. ${r.limited} item(ns) passaram do limite do plano.`
+      r.refused
+        ? `${r.refused} item(ns) não foram enviados: a nuvem exige o plano Pro.`
         : 'Dados enviados para a sua conta',
     )
   }
@@ -69,7 +71,7 @@ export default function ImportCard() {
         {hasLocal && (
           <Button
             variant="primary"
-            disabled={busy}
+            disabled={busy || !pro}
             onClick={() => {
               const data = readLocalEdition()
               if (data) void send(data, 'deste navegador', true)
@@ -78,7 +80,7 @@ export default function ImportCard() {
             <CloudUpload size={16} /> Enviar dados deste navegador
           </Button>
         )}
-        <Button disabled={busy} onClick={() => fileRef.current?.click()}>
+        <Button disabled={busy || !pro} onClick={() => fileRef.current?.click()}>
           <FileUp size={16} /> Enviar de um arquivo de backup
         </Button>
         <input
@@ -93,7 +95,12 @@ export default function ImportCard() {
           }}
         />
       </div>
-      {!hasLocal && (
+      {!pro && (
+        <p className="px-4 pb-4 text-sm text-slate-500 sm:px-5">
+          Disponível com o plano Pro, que liga a conta à nuvem.
+        </p>
+      )}
+      {pro && !hasLocal && (
         <p className="px-4 pb-4 text-sm text-slate-500 sm:px-5">Não há dados da versão gratuita neste navegador.</p>
       )}
     </Card>

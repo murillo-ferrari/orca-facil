@@ -40,12 +40,12 @@ export default function PlanCard() {
         title={
           <span className="flex items-center gap-2">
             Plano{' '}
-            <Badge className={view.pro ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-700'}>
+            <Badge className={view.pro ? 'bg-brand-50 text-brand-700' : 'bg-amber-50 text-amber-800'}>
               {view.title}
             </Badge>
           </span>
         }
-        description={view.pro ? view.detail : 'Sem sincronização na nuvem. Seus dados ficam só neste aparelho.'}
+        description={view.pro ? view.detail : 'Na nuvem, novas alterações só são salvas com o plano Pro.'}
       />
       <div className="space-y-3 p-4 sm:p-5">
         {!view.pro && (

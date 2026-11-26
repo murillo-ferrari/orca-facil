@@ -136,25 +136,6 @@ export type Database = {
         }
         Relationships: []
       }
-      plan_limits: {
-        Row: {
-          max_company_profiles: number | null
-          max_new_quotes_per_month: number | null
-          plan: string
-        }
-        ComputedFields: never
-        Insert: {
-          max_company_profiles?: number | null
-          max_new_quotes_per_month?: number | null
-          plan: string
-        }
-        Update: {
-          max_company_profiles?: number | null
-          max_new_quotes_per_month?: number | null
-          plan?: string
-        }
-        Relationships: []
-      }
       plan_prices: {
         Row: {
           amount: number
@@ -179,7 +160,6 @@ export type Database = {
           data: NonNullable<Json>
           deleted_at: string | null
           id: string
-          imported: boolean
           inserted_at: string
           issue_date: string
           number: string
@@ -194,7 +174,6 @@ export type Database = {
           data: NonNullable<Json>
           deleted_at?: string | null
           id: string
-          imported?: boolean
           inserted_at?: string
           issue_date: string
           number: string
@@ -208,7 +187,6 @@ export type Database = {
           data?: NonNullable<Json>
           deleted_at?: string | null
           id?: string
-          imported?: boolean
           inserted_at?: string
           issue_date?: string
           number?: string
@@ -263,13 +241,6 @@ export type Database = {
             referencedRelation: 'plan_prices'
             referencedColumns: ['billing_interval']
           },
-          {
-            foreignKeyName: 'subscriptions_plan_fkey'
-            columns: ['plan']
-            isOneToOne: false
-            referencedRelation: 'plan_limits'
-            referencedColumns: ['plan']
-          },
         ]
       }
       user_settings: {
@@ -311,9 +282,7 @@ export type Database = {
       aplicar_alteracoes: { Args: { p_changes: Json }; Returns: Json }
       buscar_alteracoes: { Args: { p_desde?: string; p_limite?: number }; Returns: Json }
       definir_proximo_numero: { Args: { p_empresa: string; p_proximo: number }; Returns: number }
-      importar_dados: { Args: { p_changes: Json }; Returns: Json }
       reservar_numeros_orcamento: { Args: { p_empresa: string; p_quantidade?: number }; Returns: number }
-      uso_do_plano: { Args: Record<PropertyKey, never>; Returns: Json }
     }
     Enums: {
       [_ in never]: never

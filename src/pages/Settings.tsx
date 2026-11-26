@@ -16,8 +16,6 @@ const ImportCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/ImportCard')) : null
 const PlanCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/billing/PlanCard')) : null
-const LimitCard =
-  import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/LimitCard')) : null
 const ConflictsCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/ConflictsCard')) : null
 
@@ -248,8 +246,6 @@ export function SettingsPage() {
           <>
             {lazyCard(AccountCard, <CardSkeleton className="h-[262px] sm:h-[154px]" />)}
             {lazyCard(PlanCard, <CardSkeleton className={PLAN_SKELETON} />)}
-            {/* Sem skeleton: quase sempre não mostra nada, e reservar espaço criaria o salto */}
-            {lazyCard(LimitCard)}
           </>
         )}
         {current.slug === 'dados' && (

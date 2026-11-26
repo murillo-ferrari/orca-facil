@@ -7,7 +7,7 @@ import { cn } from '../../../components/styles'
 import { formatCurrency } from '../../../lib/format'
 import { confirmSubscription, subscribe, usePlan, watchPlan, type Interval } from './planStore'
 
-/** Linhas da comparação: [recurso, Grátis (no aparelho), Pro (na nuvem)]. true/false viram ícone; texto aparece como está. */
+/** Linhas da comparação: [recurso, Grátis (a edição no aparelho), Pro (na nuvem)]. true/false viram ícone. */
 const FEATURES: [string, string | boolean, string | boolean][] = [
   ['Orçamentos e empresas', 'Sem limite', 'Sem limite'],
   ['Onde ficam os dados', 'Só neste aparelho', 'Na nuvem, na sua conta'],
@@ -30,7 +30,7 @@ const FAQ: [string, string][] = [
   ],
   [
     'O que acontece com meus dados se eu cancelar?',
-    'Nada é apagado: seus dados continuam na sua conta. Você pode exportar um backup em arquivo (Ajustes › Dados) e usar o plano grátis, no aparelho, importando esse arquivo.',
+    'Nada é apagado: seus dados continuam na sua conta e você continua vendo tudo, mas novas alterações deixam de ser salvas na nuvem. Exporte um backup em arquivo (Ajustes › Dados) e use o plano grátis, no aparelho, importando esse arquivo.',
   ],
   [
     'Posso levar para a nuvem o que já tenho no grátis?',

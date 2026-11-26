@@ -1,8 +1,14 @@
 # CLAUDE.md — Orçafácil (gerador de orçamentos)
 
-App web para profissionais autônomos criarem orçamentos de serviços e exportarem em PDF. Roda **100% no navegador**:
-sem backend, sem login; os dados ficam no `localStorage`. O `README.md` é a documentação para pessoas (funcionalidades,
-estrutura de pastas arquivo por arquivo, diagramas Mermaid). Este arquivo guarda o contexto para continuar o trabalho.
+App web para profissionais autônomos criarem orçamentos de serviços e exportarem em PDF. Tem **duas edições**, escolhidas
+no build por `VITE_EDITION`:
+
+- **Local (grátis):** roda 100% no navegador, sem backend nem login; os dados ficam no `localStorage`. Publicada no GitHub Pages.
+- **Cloud (plano Pro, R$ 9,99/mês ou R$ 99,99/ano):** login obrigatório (Supabase), dados na nuvem sincronizados entre
+  aparelhos, cobrança pelo Mercado Pago. **Na nuvem só existe o Pro** (decidido em 26/11/2026): o grátis é a edição Local.
+
+O `README.md` é a documentação para pessoas (funcionalidades, estrutura de pastas arquivo por arquivo, diagramas
+Mermaid). Este arquivo guarda o contexto para continuar o trabalho.
 
 O nome "Orçafácil" (aparece em `src/App.tsx` e `index.html`) será publicado em `orcafacil.murilloferrari.tech` (subdomínio no Cloudflare).
 Licença: AGPL-3.0 (`LICENSE`). Repositório público: <https://github.com/murillo-ferrari/orca-facil> (a pasta local
@@ -25,8 +31,13 @@ npm run format         # Prettier: sem ponto e vírgula, aspas simples, 120 colu
 npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
 ```
 
-- `VITE_EDITION` (`local` | `cloud`, padrão `local`) escolhe a edição no build; `vite.config.ts` valida e hoje
-  **recusa `cloud`** até a edição existir. CI em `.github/workflows/ci.yml`; publicação em `.github/workflows/pages.yml`.
+- `VITE_EDITION` (`local` | `cloud`, padrão `local`) escolhe a edição no build; `vite.config.ts` valida, e a `cloud`
+  exige `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` (ver `.env.example`; `npm run build:cloud`). Para testar a
+  Cloud no navegador: banco local (`npm run db:start`) + `VITE_EDITION=cloud` com a URL e a chave que o comando mostra.
+  CI em `.github/workflows/ci.yml` (compila as duas edições); publicação da Local em `.github/workflows/pages.yml`.
+- A Cloud usa `BrowserRouter` (rotas por caminho) e a Local `HashRouter`. Sem sessão: `/` é a **landing**
+  (`editions/cloud/landing/`), `/entrar` o login. O código da Cloud nunca entra no bundle da Local (imports `lazy`
+  sob `import.meta.env.VITE_EDITION === 'cloud'`).
 
 ## Testes e validação
 
@@ -123,22 +134,27 @@ persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem
 - Migrações em `supabase/migrations/` (SQL comentado em pt-BR). **Depois que uma migração for aplicada num ambiente
   online, nunca editá-la: criar uma nova.** Enquanto só existir localmente, pode ser editada + `npm run db:reset`.
 - Tabelas: `user_settings` (1 por usuário, `id = user_id`), `company_profiles`, `clients`, `catalog_items`, `quotes`
-  (documento completo em `data` + colunas extraídas), `plan_limits`, `subscriptions`, `billing_events`.
+  (documento completo em `data` + colunas extraídas), `plan_prices`, `subscriptions`, `billing_events`.
 - Colunas de controle definidas pelo servidor: `user_id` (de `auth.uid()`), `rev`, `inserted_at`, `updated_at`;
   `deleted_at` = exclusão lógica. Usuários não fazem DELETE físico; excluir a conta apaga tudo em cascata.
 - RPCs do app: `aplicar_alteracoes`, `buscar_alteracoes`, `reservar_numeros_orcamento`, `definir_proximo_numero`,
-  `uso_do_plano`. Auxiliares `security definer` ficam no schema `private` (não exposto pela API).
-- Limites (grátis: 15 orçamentos novos/mês, 1 empresa) na tabela `plan_limits`; aplicados nas policies de INSERT.
-- Cobrança (F7): preços em `plan_prices`; Edge Functions `assinatura` (assinar/cancelar) e `mercadopago-webhook`
-  (só ele e o cancelamento gravam `subscriptions`). Regras puras em `supabase/functions/_shared/mercadopago.ts`,
-  testadas pelo Vitest. Secrets: `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `APP_URL`.
-- Testes: `npm run db:test` (91 pgTAP, também no CI). Ao mudar o banco: migração + teste + `npm run db:types`
+  Auxiliares `security definer` ficam no schema `private` (não exposto pela API).
+- **Na nuvem só existe o plano Pro** (decidido em 26/11/2026; o grátis é a edição Local). Sem Pro vigente (nova conta ou
+  vencida há mais de 7 dias) a conta só lê: as policies de INSERT/UPDATE exigem `private.is_pro()` e o servidor recusa
+  com `sem_permissao`. Não há mais limites de orçamentos/empresas nem `plan_limits`.
+- **Cobrança (F7, Mercado Pago):** preços em `plan_prices` (legíveis por visitantes: a landing os mostra). Edge Functions:
+  `assinatura` (`assinar`, `confirmar`, `cancelar`; JWT conferido no código), `mercadopago-webhook` (confere
+  `x-signature`, registra em `billing_events` e lê o estado na API) e `delete-account` (cancela a assinatura antes de
+  apagar a conta). Gravam `subscriptions` por `upsert` (`saveSubscription`). Regras puras em
+  `supabase/functions/_shared/mercadopago.ts`, testadas pelo Vitest. Secrets: `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`,
+  `APP_URL` (`https` público) e, só no `staging`, `MP_TEST_PAYER_EMAIL` (comprador de teste). O plano muda por
+  webhook **ou** por `confirmar` (ao voltar do checkout, por "Já assinei" e uma vez por sessão para assinantes), então
+  não depende de o webhook chegar. Publicar funções: `npx supabase functions deploy <nome>` (pede `--yes` em modo agente).
+- Testes: `npm run db:test` (86 pgTAP, também no CI). Os testes promovem os usuários a Pro (`update public.subscriptions`). Ao mudar o banco: migração + teste + `npm run db:types`
   (o CI falha se `src/editions/cloud/database.types.ts` estiver desatualizado). Nos testes, para mexer em colunas
   protegidas por gatilho, usar `set local session_replication_role = replica`.
 - Projeto online vinculado: `orca-facil` (staging, ref `tqysyqwzqyuiwbudnfqc`). CLI v3: comandos remotos exigem
   `--remote` (ex.: `npx supabase db push --remote --dry-run` antes de aplicar); sem ele, o alvo é o banco local.
-- `importar_dados` (RPC) importa dados da edição Local sem contar no limite do plano (só em conta sem orçamentos
-  próprios); `quotes.imported` é definida pelo servidor. Ver seção 8 do plano.
 - Docker Desktop precisa estar rodando. Container do banco: `supabase_db_orca-facil` (porta 54322).
 
 ## Regras de negócio
@@ -159,7 +175,7 @@ persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem
 ## Ajustes (`src/pages/Settings.tsx`, rota `/ajustes` e `/ajustes/:tab`)
 
 Abas como em Relatórios (links de rota, não `role="tablist"`): **Conta e plano** (`/ajustes`, só na Cloud: conta,
-plano, aviso de limite), **Dados** (`dados`: enviar para a nuvem, conflitos, backup; é a primeira aba na edição Local)
+plano), **Dados** (`dados`: enviar para a nuvem, conflitos, backup; é a primeira aba na edição Local)
 e **Outros** (`outros`: unidades de medida). Aba inexistente abre a primeira.
 
 ## Relatórios (`src/reports/`, rota `/relatorios` e `/relatorios/:tab`)
@@ -233,7 +249,7 @@ Ideia do usuário em duas etapas, detalhada em **`docs/plano-versao-cloud.md`** 
 Decididas: **D1 licença AGPL-3.0**, **D2 código da Cloud no mesmo repositório público** (edição escolhida por
 `VITE_EDITION`), **D3 domínio `orcafacil.murilloferrari.tech`** (trocado em 23/11/2026; e-mail de login
 `login@orcafacil.murilloferrari.tech`), **D10 Resend** (SMTP), **D6 código por e-mail + Google**, **D7 leitura e escrita offline**,
-**D8 mescla em três vias**, **D4 Mercado Pago**, **D5 Pro R$ 9,99/mês ou R$ 99,99/ano**. Pendente: D9 nome (tende a "Orçafácil") — ver seção 2 do plano.
+**D8 mescla em três vias**, **D4 Mercado Pago**, **D5 só Pro na nuvem, R$ 9,99/mês ou R$ 99,99/ano (o grátis é a edição Local)**. Pendente: D9 nome (tende a "Orçafácil") — ver seção 2 do plano.
 
 ## Histórico (resumo)
 
@@ -253,7 +269,11 @@ Decididas: **D1 licença AGPL-3.0**, **D2 código da Cloud no mesmo repositório
 11. **F4 (autenticação) concluída:** login por código e Google, Turnstile, conta em Ajustes, `delete-account`,
     modelo de e-mail; projeto online configurado (24/11/2026).
 12. **F5 (sincronização) e F6 (importação da Local) concluídas** (24/11/2026): IndexedDB, fila por diferença, reserva
-    de números em blocos, tela de conflitos com mescla em três vias, `importar_dados`; migrações no `staging`.
-13. **F7 (planos e cobrança)** — assinatura funcionando no `staging`: `plan_prices`, funções `assinatura`
-    (assinar/confirmar/cancelar) e `mercadopago-webhook`, página `/assinatura`, CTA na sidebar e _Ajustes › Plano_.
-    Falta o webhook chegar e testar cancelamento/renovação (seção 9.4 do plano).
+    de números em blocos, tela de conflitos com mescla em três vias; migrações no `staging`.
+13. **F7 (planos e cobrança) concluída** (26/11/2026): `plan_prices`, funções `assinatura`, `mercadopago-webhook` e
+    `delete-account` (cancela a assinatura), página `/assinatura`, CTA na sidebar, faixa "sem plano" e _Ajustes › Plano_;
+    testada no `staging` com conta de teste do Mercado Pago.
+14. **Landing, só Pro na nuvem e ajustes** (26/11/2026): página inicial da Cloud (`/`) com vitrine de recursos, login em
+    `/entrar` (ícone do Google), rota de Ajustes `/ajustes` em abas, "serviços" unificado como "Catálogo",
+    sincronização que grava a cópia local mesmo offline, e a decisão de a nuvem ser só Pro (migração
+    `20261126110000_so_plano_pro`: sem Pro a conta só lê; fim dos limites do grátis e de `importar_dados`).

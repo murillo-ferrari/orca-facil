@@ -1,8 +1,9 @@
 # Plano de implementação — Orçafácil Cloud
 
-> Documento de planejamento. Estado do projeto na data: app 100% local (React + `localStorage`), schema de dados v2,
-> sem remoto Git. Valores de preços e limites de terceiros foram verificados em novembro de 2026 e devem ser
-> reconferidos antes de contratar (fontes no fim do documento).
+> Documento de planejamento, atualizado em 26/11/2026. Estado: **F1 a F7 concluídas** (edição Local publicada; edição Cloud
+> com login, sincronização, plano Pro pelo Mercado Pago e landing, rodando no projeto `staging`). Faltam F8 a F10.
+> Valores de preços e limites de terceiros foram verificados em novembro de 2026 e devem ser reconferidos antes de
+> contratar (fontes no fim do documento).
 
 > **Decidido:** backend **Supabase** e autenticação **Supabase Auth**. O Clerk foi descartado porque a cobrança dele
 > (Clerk Billing) não funciona no Brasil, e sem ela não compensava um segundo fornecedor. Comparativo e justificativa
@@ -18,7 +19,7 @@ O projeto passa a ter duas edições, a partir do **mesmo código**:
 | Conta | Não precisa | Login obrigatório (Supabase Auth) |
 | Dados | `localStorage` do navegador | Banco na nuvem (Supabase/Postgres) + cópia local para uso offline |
 | Diferencial | Grátis, código aberto, privado por padrão | Mesmos dados em qualquer dispositivo; backup automático |
-| Custo para o usuário | Grátis | Plano grátis com limite + plano pago |
+| Custo para o usuário | Grátis | Plano Pago (Pro), único na nuvem |
 
 A edição Local continua existindo e completa. A Cloud acrescenta conta, sincronização e planos, e não pode piorar
 a experiência atual: o app continua rápido e funciona sem internet.
@@ -34,7 +35,7 @@ foram decididas durante a F4–F7. Pendente: D9 (nome).
 | D2 | **Código da Cloud** no mesmo repositório público? | Mesmo repo · repo privado separado | ✅ **Mesmo repositório**, com as edições escolhidas por variável de build; segredos fora do código |
 | D3 | **Domínio** | — | ✅ **`orcafacil.murilloferrari.tech`** (subdomínio no Cloudflare; trocado em 23/11/2026 no lugar de `orcafacil.com.br`). App nesse endereço, e-mails de login de `login@orcafacil.murilloferrari.tech` |
 | D4 | **Provedor de pagamento** | Asaas · Mercado Pago · Stripe · Paddle (detalhes na seção 9.2) | ✅ **Mercado Pago** (assinaturas _preapproval_; decidido em 24/11/2026) |
-| D5 | **Planos e limites** | Ver seção 9.1 | ✅ Grátis: 15 orçamentos novos/mês e 1 empresa; **Pro: R$ 9,99/mês ou R$ 99,99/ano**, ilimitado (24/11/2026) |
+| D5 | **Planos** | Ver seção 9.1 | ✅ **Só o Pro existe na nuvem: R$ 9,99/mês ou R$ 99,99/ano**. O grátis é a edição Local, no aparelho (24 e 26/11/2026) |
 | D6 | **Formas de login** | E-mail com código · Google · Apple · senha | ✅ **E-mail com código de 6 dígitos + Google** (feito na F4) |
 | D10 | **Serviço de envio de e-mail (SMTP)** | Resend · Brevo · Amazon SES · Postmark · ZeptoMail | ✅ **Resend** (decidido em 23/11/2026) |
 | D7 | **Nível de offline** | Só online · leitura offline · leitura e escrita offline | ✅ **Leitura e escrita offline** (feito na F5) |
@@ -180,7 +181,7 @@ extraídas resolvem, e uma view pode expandir o JSON.
 | `clients` | `name text`, `document_digits text` | |
 | `catalog_items` | `description text` | |
 | `quotes` | `profile_id uuid`, `number text`, `status text`, `issue_date date` | Itens, acréscimos, cliente e `statusHistory` ficam no `data` |
-| `plan_limits` | `max_new_quotes_per_month`, `max_company_profiles` | Limites por plano (grátis: 15/mês e 1 empresa); ajustáveis sem migração |
+| `plan_prices` | `billing_interval`, `amount`, `months` | Preços do Pro (mensal e anual), lidos pela função de assinatura e pela landing. (`plan_limits` existiu até 26/11/2026, quando os limites do grátis foram removidos) |
 | `subscriptions` | `plan`, `status`, `current_period_end`, `provider`, `provider_customer_id`, `provider_subscription_id` | Gravada **só** pelo servidor (gatilho de cadastro e Edge Functions) |
 | `billing_events` | `provider`, `event_id` (único), `payload jsonb` | Idempotência e auditoria dos webhooks |
 
@@ -266,7 +267,7 @@ ficam no schema `private`, que a API não expõe.
 | `definir_proximo_numero(p_empresa, p_proximo)` | Campo "Próximo número" da tela de empresa |
 | `uso_do_plano()` | Plano em vigor, orçamentos criados no mês, empresas e os limites |
 | `private.current_plan()`, `private.can_create_quote()`, `private.can_create_company_profile()` | Usadas nas policies de INSERT. O mês é contado no fuso de São Paulo, e excluídos contam (apagar não devolve cota) |
-| `private.handle_new_user()` | Gatilho no cadastro: cria `user_settings` e a assinatura grátis |
+| `private.handle_new_user()` | Gatilho no cadastro: cria `user_settings` e a assinatura (`plan = 'free'`, que significa "sem plano") |
 | `private.purge_deleted_rows()` | Remove de vez linhas excluídas há mais de 90 dias (pg_cron, diário) |
 
 Proteções feitas por gatilho: o servidor define `user_id` (sem o app enviar), `rev`, `inserted_at` e `updated_at`;
@@ -281,8 +282,8 @@ pelas funções de numeração, e `data.nextNumber` sempre reflete o valor real.
   nada; excluir a conta apaga tudo em cascata; todas as tabelas têm RLS;
 - **integridade:** versão sobe e não pode ser forjada; colunas extraídas; validações (status, data, número repetido);
   numeração protegida;
-- **planos:** limites do grátis (orçamentos/mês e empresas), cota mensal, Pro, tolerância de 7 dias na
-  inadimplência, nada é apagado ao voltar ao grátis;
+- **planos:** sem Pro a conta só lê (nenhuma tabela grava), Pro sem limites, tolerância de 7 dias na
+  inadimplência, cancelada vale até o fim do período, nada é apagado ao ficar sem plano;
 - **sincronização:** criação, alteração, conflito, exclusão/restauração, lotes com itens inválidos, paginação da busca
   e numeração.
 
@@ -491,8 +492,8 @@ Itens com envio pendente mostram um ícone discreto.
 5. Volta garantida: _Ajustes › Exportar backup_ continua existindo na Cloud, no mesmo formato da Local. A pessoa
    pode sair da Cloud a qualquer momento levando tudo.
 
-Limites do plano grátis **não** bloqueiam a importação (o limite vale para criar novos orçamentos), para não punir
-quem migra.
+A importação exige plano Pro (a nuvem só grava para quem assina): quem quer migrar assina primeiro e, no primeiro
+acesso, o app oferece o envio. Sem Pro, o aviso e _Ajustes › Enviar dados para a nuvem_ ficam bloqueados.
 
 **Como ficou (F6, 24/11/2026):**
 - **Aviso no primeiro login, com confirmação** (`MigrationPrompt`): aparece depois da primeira sincronização, para já
@@ -503,27 +504,36 @@ quem migra.
 - **União, nunca substituição** (`mergeLocalIntoCloud`): mesmo `id` fica com o `updatedAt` mais recente (empate: a
   nuvem); orçamento local com número já usado por outro orçamento da nuvem recebe número novo; `nextNumber` fica com o
   maior dos dois lados; unidades de símbolo novo são acrescentadas.
-- **Fora do limite do plano:** migração `20261124110000` cria a função `importar_dados`, que liga `app.importando` só
-  dentro dela, marca os orçamentos como `imported` (não contam no limite do mês) e aceita mais empresas que o limite.
-  Não vira atalho: só funciona em conta **sem orçamentos próprios**, tem teto de 5.000 orçamentos e 20 empresas, e a
-  coluna `imported` é definida pelo servidor (insert direto nunca nasce importado; update não a muda).
+- **Sem limite especial (26/11/2026):** a função `importar_dados` e a coluna `quotes.imported` existiram só para a
+  importação não contar no limite do plano grátis. Sem esse limite, a migração `20261126110000` as removeu, e a
+  importação passa pelo envio normal (`aplicar_alteracoes`).
 - **Pendente:** excluir conta já existe (F4); exportar já existe (Ajustes › Exportar backup, mesmo formato).
 
 ## 9. Planos, limites e cobrança
 
 ### 9.1 Planos (decisão D5, 24/11/2026)
 
-| | Local | Cloud Grátis | Cloud Pro |
-|---|---|---|---|
-| Preço | R$ 0 | R$ 0 | **R$ 9,99/mês ou R$ 99,99/ano** (tabela `plan_prices`) |
-| Orçamentos novos por mês | ilimitados | 15 | ilimitados |
-| Empresas (perfis) | ilimitadas | 1 | ilimitadas |
-| Dispositivos sincronizados | — | ilimitados | ilimitados |
-| Relatórios, PDF, catálogo, clientes | sim | sim | sim |
-| Futuro (fora deste plano): link público do orçamento com aceite online, envio por e-mail, logo no PDF | — | — | sim |
+**Decidido (26/11/2026): na nuvem só existe o plano Pro.** O "grátis" é a edição Local (sem conta, dados só no
+navegador, sem limites). O plano grátis na nuvem (15 orçamentos por mês, 1 empresa) só existia para a pessoa conseguir
+importar o que já tinha ao virar Pro; com a importação por arquivo e o envio dos dados do navegador, ele deixou de
+fazer sentido.
 
-Critério: o grátis precisa ser útil de verdade (quem orça pouco não paga). O Pro é para quem vive de orçamento.
-Limitar por volume e por número de empresas é simples de explicar e de verificar no servidor.
+| | Local (grátis) | Cloud Pro |
+|---|---|---|
+| Preço | R$ 0 | **R$ 9,99/mês ou R$ 99,99/ano** (tabela `plan_prices`) |
+| Orçamentos e empresas | ilimitados | ilimitados |
+| Onde ficam os dados | só no navegador deste aparelho | na nuvem, na conta |
+| Sincronização entre aparelhos | — | sim |
+| Enviar para a nuvem o que já tem no grátis | — | sim |
+| Relatórios, PDF, catálogo, clientes, backup em arquivo | sim | sim |
+| Futuro (fora deste plano): link público do orçamento com aceite online, envio por e-mail, logo no PDF | — | sim |
+
+**Sem plano na nuvem** (conta recém-criada ou assinatura vencida há mais de 7 dias): a conta **só lê**. O servidor
+recusa qualquer gravação (`sem_permissao`, política de RLS com `private.is_pro()`), mas nada é apagado: dá para ver os
+dados, exportar um backup, assinar de novo ou excluir a conta. O app avisa com uma faixa no topo e no indicador de
+sincronização.
+
+**Para sair do Pro:** exportar um backup em arquivo (_Ajustes › Dados_) e importá-lo na edição Local.
 
 ### 9.2 Provedor de pagamento (decisão D4)
 
@@ -560,10 +570,10 @@ sequenceDiagram
     A->>U: "Plano Pro ativo"
 ```
 
-- **Fonte da verdade:** a tabela `subscriptions`. As policies (`private.can_create_quote()` e `private.can_create_company_profile()`) consultam essa tabela, então
-  não dá para burlar o limite alterando o app.
-- **Inadimplência:** pagamento atrasado → aviso no app → após 7 dias, volta para o Grátis. **Nenhum dado é
-  apagado**: só a criação acima do limite fica bloqueada.
+- **Fonte da verdade:** a tabela `subscriptions`. As policies de escrita (`private.is_pro()`) consultam essa tabela,
+  então não dá para burlar o plano alterando o app.
+- **Inadimplência:** pagamento atrasado → aviso no app → após 7 dias, a conta fica sem plano e **só lê**. **Nenhum
+  dado é apagado**: só a gravação na nuvem é bloqueada.
 - **Cancelamento:** vale até o fim do período pago.
 - **Webhooks:** verificar assinatura/token, registrar em `billing_events` (com `event_id` único, o que dá
   idempotência), responder rápido e reprocessar se falhar.
@@ -589,18 +599,33 @@ sequenceDiagram
   assinatura antiga não derruba a atual.
 - **Telas** (`editions/cloud/billing/`, plano compartilhado em `planStore.ts`): página **`/assinatura`** com cards
   Grátis × Pro, período mensal/anual, tabela de comparação e perguntas frequentes; CTA "Seja Pro" na sidebar (acima
-  do status de sincronização) e botão "Pro" no topo do celular, só para quem não é Pro; _Ajustes › Plano_ com uso,
-  "Conhecer o Pro", "Já assinei" e "Cancelar assinatura". Skeleton até a primeira leitura (sem flash de "Grátis").
+  do status de sincronização) e botão "Pro" no topo do celular, só para quem não é Pro; faixa "Sua conta está sem
+  plano" no topo do app; _Ajustes › Plano_ com "Conhecer o Pro", "Já assinei" e "Cancelar assinatura". Skeleton até a
+  primeira leitura (sem flash de "Sem plano").
 - **Configurar no Supabase** (secrets das funções): `MP_ACCESS_TOKEN` (credencial de teste no `staging`),
   `MP_WEBHOOK_SECRET` (gerada no painel do Mercado Pago ao salvar o webhook), `APP_URL` (precisa ser `https`
   público: o Mercado Pago recusa `back_url` local) e, **só no `staging`**, `MP_TEST_PAYER_EMAIL` (com credencial de
   teste, o pagador tem de ser o comprador de teste, `test_user_<id>@testuser.com`). Webhook no painel:
   `https://<ref>.supabase.co/functions/v1/mercadopago-webhook`, tópicos de Assinaturas.
-- **Testado no `staging` (24/11/2026):** assinatura mensal com comprador e cartão de teste, confirmada por "Já
-  assinei" (Pro até 24/12/2026). **Pendente:** o webhook não recebeu nenhuma notificação (conferir aplicação/modo/
-  eventos no painel do Mercado Pago); cancelamento, renovação e atraso. Conferir lá: se a assinatura aceita Pix/boleto ou só cartão/saldo, e se `frequency=12` +
-  `months` aparece como anual no checkout.
-- **Fora da F7:** cancelar a assinatura ao excluir a conta (`delete-account`) e nota fiscal (NFS-e) da venda.
+- **Testado no `staging` (24 a 26/11/2026)** com contas de teste do Mercado Pago (vendedor e comprador de teste): assinar
+  (mensal e anual), voltar do checkout, "Já assinei", cancelar pelo app e excluir a conta com assinatura ativa. O que
+  aprendemos:
+  - **Credencial:** com `MP_ACCESS_TOKEN` da conta real e pagador de teste, o Mercado Pago recusa ("Both payer and
+    collector must be real or test users"). No `staging`, usar a aplicação criada **dentro da conta vendedora de teste**
+    e `MP_TEST_PAYER_EMAIL` com o e-mail do comprador de teste (`test_user_<id>@testuser.com`).
+  - **`back_url`** precisa ser `https` público (o Mercado Pago recusa `http://localhost`).
+  - **Webhook:** nenhuma notificação chegou pelo cadastro em "Suas integrações", e a documentação se contradiz sobre ele
+    valer para assinaturas. Por isso `assinar` passa `notification_url` na criação e o plano **não depende do webhook**:
+    `confirmar` lê o estado na API (ao voltar do checkout, por "Já assinei" e uma vez por sessão para assinantes). O
+    webhook continua implementado e verificado, e `billing_events` mostra se ele passou a chegar.
+  - **Cancelamento:** a grafia do status aparece como `cancelled` e `canceled` na documentação; `cancelPreapproval`
+    tenta uma e cai para a outra.
+  - Contas criadas antes do gatilho `handle_new_user` não tinham linha em `subscriptions`; a gravação é por `upsert`.
+- **Só Pro na nuvem (26/11/2026, migração `20261126110000_so_plano_pro`):** política de escrita (`private.is_pro()`)
+  nas cinco tabelas; removidos `plan_limits`, `uso_do_plano`, as funções de limite e `importar_dados`.
+  `subscriptions.plan = 'free'` passa a significar "sem assinatura".
+- **Excluir conta** cancela a assinatura no Mercado Pago antes de apagar (e não apaga se o cancelamento falhar).
+  **Fora da F7:** nota fiscal (NFS-e) da venda.
 
 ## 10. Segurança
 
@@ -680,7 +705,7 @@ Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úte
 | ✅ **F4 · Autenticação** (concluída em 24/11/2026, inclusive no projeto online) | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
 | ✅ **F5 · Sincronização** (concluída em 24/11/2026; Realtime ficou para depois) | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes | 4–6 dias |
 | ✅ **F6 · Migração e conta** (concluída em 24/11/2026; migração aplicada no `staging`) | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
-| 🟡 **F7 · Planos e cobrança** (assinatura funcionando no `staging` em 24/11/2026; falta o webhook chegar) | Tela de planos/uso, checkout, webhook do provedor, inadimplência, testes no sandbox | 3–5 dias |
+| ✅ **F7 · Planos e cobrança** (concluída em 26/11/2026; só Pro na nuvem) | Página de planos, checkout, webhook e confirmação, inadimplência, cancelamento, landing, testes no sandbox | 3–5 dias |
 | **F8 · Segurança e LGPD** | Cabeçalhos/CSP, revisão de RLS, Termos e Política (+ revisão jurídica), página de status | 1–2 dias |
 | **F9 · Produção** | Supabase Pro em São Paulo, domínio e DNS (app + e-mail), Google OAuth publicado, Cloudflare Pages, Sentry, pipelines | 1–2 dias |
 | **F10 · Beta e lançamento** | Beta fechado (5–10 autônomos reais), correções, landing page, lançamento | 1–2 semanas de calendário |
@@ -697,7 +722,7 @@ F4, em paralelo com F5, se houver duas frentes.
 - Um usuário nunca acessa dados de outro (provado por testes automatizados de RLS).
 - Usuário vindo da edição Local leva todos os dados para a nuvem em poucos cliques.
 - O código de login chega em até 1 minuto na caixa de entrada (não no spam) de Gmail e Outlook.
-- Plano grátis bloqueia acima do limite no servidor, e o Pro libera assim que o pagamento é confirmado.
+- Sem plano Pro o servidor recusa gravações (a conta só lê), e o Pro libera assim que o pagamento é confirmado.
 - Excluir a conta apaga todos os dados do usuário.
 - A edição Local publicada no GitHub Pages continua funcionando, sem nenhum código da Cloud no bundle.
 
@@ -741,8 +766,13 @@ infraestrutura (considerando taxas e câmbio).
    rota mostra o login) nem `/conta` (a conta fica em Ajustes). Projeto online configurado: SMTP do Resend + DNS,
    modelos de e-mail, URLs de retorno, Google OAuth, Turnstile e função `delete-account`.
 6. ~~F5 (sincronização) e F6 (migração da Local)~~ (feito em 24/11/2026; migrações aplicadas no `staging`).
-7. **F7 (planos e cobrança)** em andamento: código pronto e testado no banco local (seção 9.4). Falta configurar
-   o webhook no painel do Mercado Pago e testar cancelamento, renovação e o plano anual (seção 9.4).
+7. ~~F7 (planos e cobrança)~~ (feito em 26/11/2026, seção 9.4): Mercado Pago, só Pro na nuvem, landing em `/` e login em
+   `/entrar`. Para publicar no `staging`: `supabase db push --remote` (migrações `precos_publicos` e `so_plano_pro`) e
+   `supabase functions deploy assinatura mercadopago-webhook delete-account`.
+8. **Servir a edição Local no mesmo domínio** (ex.: `/local/`) e apontar o botão "Usar grátis" da landing para ela;
+   decidir o aviso de backup no GitHub Pages (os dados do navegador são por endereço).
+9. **F8 (segurança e LGPD)**, depois **F9 (produção)** e **F10 (beta)**. Itens soltos: abrir o app sem internet
+   (service worker/PWA), título e imagem de compartilhamento da landing, e nota fiscal da venda (NFS-e).
 
 ## Fontes consultadas (novembro de 2026)
 

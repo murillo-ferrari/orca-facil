@@ -1,7 +1,7 @@
 -- Planos e limites: o grátis bloqueia acima do limite no servidor; o Pro libera.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(16);
+select plan(18);
 
 insert into auth.users (id, email, aud, role) values
   ('a0000000-0000-4000-8000-000000000001', 'ana@teste.local', 'authenticated', 'authenticated');
@@ -98,6 +98,12 @@ select throws_ok($$update public.plan_prices set amount = 0.01$$, '42501', null,
 select throws_ok($$update public.subscriptions set billing_interval = 'anual'$$, '42501', null,
   'usuário não altera a própria assinatura');
 select throws_ok($$select * from public.billing_events$$, '42501', null, 'usuário não lê eventos de cobrança');
+
+-- Visitante (sem login) lê só os preços, e só lê
+reset role;
+set local role anon;
+select is((select count(*)::int from public.plan_prices), 2, 'visitante vê os dois preços');
+select throws_ok($$update public.plan_prices set amount = 0.01$$, '42501', null, 'visitante não altera preços');
 
 select * from finish();
 rollback;

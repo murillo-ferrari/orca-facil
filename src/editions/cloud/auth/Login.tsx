@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { FileText } from 'lucide-react'
 import { Button, Card, Field, Input } from '../../../components/ui'
 import { fieldMessageId } from '../../../components/styles'
@@ -52,6 +53,30 @@ function Turnstile({ onToken }: { onToken: (token: string) => void }) {
     }
   }, [onToken])
   return <div ref={ref} className="min-h-[65px]" />
+}
+
+/** Logo do Google (as quatro cores da marca), decorativo: o botão já tem o texto. */
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true" className="shrink-0">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </svg>
+  )
 }
 
 export function Login() {
@@ -122,13 +147,16 @@ export function Login() {
             <FileText size={16} />
           </div>
           <span className="font-semibold tracking-tight text-slate-900">Orçafácil</span>
+          <Link to="/" className="ml-auto text-sm text-slate-500 hover:text-slate-800">
+            ← Início
+          </Link>
         </div>
 
         {step === 'email' ? (
           <>
             <h1 className="text-xl font-semibold text-slate-900">Entrar</h1>
             <p className="mt-1 mb-5 text-sm text-slate-600">
-              Sem senha: enviamos um código para o seu e-mail. No primeiro acesso, a conta é criada.
+              Enviamos um código para o seu e-mail. No primeiro acesso, a conta é criada.
             </p>
             <form
               className="flex flex-col gap-4"
@@ -168,6 +196,7 @@ export function Login() {
               <span className="h-px flex-1 bg-slate-200" /> ou <span className="h-px flex-1 bg-slate-200" />
             </div>
             <Button size="lg" className="w-full justify-center" onClick={google}>
+              <GoogleMark />
               Continuar com Google
             </Button>
           </>
@@ -181,8 +210,10 @@ export function Login() {
                 </label>
                 {/* Dica acima do campo: o teclado do celular e o preenchimento automático não a cobrem */}
                 <p id="login-hint" className="text-sm text-slate-600">
-                  Enviamos um código de 6 dígitos para <strong className="break-all">{email.trim()}</strong>. Confira
-                  também a caixa de spam.
+                  Enviamos um código de 6 dígitos para{' '}
+                  {/* Em linha própria: só quebra no meio se o e-mail sozinho não couber (overflow-wrap:anywhere) */}
+                  <strong className="block [overflow-wrap:anywhere]">{email.trim()}</strong>
+                  Confira também a caixa de spam.
                 </p>
                 <Input
                   id="login"

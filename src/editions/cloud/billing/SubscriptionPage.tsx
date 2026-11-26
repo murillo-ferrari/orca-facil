@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, ChevronDown, Crown, ExternalLink, Minus } from 'lucide-react'
+import { Check, Crown, ExternalLink, Minus } from 'lucide-react'
 import { Badge, Button, Card, PageHeader, Segmented } from '../../../components/ui'
+import { Faq } from '../../../components/Faq'
 import { cn } from '../../../components/styles'
 import { formatCurrency } from '../../../lib/format'
 import { confirmSubscription, subscribe, usePlan, watchPlan, type Interval } from './planStore'
 
-/** Linhas da comparação: [recurso, Grátis, Pro]. true/false viram ícone; texto aparece como está. */
+/** Linhas da comparação: [recurso, Grátis (no aparelho), Pro (na nuvem)]. true/false viram ícone; texto aparece como está. */
 const FEATURES: [string, string | boolean, string | boolean][] = [
-  ['Orçamentos novos por mês', '15', 'Ilimitados'],
-  ['Empresas (perfis)', '1', 'Ilimitadas'],
-  ['Sincronização entre celular e computador', true, true],
+  ['Orçamentos e empresas', 'Sem limite', 'Sem limite'],
+  ['Onde ficam os dados', 'Só neste aparelho', 'Na nuvem, na sua conta'],
+  ['Sincronização entre celular e computador', false, true],
+  ['Enviar para a nuvem os dados do grátis', false, true],
   ['Funciona sem internet', true, true],
-  ['PDF, clientes, catálogo de serviços', true, true],
+  ['PDF, clientes e catálogo', true, true],
   ['Relatórios e follow-up', true, true],
-  ['Importar dados da edição Local', true, true],
+  ['Backup em arquivo', true, true],
 ]
 
 const FAQ: [string, string][] = [
@@ -24,15 +26,15 @@ const FAQ: [string, string][] = [
   ],
   [
     'Posso cancelar quando quiser?',
-    'Sim, em Ajustes › Conta e plano. O Pro continua valendo até o fim do período já pago; depois, a conta volta ao plano grátis.',
+    'Sim, em Ajustes › Conta e plano. O Pro continua valendo até o fim do período já pago.',
   ],
   [
-    'O que acontece com meus dados se eu voltar ao grátis?',
-    'Nada é apagado. Você continua vendo e editando tudo; só a criação de orçamentos e empresas acima do limite do grátis fica bloqueada.',
+    'O que acontece com meus dados se eu cancelar?',
+    'Nada é apagado: seus dados continuam na sua conta. Você pode exportar um backup em arquivo (Ajustes › Dados) e usar o plano grátis, no aparelho, importando esse arquivo.',
   ],
   [
-    'Orçamentos importados da edição Local contam no limite?',
-    'Não. O limite vale só para orçamentos novos criados no mês.',
+    'Posso levar para a nuvem o que já tenho no grátis?',
+    'Sim. No primeiro acesso com a conta, o app oferece enviar os dados do navegador (ou de um backup em arquivo) para a nuvem. Nada é substituído.',
   ],
 ]
 
@@ -47,7 +49,7 @@ function Value({ v, label }: { v: string | boolean; label: string }) {
 
 /** /assinatura (edição Cloud): benefícios do Pro, comparação com o grátis, preços e perguntas frequentes. */
 export default function SubscriptionPage() {
-  const { loaded, view, prices, use, busy } = usePlan()
+  const { loaded, view, prices, busy } = usePlan()
   const [interval, setInterval] = useState<Interval>('anual')
   useEffect(watchPlan, [])
 
@@ -60,7 +62,7 @@ export default function SubscriptionPage() {
     <>
       <PageHeader
         title="Orçafácil Pro"
-        description="Para quem vive de orçamento: sem limite de orçamentos nem de empresas."
+        description="Para quem usa em mais de um aparelho: seus dados na nuvem, sincronizados entre celular e computador."
       />
 
       {loaded && view.pro && (
@@ -95,27 +97,26 @@ export default function SubscriptionPage() {
           <div className="flex h-full flex-col gap-4 p-5">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Grátis</h2>
-              <p className="text-sm text-slate-500">Para quem orça de vez em quando.</p>
+              <p className="text-sm text-slate-500">No aparelho, sem cadastro.</p>
             </div>
             <p>
               <span className="text-3xl font-bold tracking-tight text-slate-900">R$ 0</span>
             </p>
             <ul className="space-y-2 text-sm text-slate-700">
               <li className="flex gap-2">
-                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> 15 orçamentos novos por mês
+                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Orçamentos e empresas sem limite
               </li>
               <li className="flex gap-2">
-                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> 1 empresa
+                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> PDF, clientes, catálogo e
+                relatórios
               </li>
               <li className="flex gap-2">
-                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Todos os recursos do app
+                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Dados salvos só neste aparelho
+              </li>
+              <li className="flex gap-2">
+                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Backup em arquivo, quando quiser
               </li>
             </ul>
-            {loaded && !view.pro && use?.limite_orcamentos_no_mes != null && (
-              <p className="mt-auto text-xs text-slate-500">
-                Seu uso neste mês: {use.orcamentos_no_mes} de {use.limite_orcamentos_no_mes} orçamentos.
-              </p>
-            )}
           </div>
         </Card>
 
@@ -124,9 +125,9 @@ export default function SubscriptionPage() {
             <div>
               <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
                 <Crown size={18} className="text-brand-600" aria-hidden /> Pro
-                <Badge className="bg-brand-50 text-brand-700">Sem limites</Badge>
+                <Badge className="bg-brand-50 text-brand-700">Na nuvem</Badge>
               </h2>
-              <p className="text-sm text-slate-500">Para quem vive de orçamento.</p>
+              <p className="text-sm text-slate-500">Para quem usa em mais de um aparelho.</p>
             </div>
             <p className={cn(!price && 'invisible')}>
               <span className="text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
@@ -139,19 +140,21 @@ export default function SubscriptionPage() {
             </p>
             <ul className="space-y-2 text-sm text-slate-700">
               <li className="flex gap-2">
-                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden />
-                <span>
-                  <strong>Orçamentos ilimitados</strong>
-                </span>
+                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Tudo do plano grátis
               </li>
               <li className="flex gap-2">
                 <Check size={18} className="shrink-0 text-emerald-600" aria-hidden />
                 <span>
-                  <strong>Empresas ilimitadas</strong>, cada uma com sua numeração
+                  <strong>Sincronização</strong> entre celular e computador
                 </span>
               </li>
               <li className="flex gap-2">
-                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Todos os recursos do grátis
+                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Seus dados na nuvem, de qualquer
+                aparelho, com a sua conta
+              </li>
+              <li className="flex gap-2">
+                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Leva para a nuvem o que você já
+                tem no grátis
               </li>
               <li className="flex gap-2">
                 <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Cancele quando quiser
@@ -188,10 +191,10 @@ export default function SubscriptionPage() {
                 <th scope="col" className="px-4 py-3 sm:px-5">
                   Recurso
                 </th>
-                <th scope="col" className="w-24 px-2 py-3 text-center sm:w-32">
+                <th scope="col" className="w-28 px-2 py-3 text-center sm:w-40">
                   Grátis
                 </th>
-                <th scope="col" className="w-24 px-2 py-3 text-center text-brand-700 sm:w-32">
+                <th scope="col" className="w-28 px-2 py-3 text-center text-brand-700 sm:w-40">
                   Pro
                 </th>
               </tr>
@@ -223,22 +226,7 @@ export default function SubscriptionPage() {
         <h2 id="perguntas" className="mb-3 text-lg font-semibold text-slate-900">
           Perguntas frequentes
         </h2>
-        <Card className="divide-y divide-slate-100">
-          {FAQ.map(([q, a]) => (
-            <details key={q} className="group px-4 sm:px-5">
-              <summary className="flex cursor-pointer list-none items-center gap-2 py-3.5 text-sm font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
-                {/* Seta antes do texto, girada quando fechado (guia "accordion" do MWG) */}
-                <ChevronDown
-                  size={16}
-                  aria-hidden
-                  className="shrink-0 -rotate-90 text-slate-400 group-open:rotate-0 motion-safe:transition-transform"
-                />
-                {q}
-              </summary>
-              <p className="pb-4 pl-6 text-sm text-slate-600">{a}</p>
-            </details>
-          ))}
-        </Card>
+        <Faq items={FAQ} />
       </section>
 
       {loaded && !view.pro && (

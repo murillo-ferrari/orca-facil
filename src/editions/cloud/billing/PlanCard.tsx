@@ -12,14 +12,14 @@ import { callAssinatura, confirmSubscription, loadPlan, usePlan, watchPlan } fro
  * /assinatura (onde estão preços e comparação); quem é Pro pode cancelar.
  */
 export default function PlanCard() {
-  const { loaded, view, use, prices, busy } = usePlan()
+  const { loaded, view, prices, busy } = usePlan()
   useEffect(watchPlan, [])
   const benefitsId = useId()
 
   async function cancel() {
     const ok = await confirmDialog({
       title: 'Cancelar o plano Pro',
-      message: `A renovação automática será cancelada. O Pro continua valendo até o fim do período já pago; depois, a conta volta ao plano grátis sem perder nenhum dado.`,
+      message: `A renovação automática será cancelada. O Pro continua valendo até o fim do período já pago; seus dados continuam na conta e você pode exportar um backup em arquivo.`,
       confirmLabel: 'Cancelar assinatura',
       danger: true,
     })
@@ -45,19 +45,13 @@ export default function PlanCard() {
             </Badge>
           </span>
         }
-        description={
-          view.pro
-            ? view.detail
-            : use?.limite_orcamentos_no_mes
-              ? `${use.orcamentos_no_mes} de ${use.limite_orcamentos_no_mes} orçamentos novos neste mês · 1 empresa.`
-              : 'Até 15 orçamentos novos por mês e 1 empresa.'
-        }
+        description={view.pro ? view.detail : 'Sem sincronização na nuvem. Seus dados ficam só neste aparelho.'}
       />
       <div className="space-y-3 p-4 sm:p-5">
         {!view.pro && (
           <>
             <p className="text-sm text-slate-600">
-              Com o <strong>Pro</strong>, orçamentos e empresas ilimitados
+              Com o <strong>Pro</strong>, seus dados sincronizam entre aparelhos
               {prices.mensal ? `, a partir de ${formatCurrency(prices.mensal)}/mês` : ''}.
             </p>
             <div className="flex flex-wrap items-center gap-2">
@@ -81,10 +75,10 @@ export default function PlanCard() {
               </h2>
               <ul aria-labelledby={benefitsId} className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-700">
                 <li className="flex items-center gap-1.5">
-                  <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Orçamentos ilimitados
+                  <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Dados na nuvem
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Empresas ilimitadas
+                  <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Orçamentos e empresas sem limite
                 </li>
                 <li className="flex items-center gap-1.5">
                   <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Sincronização entre dispositivos

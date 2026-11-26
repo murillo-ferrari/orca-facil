@@ -9,7 +9,6 @@ import { usePlan, watchPlan } from './planStore'
  */
 export default function UpgradeCta({ compact }: { compact?: boolean }) {
   const show = usePlan((s) => s.loaded && !s.view.pro)
-  const use = usePlan((s) => s.use)
   useEffect(watchPlan, [])
   if (!show) return null
 
@@ -25,7 +24,6 @@ export default function UpgradeCta({ compact }: { compact?: boolean }) {
       </Link>
     )
 
-  const limit = use?.limite_orcamentos_no_mes
   return (
     <Link
       to="/assinatura"
@@ -35,9 +33,7 @@ export default function UpgradeCta({ compact }: { compact?: boolean }) {
         <Crown size={16} aria-hidden /> Seja Pro
       </span>
       <span className="mt-0.5 block text-xs text-slate-600">
-        {limit != null
-          ? `${use?.orcamentos_no_mes ?? 0} de ${limit} orçamentos neste mês. Libere orçamentos e empresas ilimitados.`
-          : 'Orçamentos e empresas ilimitados.'}
+        Seus dados na nuvem, sincronizados entre celular e computador.
       </span>
     </Link>
   )

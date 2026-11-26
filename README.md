@@ -3,9 +3,10 @@
 Ferramenta web para profissionais autônomos criarem orçamentos e exportarem em PDF.
 Duas edições, do mesmo código:
 
-- **Local (grátis):** roda no navegador, sem servidor nem login; os dados ficam no `localStorage` do aparelho.
-  **Use agora, de graça:** <https://murillo-ferrari.github.io/orca-facil/>. Para levar os dados a outro computador, use
-  _Ajustes › Dados › Exportar backup_.
+- **Local (grátis):** roda no navegador, sem servidor nem login; os dados ficam no `localStorage` do aparelho. Fica em
+  `/gratis/` do site (veja _Rodando_ abaixo; o endereço público sai com o lançamento). Para levar os dados a outro
+  computador, use _Ajustes › Dados › Exportar backup_. Também dá para rodar a sua própria cópia a partir deste
+  repositório, que é aberto (AGPL-3.0).
 - **Cloud (plano Pro):** login (código por e-mail ou Google), dados na nuvem sincronizados entre celular e computador,
   funciona sem internet e envia para a nuvem o que você já tinha no grátis. Assinatura pelo Mercado Pago
   (R$ 9,99/mês ou R$ 99,99/ano). Na nuvem só existe o Pro: o grátis é a edição Local.
@@ -79,7 +80,7 @@ As funções de servidor (Mercado Pago e exclusão de conta) ficam em `supabase/
 `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` e `APP_URL` (veja `docs/plano-versao-cloud.md`, seção 9.4).
 
 O build da edição Local usa caminhos relativos e rotas com `#`, então a pasta `dist/` funciona em qualquer
-hospedagem estática (Netlify, Vercel, GitHub Pages) ou subpasta.
+hospedagem estática (Netlify, Vercel, Cloudflare Pages etc.) ou subpasta.
 
 O **site completo** (landing e Cloud em `/`, edição Local em `/gratis/`) sai de um comando:
 
@@ -89,12 +90,10 @@ npm run build:site   # dist/ (Cloud) com dist/gratis/ (Local); a hospedagem deve
 
 Como as duas edições ficam na mesma origem, a Cloud encontra os dados do grátis e oferece enviá-los ao assinar.
 
-### Publicar a sua própria cópia
+### Publicar a sua própria cópia da edição Local
 
-1. Faça um _fork_ do repositório.
-2. Em _Settings › Pages › Build and deployment_, escolha **GitHub Actions** como _Source_.
-3. Cada push na `main` roda as verificações e publica em `https://<seu-usuario>.github.io/<repositorio>/`
-   (workflow `.github/workflows/pages.yml`).
+Rode `npm run build` e publique a pasta `dist/` em qualquer hospedagem estática. Não há workflow de publicação neste
+repositório: o CI (`.github/workflows/ci.yml`) só verifica formatação, lint, tipos, testes, o build do site e o banco.
 
 ## Estrutura
 
@@ -113,8 +112,7 @@ orca-facil/
 ├── .claude/skills/            skill do projeto: consultar o Modern Web Guidance antes de mexer em interface
 ├── .env.example                variáveis de build (VITE_EDITION)
 ├── .github/workflows/
-│   ├── ci.yml                  formatação, lint, tipos, testes, build e testes do banco a cada push/PR
-│   └── pages.yml               publica a edição Local no GitHub Pages a cada push na main
+│   └── ci.yml                  formatação, lint, tipos, testes, build do site e testes do banco a cada push/PR
 ├── public/favicon.svg
 ├── supabase/                   banco e servidor da edição Cloud (Postgres e Edge Functions no Supabase)
 │   ├── config.toml             configuração do Supabase local

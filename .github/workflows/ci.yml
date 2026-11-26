@@ -1,5 +1,6 @@
-# Verificações de todo push e pull request: formatação, lint, tipos, testes e build.
-# (A publicação no GitHub Pages fica em pages.yml, na fase F2 do plano.)
+# Verificações de todo push e pull request: formatação, lint, tipos, testes, build do site e testes do banco.
+# Não há publicação aqui: o repositório é aberto, mas a edição Local (grátis) é servida em /gratis/ do site da Cloud
+# (deploy na F9, Cloudflare Pages), e não no GitHub Pages.
 name: CI
 
 on:

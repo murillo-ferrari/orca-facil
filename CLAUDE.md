@@ -13,7 +13,8 @@ Mermaid). Este arquivo guarda o contexto para continuar o trabalho.
 
 O nome "Orçafácil" (aparece em `src/App.tsx` e `index.html`) será publicado em `orcafacil.murilloferrari.tech` (subdomínio no Cloudflare).
 Licença: AGPL-3.0 (`LICENSE`). Repositório público: <https://github.com/murillo-ferrari/orca-facil> (a pasta local
-ainda se chama `gerador-orcamento`). Edição Local publicada em <https://murillo-ferrari.github.io/orca-facil/>.
+ainda se chama `gerador-orcamento`). O repositório é aberto, mas **não há publicação no GitHub Pages**: a edição Local
+(grátis) será servida em `/gratis/` do site da Cloud (deploy na F9).
 Commits com o e-mail pessoal do usuário, por escolha dele.
 
 ## Stack e comandos
@@ -35,8 +36,8 @@ npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
 - `VITE_EDITION` (`local` | `cloud`, padrão `local`) escolhe a edição no build; `vite.config.ts` valida, e a `cloud`
   exige `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` (ver `.env.example`; `npm run build:cloud`). Para testar a
   Cloud no navegador: banco local (`npm run db:start`) + `VITE_EDITION=cloud` com a URL e a chave que o comando mostra.
-  CI em `.github/workflows/ci.yml` (compila o site: Cloud em `/` e Local em `/gratis/`, `npm run build:site`); publicação
-  da Local em `.github/workflows/pages.yml` (GitHub Pages; o deploy do site completo virá com a F9, no Cloudflare Pages).
+  CI em `.github/workflows/ci.yml` (compila o site: Cloud em `/` e Local em `/gratis/`, `npm run build:site`). Não há
+  workflow de publicação; o deploy do site completo virá com a F9, no Cloudflare Pages.
 - A Cloud usa `BrowserRouter` (rotas por caminho) e a Local `HashRouter`. Sem sessão: `/` é a **landing**
   (`editions/cloud/landing/`), `/entrar` o login. O código da Cloud nunca entra no bundle da Local (imports `lazy`
   sob `import.meta.env.VITE_EDITION === 'cloud'`).
@@ -84,8 +85,8 @@ npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
   Ao comparar `statusHistory[].at` com datas de calendário, converter para data local (ver `statusDate` em
   `reports/data.ts`).
 - **Impressão:** elementos que não devem sair no papel levam `print:hidden`.
-- **Commits e push:** só quando o usuário pedir. Branch `main`, remoto `origin` no GitHub. Push na `main` dispara o
-  CI (`ci.yml`) e a publicação no GitHub Pages (`pages.yml`, que só publica se `npm run check` passar).
+- **Commits e push:** só quando o usuário pedir. Branch `main`, remoto `origin` no GitHub. Push na `main` dispara só o
+  CI (`ci.yml`); não publica nada.
 
 ## Boas práticas da web (Modern Web Guidance)
 
@@ -238,7 +239,8 @@ quando o usuário clica em _Cobrar_). A fonte é servida pelo próprio app desde
 
 Ideia do usuário em duas etapas, detalhada em **`docs/plano-versao-cloud.md`** (ler antes de trabalhar nisso):
 
-1. **Edição Local pública:** repositório público + build no GitHub Pages; qualquer um usa ou clona.
+1. **Edição Local pública:** repositório público; qualquer um usa ou clona. (Era publicada no GitHub Pages; a
+   publicação foi desligada em 26/11/2026, e o grátis passa a ser servido em `/gratis/` do site da Cloud.)
 2. **Edição Cloud:** login obrigatório e dados sincronizados entre dispositivos, com planos pagos.
    **Decidido (18/11/2026): Supabase para tudo** — banco Postgres com RLS (`auth.uid()`), **Supabase Auth** (código
    de 6 dígitos por e-mail + Google, telas próprias em pt-BR, SMTP próprio obrigatório), Realtime e Edge Functions,

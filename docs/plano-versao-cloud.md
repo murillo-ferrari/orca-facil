@@ -13,13 +13,13 @@
 
 O projeto passa a ter duas edições, a partir do **mesmo código**:
 
-| | **Edição Local** (etapa 1) | **Edição Cloud** (etapa 2) |
-|---|---|---|
-| Onde roda | GitHub Pages, ou onde a pessoa quiser (clone + build) | Domínio próprio (`orcafacil.murilloferrari.tech`) |
-| Conta | Não precisa | Login obrigatório (Supabase Auth) |
-| Dados | `localStorage` do navegador | Banco na nuvem (Supabase/Postgres) + cópia local para uso offline |
-| Diferencial | Grátis, código aberto, privado por padrão | Mesmos dados em qualquer dispositivo; backup automático |
-| Custo para o usuário | Grátis | Plano Pago (Pro), único na nuvem |
+|                      | **Edição Local** (etapa 1)                                                    | **Edição Cloud** (etapa 2)                                        |
+| -------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Onde roda            | `/gratis/` do site (domínio próprio), ou onde a pessoa quiser (clone + build) | Domínio próprio (`orcafacil.murilloferrari.tech`)                 |
+| Conta                | Não precisa                                                                   | Login obrigatório (Supabase Auth)                                 |
+| Dados                | `localStorage` do navegador                                                   | Banco na nuvem (Supabase/Postgres) + cópia local para uso offline |
+| Diferencial          | Grátis, código aberto, privado por padrão                                     | Mesmos dados em qualquer dispositivo; backup automático           |
+| Custo para o usuário | Grátis                                                                        | Plano Pago (Pro), único na nuvem                                  |
 
 A edição Local continua existindo e completa. A Cloud acrescenta conta, sincronização e planos, e não pode piorar
 a experiência atual: o app continua rápido e funciona sem internet.
@@ -29,18 +29,18 @@ a experiência atual: o app continua rápido e funciona sem internet.
 Decididas em 18/11/2026: **D1, D2 e D3**, além de backend e autenticação (Supabase + Supabase Auth). D4, D5, D6, D7, D8 e D10
 foram decididas durante a F4–F7. Pendente: D9 (nome).
 
-| # | Decisão | Opções | Recomendação |
-|---|---|---|---|
-| D1 | **Licença** do repositório público | MIT · AGPL-3.0 | ✅ **AGPL-3.0** — quem hospedar uma versão modificada do app como serviço precisa publicar o código |
-| D2 | **Código da Cloud** no mesmo repositório público? | Mesmo repo · repo privado separado | ✅ **Mesmo repositório**, com as edições escolhidas por variável de build; segredos fora do código |
-| D3 | **Domínio** | — | ✅ **`orcafacil.murilloferrari.tech`** (subdomínio no Cloudflare; trocado em 23/11/2026 no lugar de `orcafacil.com.br`). App nesse endereço, e-mails de login de `login@orcafacil.murilloferrari.tech` |
-| D4 | **Provedor de pagamento** | Asaas · Mercado Pago · Stripe · Paddle (detalhes na seção 9.2) | ✅ **Mercado Pago** (assinaturas _preapproval_; decidido em 24/11/2026) |
-| D5 | **Planos** | Ver seção 9.1 | ✅ **Só o Pro existe na nuvem: R$ 9,99/mês ou R$ 99,99/ano**. O grátis é a edição Local, no aparelho (24 e 26/11/2026) |
-| D6 | **Formas de login** | E-mail com código · Google · Apple · senha | ✅ **E-mail com código de 6 dígitos + Google** (feito na F4) |
-| D10 | **Serviço de envio de e-mail (SMTP)** | Resend · Brevo · Amazon SES · Postmark · ZeptoMail | ✅ **Resend** (decidido em 23/11/2026) |
-| D7 | **Nível de offline** | Só online · leitura offline · leitura e escrita offline | ✅ **Leitura e escrita offline** (feito na F5) |
-| D8 | **Conflito** entre dispositivos | Última gravação vence · diálogo de escolha · mesclar | ✅ **Mescla em três vias** com diff lado a lado; vale a nuvem até a pessoa decidir (seção 7.5, decidido em 24/11/2026) |
-| D9 | **Nome do produto** | — | **Orçafácil**, acompanhando o domínio; confirmar quando o registro for concluído |
+| #   | Decisão                                           | Opções                                                         | Recomendação                                                                                                                                                                                           |
+| --- | ------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| D1  | **Licença** do repositório público                | MIT · AGPL-3.0                                                 | ✅ **AGPL-3.0** — quem hospedar uma versão modificada do app como serviço precisa publicar o código                                                                                                    |
+| D2  | **Código da Cloud** no mesmo repositório público? | Mesmo repo · repo privado separado                             | ✅ **Mesmo repositório**, com as edições escolhidas por variável de build; segredos fora do código                                                                                                     |
+| D3  | **Domínio**                                       | —                                                              | ✅ **`orcafacil.murilloferrari.tech`** (subdomínio no Cloudflare; trocado em 23/11/2026 no lugar de `orcafacil.com.br`). App nesse endereço, e-mails de login de `login@orcafacil.murilloferrari.tech` |
+| D4  | **Provedor de pagamento**                         | Asaas · Mercado Pago · Stripe · Paddle (detalhes na seção 9.2) | ✅ **Mercado Pago** (assinaturas _preapproval_; decidido em 24/11/2026)                                                                                                                                |
+| D5  | **Planos**                                        | Ver seção 9.1                                                  | ✅ **Só o Pro existe na nuvem: R$ 9,99/mês ou R$ 99,99/ano**. O grátis é a edição Local, no aparelho (24 e 26/11/2026)                                                                                 |
+| D6  | **Formas de login**                               | E-mail com código · Google · Apple · senha                     | ✅ **E-mail com código de 6 dígitos + Google** (feito na F4)                                                                                                                                           |
+| D10 | **Serviço de envio de e-mail (SMTP)**             | Resend · Brevo · Amazon SES · Postmark · ZeptoMail             | ✅ **Resend** (decidido em 23/11/2026)                                                                                                                                                                 |
+| D7  | **Nível de offline**                              | Só online · leitura offline · leitura e escrita offline        | ✅ **Leitura e escrita offline** (feito na F5)                                                                                                                                                         |
+| D8  | **Conflito** entre dispositivos                   | Última gravação vence · diálogo de escolha · mesclar           | ✅ **Mescla em três vias** com diff lado a lado; vale a nuvem até a pessoa decidir (seção 7.5, decidido em 24/11/2026)                                                                                 |
+| D9  | **Nome do produto**                               | —                                                              | **Orçafácil**, acompanhando o domínio; confirmar quando o registro for concluído                                                                                                                       |
 
 ## 3. Etapa 1 — Publicação da edição Local (pré-requisito)
 
@@ -59,6 +59,10 @@ Rápida e independente. Dá visibilidade ao projeto antes da Cloud.
 
 ### 3.2 Publicação
 
+> **Mudou em 26/11/2026:** o GitHub Pages **não publica mais** a edição Local (o workflow `pages.yml` foi removido). O
+> repositório continua público, e o grátis passa a ser servido em `/gratis/` do site da Cloud (seção 4.3). O texto
+> abaixo é o histórico da F2.
+
 1. Criar o repositório no GitHub (público) e fazer o push da `main`.
 2. Em _Settings › Pages_, escolher **GitHub Actions** como origem.
 3. Workflow `.github/workflows/pages.yml`: em cada push na `main`, roda lint, tipos, testes e build
@@ -70,7 +74,7 @@ Rápida e independente. Dá visibilidade ao projeto antes da Cloud.
 
 - A URL pública abre o app, cria orçamentos e gera PDF.
 - Um clone limpo roda com `npm install && npm run dev`.
-- O build do Pages não contém nenhum código da Cloud (Supabase), o que se confere pelo tamanho do bundle.
+- O build da edição Local não contém nenhum código da Cloud (Supabase), o que se confere pelo tamanho do bundle.
 
 ## 4. Arquitetura da Cloud
 
@@ -109,16 +113,16 @@ flowchart TB
 
 ### 4.2 Componentes e responsabilidades
 
-| Componente | Responsabilidade | Plano |
-|---|---|---|
-| **Supabase Auth** | Cadastro e login (código de 6 dígitos por e-mail, Google), sessão com renovação automática, CAPTCHA no envio do código. Usuários ficam em `auth.users`, no mesmo banco | 50.000 MAU no Free, 100.000 no Pro |
-| **Supabase Postgres** | Dados de cada usuário, isolados por RLS (`user_id = auth.uid()`) | Free no desenvolvimento; **Pro (US$ 25/mês) em produção** (o Free pausa após 7 dias sem uso) |
-| **Supabase Edge Functions** | Checkout e webhook do pagamento, exclusão de conta. Únicos lugares com chaves secretas | Incluso |
-| **Supabase Realtime** | Avisar os outros dispositivos de que há mudanças (eles então sincronizam) | Incluso |
-| **SMTP próprio** | Entregar os e-mails de login. O envio padrão do Supabase só atende membros da equipe e manda 2 e-mails/hora | Plano grátis do provedor (conferir) |
-| **Provedor de pagamento** | Assinatura recorrente em reais (Pix, cartão, boleto) | Taxa por transação |
-| **Cloudflare Pages** | Hospedagem do app Cloud no domínio próprio, com cabeçalhos de segurança (CSP) | Free |
-| **Sentry** (opcional) | Erros em produção | Free |
+| Componente                  | Responsabilidade                                                                                                                                                       | Plano                                                                                        |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Supabase Auth**           | Cadastro e login (código de 6 dígitos por e-mail, Google), sessão com renovação automática, CAPTCHA no envio do código. Usuários ficam em `auth.users`, no mesmo banco | 50.000 MAU no Free, 100.000 no Pro                                                           |
+| **Supabase Postgres**       | Dados de cada usuário, isolados por RLS (`user_id = auth.uid()`)                                                                                                       | Free no desenvolvimento; **Pro (US$ 25/mês) em produção** (o Free pausa após 7 dias sem uso) |
+| **Supabase Edge Functions** | Checkout e webhook do pagamento, exclusão de conta. Únicos lugares com chaves secretas                                                                                 | Incluso                                                                                      |
+| **Supabase Realtime**       | Avisar os outros dispositivos de que há mudanças (eles então sincronizam)                                                                                              | Incluso                                                                                      |
+| **SMTP próprio**            | Entregar os e-mails de login. O envio padrão do Supabase só atende membros da equipe e manda 2 e-mails/hora                                                            | Plano grátis do provedor (conferir)                                                          |
+| **Provedor de pagamento**   | Assinatura recorrente em reais (Pix, cartão, boleto)                                                                                                                   | Taxa por transação                                                                           |
+| **Cloudflare Pages**        | Hospedagem do app Cloud no domínio próprio, com cabeçalhos de segurança (CSP)                                                                                          | Free                                                                                         |
+| **Sentry** (opcional)       | Erros em produção                                                                                                                                                      | Free                                                                                         |
 
 **Por que tudo no Supabase:** um único fornecedor para identidade, dados, tempo real e funções. Tudo fica na região
 São Paulo, o que inclui os dados de conta e simplifica a LGPD. As regras de acesso usam `auth.uid()` com chave
@@ -181,16 +185,16 @@ Motivo: todos os cálculos (totais, relatórios, PDF) já rodam no navegador. No
 separadas daria trabalho de mapeamento sem benefício agora. Se um dia houver relatórios no servidor, as colunas
 extraídas resolvem, e uma view pode expandir o JSON.
 
-| Tabela | Colunas extraídas além do padrão | Observações |
-|---|---|---|
-| `user_settings` | — | 1 linha por usuário: unidades, preferências |
-| `company_profiles` | `next_number int` | `next_number` é a fonte da verdade da numeração (seção 7.6). Nome evita confusão com "perfil de usuário" |
-| `clients` | `name text`, `document_digits text` | |
-| `catalog_items` | `description text` | |
-| `quotes` | `profile_id uuid`, `number text`, `status text`, `issue_date date` | Itens, acréscimos, cliente e `statusHistory` ficam no `data` |
-| `plan_prices` | `billing_interval`, `amount`, `months` | Preços do Pro (mensal e anual), lidos pela função de assinatura e pela landing. (`plan_limits` existiu até 26/11/2026, quando os limites do grátis foram removidos) |
-| `subscriptions` | `plan`, `status`, `current_period_end`, `provider`, `provider_customer_id`, `provider_subscription_id` | Gravada **só** pelo servidor (gatilho de cadastro e Edge Functions) |
-| `billing_events` | `provider`, `event_id` (único), `payload jsonb` | Idempotência e auditoria dos webhooks |
+| Tabela             | Colunas extraídas além do padrão                                                                       | Observações                                                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_settings`    | —                                                                                                      | 1 linha por usuário: unidades, preferências                                                                                                                         |
+| `company_profiles` | `next_number int`                                                                                      | `next_number` é a fonte da verdade da numeração (seção 7.6). Nome evita confusão com "perfil de usuário"                                                            |
+| `clients`          | `name text`, `document_digits text`                                                                    |                                                                                                                                                                     |
+| `catalog_items`    | `description text`                                                                                     |                                                                                                                                                                     |
+| `quotes`           | `profile_id uuid`, `number text`, `status text`, `issue_date date`                                     | Itens, acréscimos, cliente e `statusHistory` ficam no `data`                                                                                                        |
+| `plan_prices`      | `billing_interval`, `amount`, `months`                                                                 | Preços do Pro (mensal e anual), lidos pela função de assinatura e pela landing. (`plan_limits` existiu até 26/11/2026, quando os limites do grátis foram removidos) |
+| `subscriptions`    | `plan`, `status`, `current_period_end`, `provider`, `provider_customer_id`, `provider_subscription_id` | Gravada **só** pelo servidor (gatilho de cadastro e Edge Functions)                                                                                                 |
+| `billing_events`   | `provider`, `event_id` (único), `payload jsonb`                                                        | Idempotência e auditoria dos webhooks                                                                                                                               |
 
 `activeProfileId` (empresa ativa) é preferência de cada dispositivo e fica só no local. As unidades vão para o
 `user_settings.data`.
@@ -266,16 +270,16 @@ apenas com a chave de serviço, dentro das Edge Functions.
 Implementadas na F3 (`supabase/migrations/`). As chamáveis pelo app rodam como o usuário (RLS vale); as auxiliares
 ficam no schema `private`, que a API não expõe.
 
-| Função | Para quê |
-|---|---|
-| `aplicar_alteracoes(p_changes)` | Recebe um lote (até 500) da fila de envio: `{ table, id, data, base_rev, deleted }`. Cria se `base_rev` for nulo; altera **somente se** `rev` ainda for igual a `base_rev`; `deleted` faz/desfaz a exclusão lógica. Cada item é independente e volta em `applied` (com o novo `rev`), `conflicts` (com a linha atual do servidor) ou `rejected` (com o motivo: `limite_do_plano`, `dados_invalidos`, `duplicado`, `sem_permissao`) |
-| `buscar_alteracoes(p_desde, p_limite)` | Por tabela, até `p_limite` linhas alteradas depois de `p_desde` (inclui excluídas), mais `has_more` e `server_time` |
-| `reservar_numeros_orcamento(p_empresa, p_quantidade)` | Atômica: devolve o primeiro número de um bloco reservado. Testada com 100 reservas simultâneas, sem colisão |
-| `definir_proximo_numero(p_empresa, p_proximo)` | Campo "Próximo número" da tela de empresa |
-| `uso_do_plano()` | Plano em vigor, orçamentos criados no mês, empresas e os limites |
-| `private.current_plan()`, `private.can_create_quote()`, `private.can_create_company_profile()` | Usadas nas policies de INSERT. O mês é contado no fuso de São Paulo, e excluídos contam (apagar não devolve cota) |
-| `private.handle_new_user()` | Gatilho no cadastro: cria `user_settings` e a assinatura (`plan = 'free'`, que significa "sem plano") |
-| `private.purge_deleted_rows()` | Remove de vez linhas excluídas há mais de 90 dias (pg_cron, diário) |
+| Função                                                                                         | Para quê                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aplicar_alteracoes(p_changes)`                                                                | Recebe um lote (até 500) da fila de envio: `{ table, id, data, base_rev, deleted }`. Cria se `base_rev` for nulo; altera **somente se** `rev` ainda for igual a `base_rev`; `deleted` faz/desfaz a exclusão lógica. Cada item é independente e volta em `applied` (com o novo `rev`), `conflicts` (com a linha atual do servidor) ou `rejected` (com o motivo: `limite_do_plano`, `dados_invalidos`, `duplicado`, `sem_permissao`) |
+| `buscar_alteracoes(p_desde, p_limite)`                                                         | Por tabela, até `p_limite` linhas alteradas depois de `p_desde` (inclui excluídas), mais `has_more` e `server_time`                                                                                                                                                                                                                                                                                                                |
+| `reservar_numeros_orcamento(p_empresa, p_quantidade)`                                          | Atômica: devolve o primeiro número de um bloco reservado. Testada com 100 reservas simultâneas, sem colisão                                                                                                                                                                                                                                                                                                                        |
+| `definir_proximo_numero(p_empresa, p_proximo)`                                                 | Campo "Próximo número" da tela de empresa                                                                                                                                                                                                                                                                                                                                                                                          |
+| `uso_do_plano()`                                                                               | Plano em vigor, orçamentos criados no mês, empresas e os limites                                                                                                                                                                                                                                                                                                                                                                   |
+| `private.current_plan()`, `private.can_create_quote()`, `private.can_create_company_profile()` | Usadas nas policies de INSERT. O mês é contado no fuso de São Paulo, e excluídos contam (apagar não devolve cota)                                                                                                                                                                                                                                                                                                                  |
+| `private.handle_new_user()`                                                                    | Gatilho no cadastro: cria `user_settings` e a assinatura (`plan = 'free'`, que significa "sem plano")                                                                                                                                                                                                                                                                                                                              |
+| `private.purge_deleted_rows()`                                                                 | Remove de vez linhas excluídas há mais de 90 dias (pg_cron, diário)                                                                                                                                                                                                                                                                                                                                                                |
 
 Proteções feitas por gatilho: o servidor define `user_id` (sem o app enviar), `rev`, `inserted_at` e `updated_at`;
 `data.id` precisa ser igual ao `id` da linha; colunas de orçamento são extraídas do documento; `next_number` só muda
@@ -301,12 +305,12 @@ faz os testes correspondentes falharem.
 
 ### 6.1 Telas e fluxos
 
-| Rota | Conteúdo |
-|---|---|
-| `/entrar` | Campo de e-mail + botão "Continuar com Google". Envia o código e vai para a etapa do código |
-| `/entrar` (etapa 2) | Campo de 6 dígitos (cola automática do código, `inputmode="numeric"`, reenvio liberado após 60 s) |
-| `/auth/callback` | Retorno do Google: troca o `code` pela sessão (PKCE) e redireciona ao app |
-| `/conta` | E-mail, contas vinculadas, "Sair", "Sair e apagar dados deste dispositivo", "Exportar dados", "Excluir conta" |
+| Rota                | Conteúdo                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `/entrar`           | Campo de e-mail + botão "Continuar com Google". Envia o código e vai para a etapa do código                   |
+| `/entrar` (etapa 2) | Campo de 6 dígitos (cola automática do código, `inputmode="numeric"`, reenvio liberado após 60 s)             |
+| `/auth/callback`    | Retorno do Google: troca o `code` pela sessão (PKCE) e redireciona ao app                                     |
+| `/conta`            | E-mail, contas vinculadas, "Sair", "Sair e apagar dados deste dispositivo", "Exportar dados", "Excluir conta" |
 
 Não há tela separada de cadastro. O primeiro código enviado a um e-mail novo cria a conta
 (`shouldCreateUser: true`), e o gatilho `handle_new_user` prepara os dados iniciais. Todas as outras rotas exigem
@@ -487,7 +491,7 @@ Itens com envio pendente mostram um ícone discreto.
 ## 8. Migração da edição Local para a Cloud
 
 0. **Decidido (23/11/2026):** a edição Cloud **nunca envia nada sozinha**. Quem usa a edição Local grátis (só
-   `localStorage`, hoje no GitHub Pages, depois na versão free deste projeto) e assina a Cloud passa por um **passo
+   `localStorage`, em `/gratis/` do site) e assina a Cloud passa por um **passo
    explícito de importação** para a nuvem (itens 1 a 4). Até esse passo existir (F6), a Cloud começa vazia.
 1. No primeiro login, se o navegador tiver dados da edição Local (`gerador-orcamento:v1`), oferecer
    **"Enviar meus dados para a nuvem"**.
@@ -503,6 +507,7 @@ A importação exige plano Pro (a nuvem só grava para quem assina): quem quer m
 acesso, o app oferece o envio. Sem Pro, o aviso e _Ajustes › Enviar dados para a nuvem_ ficam bloqueados.
 
 **Como ficou (F6, 24/11/2026):**
+
 - **Aviso no primeiro login, com confirmação** (`MigrationPrompt`): aparece depois da primeira sincronização, para já
   saber se a conta tem dados, e diz o que será enviado ("2 empresas, 14 clientes e 32 orçamentos"). "Agora não" lembra
   a escolha por conta neste navegador. Depois de enviar, a cópia da edição Local no navegador é removida.
@@ -525,15 +530,15 @@ navegador, sem limites). O plano grátis na nuvem (15 orçamentos por mês, 1 em
 importar o que já tinha ao virar Pro; com a importação por arquivo e o envio dos dados do navegador, ele deixou de
 fazer sentido.
 
-| | Local (grátis) | Cloud Pro |
-|---|---|---|
-| Preço | R$ 0 | **R$ 9,99/mês ou R$ 99,99/ano** (tabela `plan_prices`) |
-| Orçamentos e empresas | ilimitados | ilimitados |
-| Onde ficam os dados | só no navegador deste aparelho | na nuvem, na conta |
-| Sincronização entre aparelhos | — | sim |
-| Enviar para a nuvem o que já tem no grátis | — | sim |
-| Relatórios, PDF, catálogo, clientes, backup em arquivo | sim | sim |
-| Futuro (fora deste plano): link público do orçamento com aceite online, envio por e-mail, logo no PDF | — | sim |
+|                                                                                                       | Local (grátis)                 | Cloud Pro                                              |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------ |
+| Preço                                                                                                 | R$ 0                           | **R$ 9,99/mês ou R$ 99,99/ano** (tabela `plan_prices`) |
+| Orçamentos e empresas                                                                                 | ilimitados                     | ilimitados                                             |
+| Onde ficam os dados                                                                                   | só no navegador deste aparelho | na nuvem, na conta                                     |
+| Sincronização entre aparelhos                                                                         | —                              | sim                                                    |
+| Enviar para a nuvem o que já tem no grátis                                                            | —                              | sim                                                    |
+| Relatórios, PDF, catálogo, clientes, backup em arquivo                                                | sim                            | sim                                                    |
+| Futuro (fora deste plano): link público do orçamento com aceite online, envio por e-mail, logo no PDF | —                              | sim                                                    |
 
 **Sem plano na nuvem** (conta recém-criada ou assinatura vencida há mais de 7 dias): a conta **só lê**. O servidor
 recusa qualquer gravação (`sem_permissao`, política de RLS com `private.is_pro()`), mas nada é apagado: dá para ver os
@@ -544,12 +549,12 @@ sincronização.
 
 ### 9.2 Provedor de pagamento (decisão D4)
 
-| Provedor | A favor | Contra / verificar |
-|---|---|---|
-| **Asaas** | Assinaturas com Pix, boleto e cartão; emissão de NFS-e; API com webhooks; sandbox; popular entre SaaS brasileiros | Exige conta PJ (CNPJ/MEI); conferir as taxas atuais |
-| **Mercado Pago** | Assinaturas (preapproval); marca conhecida do público | Pix recorrente e regras de assinatura precisam ser validados no sandbox |
-| **Stripe** | Melhor API; Pix Automático para assinaturas desde abril/2026 | A documentação de Pix recorrente não lista o Brasil entre os países do vendedor; repasse mais lento |
-| **Paddle** | _Merchant of record_: a Paddle vende em seu nome e cuida de impostos e notas; oferece Pix Automático | Taxa maior; menos controle |
+| Provedor         | A favor                                                                                                           | Contra / verificar                                                                                  |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Asaas**        | Assinaturas com Pix, boleto e cartão; emissão de NFS-e; API com webhooks; sandbox; popular entre SaaS brasileiros | Exige conta PJ (CNPJ/MEI); conferir as taxas atuais                                                 |
+| **Mercado Pago** | Assinaturas (preapproval); marca conhecida do público                                                             | Pix recorrente e regras de assinatura precisam ser validados no sandbox                             |
+| **Stripe**       | Melhor API; Pix Automático para assinaturas desde abril/2026                                                      | A documentação de Pix recorrente não lista o Brasil entre os países do vendedor; repasse mais lento |
+| **Paddle**       | _Merchant of record_: a Paddle vende em seu nome e cuida de impostos e notas; oferece Pix Automático              | Taxa maior; menos controle                                                                          |
 
 Para qualquer um deles, a integração é isolada numa Edge Function por provedor. Trocar de provedor não mexe no app.
 
@@ -666,11 +671,11 @@ sequenceDiagram
 
 ### 12.1 Ambientes
 
-| Ambiente | App | Supabase (banco + Auth) | E-mails de login |
-|---|---|---|---|
-| Local de desenvolvimento | `npm run dev:cloud` | `supabase start` (Docker) | Capturados pelo Mailpit/Inbucket do Supabase local |
-| Prévia (por PR) | Cloudflare Pages preview | projeto `staging` | SMTP real, domínio de teste |
-| Produção | `app.<dominio>` | projeto `production` (Pro, São Paulo) | SMTP real, `login@<dominio>` |
+| Ambiente                 | App                      | Supabase (banco + Auth)               | E-mails de login                                   |
+| ------------------------ | ------------------------ | ------------------------------------- | -------------------------------------------------- |
+| Local de desenvolvimento | `npm run dev:cloud`      | `supabase start` (Docker)             | Capturados pelo Mailpit/Inbucket do Supabase local |
+| Prévia (por PR)          | Cloudflare Pages preview | projeto `staging`                     | SMTP real, domínio de teste                        |
+| Produção                 | `app.<dominio>`          | projeto `production` (Pro, São Paulo) | SMTP real, `login@<dominio>`                       |
 
 Cada projeto tem suas URLs de retorno (Google/PKCE) cadastradas em _Authentication › URL Configuration_.
 
@@ -678,9 +683,9 @@ Cada projeto tem suas URLs de retorno (Google/PKCE) cadastradas em _Authenticati
 
 - `ci.yml` (todo PR): Prettier, oxlint, `tsc`, Vitest, build das **duas** edições, testes pgTAP (Supabase em
   Docker), Playwright.
-- `pages.yml` (push na `main`): publica a edição Local no GitHub Pages.
-- `cloud.yml` (tag `v*` ou aprovação manual): `supabase db push` (migrações) → deploy das Edge Functions → build da
-  Cloud → Cloudflare Pages.
+- `pages.yml`: **removido em 26/11/2026** (não há mais publicação da Local no GitHub Pages; o grátis sai em `/gratis/` do site).
+- `cloud.yml` (tag `v*` ou aprovação manual; **ainda não existe**, entra na F9): `supabase db push` (migrações) → deploy
+  das Edge Functions → `npm run build:site` (Cloud em `/` e Local em `/gratis/`) → Cloudflare Pages.
 
 ### 12.3 Operação
 
@@ -692,30 +697,30 @@ Cada projeto tem suas URLs de retorno (Google/PKCE) cadastradas em _Authenticati
 
 ## 13. Testes
 
-| Camada | Ferramenta | O que cobre |
-|---|---|---|
-| Regras puras | Vitest | `lib/` (cálculos, máscaras, validação), `reports/data.ts` (portar os cenários já usados nas validações manuais) |
-| Sincronização | Vitest + `fake-indexeddb` + servidor falso | Fila, idempotência, conflitos, reserva de números, retomada após falha de rede |
-| Banco | pgTAP | Isolamento por RLS, limites do plano, `rev`, reserva concorrente de números |
-| Ponta a ponta | Playwright | Login por código (lido do Mailpit do Supabase local); criar orçamento num "dispositivo" e vê-lo no outro; offline → online; importação da Local; upgrade de plano no sandbox do pagamento; exclusão de conta |
+| Camada        | Ferramenta                                 | O que cobre                                                                                                                                                                                                  |
+| ------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Regras puras  | Vitest                                     | `lib/` (cálculos, máscaras, validação), `reports/data.ts` (portar os cenários já usados nas validações manuais)                                                                                              |
+| Sincronização | Vitest + `fake-indexeddb` + servidor falso | Fila, idempotência, conflitos, reserva de números, retomada após falha de rede                                                                                                                               |
+| Banco         | pgTAP                                      | Isolamento por RLS, limites do plano, `rev`, reserva concorrente de números                                                                                                                                  |
+| Ponta a ponta | Playwright                                 | Login por código (lido do Mailpit do Supabase local); criar orçamento num "dispositivo" e vê-lo no outro; offline → online; importação da Local; upgrade de plano no sandbox do pagamento; exclusão de conta |
 
 ## 14. Fases, entregas e estimativas
 
 Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úteis de trabalho efetivo.
 
-| Fase | Entregas | Estimativa |
-|---|---|---|
-| **F0 · Decisões e contas** | Decisões D1–D10; domínio; contas Supabase/Cloudflare/SMTP/pagamento; cliente OAuth do Google; repositório no GitHub | 1 dia |
-| ✅ **F1 · Fundação** (concluída em 18/11/2026) | Vitest com 95 testes das regras atuais; camada `src/data/` + `src/editions/` sem mudar comportamento; variável `VITE_EDITION` validada no build; fonte Inter local; CI (`ci.yml`) | 2–3 dias |
-| ✅ **F2 · Etapa 1 publicada** (18/11/2026) | LICENSE, README, workflow do Pages, repositório público | 0,5–1 dia |
-| ✅ **F3 · Banco** (concluída em 18/11/2026; `staging` online em 23/11/2026) | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, 78 testes pgTAP + job no CI, tipos TypeScript gerados | 2–3 dias |
-| ✅ **F4 · Autenticação** (concluída em 24/11/2026, inclusive no projeto online) | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account` | 2–3 dias |
-| ✅ **F5 · Sincronização** (concluída em 24/11/2026; Realtime ficou para depois) | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes | 4–6 dias |
-| ✅ **F6 · Migração e conta** (concluída em 24/11/2026; migração aplicada no `staging`) | Importar da Local/backup, exportar, excluir conta | 1–2 dias |
-| ✅ **F7 · Planos e cobrança** (concluída em 26/11/2026; só Pro na nuvem) | Página de planos, checkout, webhook e confirmação, inadimplência, cancelamento, landing, testes no sandbox | 3–5 dias |
-| **F8 · Segurança e LGPD** | Cabeçalhos/CSP, revisão de RLS, Termos e Política (+ revisão jurídica), página de status | 1–2 dias |
-| **F9 · Produção** | Supabase Pro em São Paulo, domínio e DNS (app + e-mail), Google OAuth publicado, Cloudflare Pages, Sentry, pipelines | 1–2 dias |
-| **F10 · Beta e lançamento** | Beta fechado (5–10 autônomos reais), correções, landing page, lançamento | 1–2 semanas de calendário |
+| Fase                                                                                                 | Entregas                                                                                                                                                                          | Estimativa                |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| **F0 · Decisões e contas**                                                                           | Decisões D1–D10; domínio; contas Supabase/Cloudflare/SMTP/pagamento; cliente OAuth do Google; repositório no GitHub                                                               | 1 dia                     |
+| ✅ **F1 · Fundação** (concluída em 18/11/2026)                                                       | Vitest com 95 testes das regras atuais; camada `src/data/` + `src/editions/` sem mudar comportamento; variável `VITE_EDITION` validada no build; fonte Inter local; CI (`ci.yml`) | 2–3 dias                  |
+| ✅ **F2 · Etapa 1 publicada** (18/11/2026; a publicação no GitHub Pages foi desligada em 26/11/2026) | LICENSE, README, workflow do Pages, repositório público                                                                                                                           | 0,5–1 dia                 |
+| ✅ **F3 · Banco** (concluída em 18/11/2026; `staging` online em 23/11/2026)                          | Migrações, RLS, triggers (incl. `handle_new_user`), RPCs, 78 testes pgTAP + job no CI, tipos TypeScript gerados                                                                   | 2–3 dias                  |
+| ✅ **F4 · Autenticação** (concluída em 24/11/2026, inclusive no projeto online)                      | Telas de login (código e Google) e de conta em pt-BR, callback PKCE, rotas protegidas, SMTP com SPF/DKIM/DMARC, modelos de e-mail, Turnstile, `delete-account`                    | 2–3 dias                  |
+| ✅ **F5 · Sincronização** (concluída em 24/11/2026; Realtime ficou para depois)                      | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes                                                                                | 4–6 dias                  |
+| ✅ **F6 · Migração e conta** (concluída em 24/11/2026; migração aplicada no `staging`)               | Importar da Local/backup, exportar, excluir conta                                                                                                                                 | 1–2 dias                  |
+| ✅ **F7 · Planos e cobrança** (concluída em 26/11/2026; só Pro na nuvem)                             | Página de planos, checkout, webhook e confirmação, inadimplência, cancelamento, landing, testes no sandbox                                                                        | 3–5 dias                  |
+| **F8 · Segurança e LGPD**                                                                            | Cabeçalhos/CSP, revisão de RLS, Termos e Política (+ revisão jurídica), página de status                                                                                          | 1–2 dias                  |
+| **F9 · Produção**                                                                                    | Supabase Pro em São Paulo, domínio e DNS (app + e-mail), Google OAuth publicado, Cloudflare Pages, Sentry, pipelines                                                              | 1–2 dias                  |
+| **F10 · Beta e lançamento**                                                                          | Beta fechado (5–10 autônomos reais), correções, landing page, lançamento                                                                                                          | 1–2 semanas de calendário |
 
 **Total de desenvolvimento:** cerca de 18 a 29 dias, mais o período de beta.
 
@@ -731,35 +736,35 @@ F4, em paralelo com F5, se houver duas frentes.
 - O código de login chega em até 1 minuto na caixa de entrada (não no spam) de Gmail e Outlook.
 - Sem plano Pro o servidor recusa gravações (a conta só lê), e o Pro libera assim que o pagamento é confirmado.
 - Excluir a conta apaga todos os dados do usuário.
-- A edição Local publicada no GitHub Pages continua funcionando, sem nenhum código da Cloud no bundle.
+- A edição Local (em `/gratis/`) continua funcionando, sem nenhum código da Cloud no bundle.
 
 ## 15. Custos estimados
 
-| Item | Desenvolvimento | Produção (início) |
-|---|---|---|
-| Domínio `.com.br` | — | cerca de R$ 40/ano |
-| Supabase (banco + Auth) | US$ 0 (Free) | **US$ 25/mês** (Pro: sem pausa, 8 GB, backups diários, 100.000 MAU no Auth) |
-| SMTP (Resend/Brevo) | US$ 0 | US$ 0 no plano grátis do provedor enquanto o volume for baixo (conferir cotas) |
-| Cloudflare Pages | US$ 0 | US$ 0 |
-| Sentry | US$ 0 | US$ 0 (plano gratuito) |
-| Pagamento | — | % por transação (depende de D4) |
-| Revisão jurídica (Termos/Política) | — | pontual, a orçar |
+| Item                               | Desenvolvimento | Produção (início)                                                              |
+| ---------------------------------- | --------------- | ------------------------------------------------------------------------------ |
+| Domínio `.com.br`                  | —               | cerca de R$ 40/ano                                                             |
+| Supabase (banco + Auth)            | US$ 0 (Free)    | **US$ 25/mês** (Pro: sem pausa, 8 GB, backups diários, 100.000 MAU no Auth)    |
+| SMTP (Resend/Brevo)                | US$ 0           | US$ 0 no plano grátis do provedor enquanto o volume for baixo (conferir cotas) |
+| Cloudflare Pages                   | US$ 0           | US$ 0                                                                          |
+| Sentry                             | US$ 0           | US$ 0 (plano gratuito)                                                         |
+| Pagamento                          | —               | % por transação (depende de D4)                                                |
+| Revisão jurídica (Termos/Política) | —               | pontual, a orçar                                                               |
 
 Custo fixo inicial: cerca de **US$ 25/mês + domínio**. Com o Pro a ~R$ 20/mês, algo como 7 a 8 assinantes cobrem a
 infraestrutura (considerando taxas e câmbio).
 
 ## 16. Riscos e mitigação
 
-| Risco | Impacto | Mitigação |
-|---|---|---|
-| Bugs de sincronização causarem perda de dados | Alto | Versões substituídas guardadas; testes de sync dedicados; backup exportável; beta antes do lançamento |
-| Mudança de preço/limite do Supabase | Médio | Integração isolada (`editions/cloud/`); Postgres padrão, portável e auto-hospedável |
-| E-mail de login cair no spam ou atrasar | Alto | SMTP transacional com SPF/DKIM/DMARC; remetente exclusivo de login; botão do Google como alternativa; monitorar entregas |
-| Provedor de pagamento recusar a conta ou mudar regras | Médio | Integração isolada por provedor; plano B entre as opções da seção 9.2 |
-| Free do Supabase pausar o `staging` | Baixo | Esperado; reativar quando preciso. Produção já nasce no Pro |
-| Complexidade do offline atrasar o projeto | Médio | Se preciso, lançar a F5 em duas partes: (a) online com cache de leitura, (b) escrita offline |
-| Obrigações fiscais da venda (NFS-e) | Médio | Provedor que emite NFS-e (Asaas) ou _merchant of record_ (Paddle); falar com contador |
-| Repositório público facilitar cópias | Baixo/médio | Licença AGPL (D1); o valor da Cloud está na operação e nos dados sincronizados |
+| Risco                                                 | Impacto     | Mitigação                                                                                                                |
+| ----------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Bugs de sincronização causarem perda de dados         | Alto        | Versões substituídas guardadas; testes de sync dedicados; backup exportável; beta antes do lançamento                    |
+| Mudança de preço/limite do Supabase                   | Médio       | Integração isolada (`editions/cloud/`); Postgres padrão, portável e auto-hospedável                                      |
+| E-mail de login cair no spam ou atrasar               | Alto        | SMTP transacional com SPF/DKIM/DMARC; remetente exclusivo de login; botão do Google como alternativa; monitorar entregas |
+| Provedor de pagamento recusar a conta ou mudar regras | Médio       | Integração isolada por provedor; plano B entre as opções da seção 9.2                                                    |
+| Free do Supabase pausar o `staging`                   | Baixo       | Esperado; reativar quando preciso. Produção já nasce no Pro                                                              |
+| Complexidade do offline atrasar o projeto             | Médio       | Se preciso, lançar a F5 em duas partes: (a) online com cache de leitura, (b) escrita offline                             |
+| Obrigações fiscais da venda (NFS-e)                   | Médio       | Provedor que emite NFS-e (Asaas) ou _merchant of record_ (Paddle); falar com contador                                    |
+| Repositório público facilitar cópias                  | Baixo/médio | Licença AGPL (D1); o valor da Cloud está na operação e nos dados sincronizados                                           |
 
 ## 17. Próximos passos imediatos
 
@@ -778,7 +783,7 @@ infraestrutura (considerando taxas e câmbio).
    `supabase functions deploy assinatura mercadopago-webhook delete-account`.
 8. ~~Servir a edição Local no mesmo domínio~~ (feito em 26/11/2026: `/gratis/`, `npm run build:site`, botão "Usar
    grátis" da landing). **Falta publicar** com o domínio e o Cloudflare Pages (F9): o deploy deve subir `dist/` já com
-   `dist/gratis/`. O GitHub Pages deixa de ser o endereço do grátis (ainda sem usuários, então sem aviso de migração).
+   `dist/gratis/`. O GitHub Pages deixou de publicar a Local (o workflow `pages.yml` foi removido), sem aviso de migração porque ainda não havia usuários.
 9. **F8 (segurança e LGPD)**, depois **F9 (produção)** e **F10 (beta)**. Itens soltos: abrir o app sem internet
    (service worker/PWA), título e imagem de compartilhamento da landing, e nota fiscal da venda (NFS-e).
 

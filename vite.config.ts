@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    // Local: base relativa, funciona em qualquer subpasta (GitHub Pages etc.).
+    // Local: base relativa, funciona em qualquer subpasta (ex.: /gratis/ no site da Cloud).
     // Cloud: rotas por caminho (BrowserRouter), então os arquivos precisam de caminho absoluto.
     base: edition === 'cloud' ? '/' : './',
     plugins: [react(), tailwindcss()],

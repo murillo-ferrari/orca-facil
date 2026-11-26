@@ -153,9 +153,16 @@ e2e/                        testes Playwright (inclusive dois "dispositivos" sin
 .github/workflows/          ci.yml, pages.yml (Local), cloud.yml (Cloud + migrações)
 ```
 
-**Rotas:** a edição Local mantém `HashRouter` (necessário no GitHub Pages). A Cloud usa rotas por caminho
-(`BrowserRouter`): o retorno do login com Google chega em `/auth/callback?code=…` (fluxo PKCE), o que conflitaria com
-rotas por `#`. O Cloudflare Pages redireciona tudo para o `index.html` (`_redirects`).
+**Rotas:** a edição Local mantém `HashRouter` (necessário em hospedagem estática sem reescrita de rotas). A Cloud usa
+rotas por caminho (`BrowserRouter`): o retorno do login com Google chega em `/auth/callback?code=…` (fluxo PKCE), o que
+conflitaria com rotas por `#`. O Cloudflare Pages redireciona tudo para o `index.html` (`_redirects`).
+
+**Um site, dois builds (decidido em 26/11/2026):** a Cloud é servida em `/` e a edição Local (o plano grátis) em
+**`/gratis/`**, no mesmo domínio (`npm run build:site` gera `dist/` com `dist/gratis/`). Arquivos que existem têm
+prioridade sobre o `_redirects` da Cloud, então `/gratis/` não cai no fallback. O `localStorage` é por origem, não por
+caminho: como as duas edições dividem a origem, a Cloud enxerga os dados do grátis e oferece enviá-los ao assinar,
+sem arquivo de backup (testado no navegador). A Cloud só **lê** essa chave e a apaga depois do envio; se algum dia ela
+gravasse ali, as edições se misturariam. O botão "Usar grátis" da landing aponta para `/gratis/`.
 
 **Estado na tela:** as telas continuam usando o store zustand. Na Cloud, o store deixa de persistir no
 `localStorage` e passa a ser alimentado pelo motor de sincronização (seção 7). As telas não sabem de onde vêm os
@@ -769,8 +776,9 @@ infraestrutura (considerando taxas e câmbio).
 7. ~~F7 (planos e cobrança)~~ (feito em 26/11/2026, seção 9.4): Mercado Pago, só Pro na nuvem, landing em `/` e login em
    `/entrar`. Para publicar no `staging`: `supabase db push --remote` (migrações `precos_publicos` e `so_plano_pro`) e
    `supabase functions deploy assinatura mercadopago-webhook delete-account`.
-8. **Servir a edição Local no mesmo domínio** (ex.: `/local/`) e apontar o botão "Usar grátis" da landing para ela;
-   decidir o aviso de backup no GitHub Pages (os dados do navegador são por endereço).
+8. ~~Servir a edição Local no mesmo domínio~~ (feito em 26/11/2026: `/gratis/`, `npm run build:site`, botão "Usar
+   grátis" da landing). **Falta publicar** com o domínio e o Cloudflare Pages (F9): o deploy deve subir `dist/` já com
+   `dist/gratis/`. O GitHub Pages deixa de ser o endereço do grátis (ainda sem usuários, então sem aviso de migração).
 9. **F8 (segurança e LGPD)**, depois **F9 (produção)** e **F10 (beta)**. Itens soltos: abrir o app sem internet
    (service worker/PWA), título e imagem de compartilhamento da landing, e nota fiscal da venda (NFS-e).
 

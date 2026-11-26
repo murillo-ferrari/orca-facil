@@ -33,9 +33,9 @@ jobs:
         run: npm run build
         env:
           VITE_EDITION: local
-      - name: Build (edição Cloud)
+      - name: Build do site (Cloud em / e Local em /gratis/)
         # Só confere que compila; valores fictícios (as chaves reais entram no deploy da Cloud)
-        run: npm run build:cloud
+        run: npm run build:site
         env:
           VITE_SUPABASE_URL: http://127.0.0.1:54321
           VITE_SUPABASE_PUBLISHABLE_KEY: ci

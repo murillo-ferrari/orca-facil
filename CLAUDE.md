@@ -3,7 +3,8 @@
 App web para profissionais autônomos criarem orçamentos de serviços e exportarem em PDF. Tem **duas edições**, escolhidas
 no build por `VITE_EDITION`:
 
-- **Local (grátis):** roda 100% no navegador, sem backend nem login; os dados ficam no `localStorage`. Publicada no GitHub Pages.
+- **Local (grátis):** roda 100% no navegador, sem backend nem login; os dados ficam no `localStorage`. No site fica em
+  **`/gratis/`**, na mesma origem da Cloud (`npm run build:site`), então a Cloud enxerga os dados do grátis ao assinar.
 - **Cloud (plano Pro, R$ 9,99/mês ou R$ 99,99/ano):** login obrigatório (Supabase), dados na nuvem sincronizados entre
   aparelhos, cobrança pelo Mercado Pago. **Na nuvem só existe o Pro** (decidido em 26/11/2026): o grátis é a edição Local.
 
@@ -34,7 +35,8 @@ npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
 - `VITE_EDITION` (`local` | `cloud`, padrão `local`) escolhe a edição no build; `vite.config.ts` valida, e a `cloud`
   exige `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` (ver `.env.example`; `npm run build:cloud`). Para testar a
   Cloud no navegador: banco local (`npm run db:start`) + `VITE_EDITION=cloud` com a URL e a chave que o comando mostra.
-  CI em `.github/workflows/ci.yml` (compila as duas edições); publicação da Local em `.github/workflows/pages.yml`.
+  CI em `.github/workflows/ci.yml` (compila o site: Cloud em `/` e Local em `/gratis/`, `npm run build:site`); publicação
+  da Local em `.github/workflows/pages.yml` (GitHub Pages; o deploy do site completo virá com a F9, no Cloudflare Pages).
 - A Cloud usa `BrowserRouter` (rotas por caminho) e a Local `HashRouter`. Sem sessão: `/` é a **landing**
   (`editions/cloud/landing/`), `/entrar` o login. O código da Cloud nunca entra no bundle da Local (imports `lazy`
   sob `import.meta.env.VITE_EDITION === 'cloud'`).

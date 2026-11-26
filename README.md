@@ -78,8 +78,16 @@ npm run build:cloud  # compila a edição Cloud
 As funções de servidor (Mercado Pago e exclusão de conta) ficam em `supabase/functions/` e usam os secrets
 `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` e `APP_URL` (veja `docs/plano-versao-cloud.md`, seção 9.4).
 
-O build usa caminhos relativos e rotas com `#`, então a pasta `dist/` funciona em qualquer hospedagem estática
-(Netlify, Vercel, GitHub Pages) ou subpasta.
+O build da edição Local usa caminhos relativos e rotas com `#`, então a pasta `dist/` funciona em qualquer
+hospedagem estática (Netlify, Vercel, GitHub Pages) ou subpasta.
+
+O **site completo** (landing e Cloud em `/`, edição Local em `/gratis/`) sai de um comando:
+
+```bash
+npm run build:site   # dist/ (Cloud) com dist/gratis/ (Local); a hospedagem deve servir /gratis/ antes do fallback da Cloud
+```
+
+Como as duas edições ficam na mesma origem, a Cloud encontra os dados do grátis e oferece enviá-los ao assinar.
 
 ### Publicar a sua própria cópia
 

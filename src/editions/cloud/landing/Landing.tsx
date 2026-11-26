@@ -8,8 +8,9 @@ import { supabase } from '../supabase'
 import { rememberAfterLogin } from '../auth/afterLogin'
 import { Showcase } from './Showcase'
 
-// ponytail: endereço fixo da edição Local. Troque para '/local/' quando ela passar a ser servida no mesmo domínio.
-const LOCAL_URL = 'https://murillo-ferrari.github.io/orca-facil/'
+// A edição Local (o plano grátis) é servida no mesmo domínio, em /gratis/ (npm run build:site). Por ser a mesma origem,
+// o localStorage dela é visível para a Cloud: quem assina o Pro já tem os dados do grátis à mão para enviar.
+const LOCAL_URL = '/gratis/'
 const GITHUB_URL = 'https://github.com/murillo-ferrari/orca-facil'
 
 const btn =

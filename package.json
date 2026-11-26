@@ -8,6 +8,7 @@
     "dev:cloud": "VITE_EDITION=cloud vite",
     "build": "tsc -b && VITE_EDITION=local vite build",
     "build:cloud": "tsc -b && VITE_EDITION=cloud vite build",
+    "build:site": "tsc -b && VITE_EDITION=cloud vite build && VITE_EDITION=local vite build --outDir dist/gratis",
     "preview": "vite preview",
     "test": "VITE_EDITION=local vitest run",
     "test:watch": "VITE_EDITION=local vitest",

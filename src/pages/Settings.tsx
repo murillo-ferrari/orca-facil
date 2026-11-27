@@ -18,6 +18,8 @@ const PlanCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/billing/PlanCard')) : null
 const ConflictsCard =
   import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/sync/ConflictsCard')) : null
+const LegalCard =
+  import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/legal/LegalCard')) : null
 
 function UnitsCard() {
   const units = useStore((s) => s.units)
@@ -193,8 +195,8 @@ function BackupCard() {
   )
 }
 
-/** Cartão carregado sob demanda; `skeleton` reserva o espaço enquanto o código chega (sem, não ocupa nada). */
-const lazyCard = (Card: ReturnType<typeof lazy> | null, skeleton?: ReactNode) =>
+/** Cartão carregado sob demanda; `skeleton` (obrigatório) reserva o espaço enquanto o código chega. */
+const lazyCard = (Card: ReturnType<typeof lazy> | null, skeleton: ReactNode) =>
   Card && (
     <Suspense fallback={skeleton}>
       <Card />
@@ -255,7 +257,12 @@ export function SettingsPage() {
             <BackupCard />
           </>
         )}
-        {current.slug === 'outros' && <UnitsCard />}
+        {current.slug === 'outros' && (
+          <>
+            <UnitsCard />
+            {lazyCard(LegalCard, <CardSkeleton lines={0} className="h-[223px] sm:h-[183px]" />)}
+          </>
+        )}
       </div>
     </>
   )

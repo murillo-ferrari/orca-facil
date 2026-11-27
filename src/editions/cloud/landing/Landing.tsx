@@ -128,7 +128,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white text-slate-800">
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8 sticky top-0 z-50 backdrop-blur">
         <Link to="/" className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
             <FileText size={16} aria-hidden />
@@ -289,6 +289,14 @@ export default function Landing() {
       <footer className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500 sm:px-6 lg:px-8">
           <p>Orçafácil · Código aberto sob a licença AGPL-3.0</p>
+          <nav aria-label="Documentos" className="flex gap-4">
+            <Link to="/termos" className="underline">
+              Termos de Uso
+            </Link>
+            <Link to="/privacidade" className="underline">
+              Privacidade
+            </Link>
+          </nav>
           <a
             href={GITHUB_URL}
             target="_blank"

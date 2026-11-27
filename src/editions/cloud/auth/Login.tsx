@@ -199,6 +199,17 @@ export function Login() {
               <GoogleMark />
               Continuar com Google
             </Button>
+            <p className="mt-5 text-center text-xs text-slate-500">
+              Ao entrar, você concorda com os{' '}
+              <Link to="/termos" className="underline">
+                Termos de Uso
+              </Link>{' '}
+              e a{' '}
+              <Link to="/privacidade" className="underline">
+                Política de Privacidade
+              </Link>
+              .
+            </p>
           </>
         ) : (
           <>

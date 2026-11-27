@@ -1,0 +1,20 @@
+# Cabeçalhos de segurança do site (Cloudflare Pages lê este arquivo; o Vite o copia para dist/ e dist/gratis/).
+# Vale para a Cloud (/) e para a edição Local (/gratis/). Ver docs/plano-versao-cloud.md, seção 10.
+#
+# CSP: só o próprio domínio, o Supabase (API), o ViaCEP (CEP digitado) e o Cloudflare Turnstile (CAPTCHA do login).
+#  - script-src sem 'unsafe-inline' nem 'unsafe-eval': o app não usa script inline (o index.html só tem o módulo).
+#  - style-src tem 'unsafe-inline' porque o React escreve atributos `style` (ex.: altura das barras do gráfico).
+#  - blob: em img/worker/connect cobre o PDF gerado no navegador (visualizar e baixar).
+#  - wa.me (WhatsApp) e o checkout do Mercado Pago são navegações (link e location.assign): a CSP não as restringe.
+# Ao adicionar um serviço externo, libere-o aqui e rode o teste de navegador descrito no plano (seção 10).
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: https://*.supabase.co https://viacep.com.br; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000
+
+# Arquivos com nome com hash (assets/) nunca mudam: cache longo
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

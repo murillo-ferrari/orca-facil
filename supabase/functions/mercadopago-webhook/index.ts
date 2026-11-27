@@ -6,8 +6,8 @@
 //    reaproveitam a linha e não são processadas de novo depois de concluídas.
 // 3. Não confia no corpo: busca a assinatura na API e grava o estado dela em subscriptions. Reprocessar é inofensivo.
 // Falha no passo 3 → 500, e o Mercado Pago tenta de novo.
-import { subscriptionFromPreapproval, verifySignature } from '../_shared/mercadopago.ts'
-import { admin, getPreapproval, getPrices, mp, reply, saveSubscription } from '../_shared/server.ts'
+import { pickSubscription, verifySignature } from '../_shared/mercadopago.ts'
+import { admin, getPreapproval, getPrices, mp, reply } from '../_shared/server.ts'
 
 // Assinatura criada/alterada → o id é da assinatura. Cobrança recorrente → buscar a assinatura dela.
 async function preapprovalIdOf(type: string, dataId: string): Promise<string | null> {
@@ -31,12 +31,12 @@ Deno.serve(async (req) => {
   })()
   // A assinatura usa o data.id da query string (documentação do Mercado Pago); o corpo é só reserva
   const dataId = url.searchParams.get('data.id') ?? event?.data?.id?.toString() ?? null
-  const ok = await verifySignature(
-    Deno.env.get('MP_WEBHOOK_SECRET') ?? '',
-    req.headers.get('x-signature'),
-    req.headers.get('x-request-id'),
-    dataId,
-  )
+  const secret = Deno.env.get('MP_WEBHOOK_SECRET')
+  if (!secret) {
+    console.error('webhook: MP_WEBHOOK_SECRET não configurado')
+    return reply(503, { error: 'webhook_nao_configurado' })
+  }
+  const ok = await verifySignature(secret, req.headers.get('x-signature'), req.headers.get('x-request-id'), dataId)
   if (!ok || !event || !dataId) return reply(401, { error: 'assinatura_invalida' })
 
   const type = String(event.type ?? url.searchParams.get('type') ?? '')
@@ -59,13 +59,48 @@ Deno.serve(async (req) => {
     if (preapprovalId) {
       const pre = await getPreapproval(preapprovalId)
       const userId = String(pre.external_reference ?? '')
-      const { data: sub } = await db
-        .from('subscriptions')
-        .select('provider_subscription_id')
-        .eq('user_id', userId)
-        .maybeSingle()
-      const change = subscriptionFromPreapproval(pre, await getPrices(db), sub?.provider_subscription_id ?? null)
-      if (change) await saveSubscription(db, change.userId, change.patch)
+      if (userId) {
+        const { data: sub } = await db
+          .from('subscriptions')
+          .select(
+            'provider_subscription_id, provider_amount, billing_interval_contracted, pending_subscription_id, pending_amount, pending_billing_interval',
+          )
+          .eq('user_id', userId)
+          .maybeSingle()
+        const change = pickSubscription([pre], await getPrices(db), userId, {
+          currentId: sub?.provider_subscription_id ?? null,
+          currentAmount: sub?.provider_amount ?? null,
+          currentInterval: (sub?.billing_interval_contracted as 'mensal' | 'anual' | null) ?? null,
+          pendingId: sub?.pending_subscription_id ?? null,
+          pendingAmount: sub?.pending_amount ?? null,
+          pendingInterval: (sub?.pending_billing_interval as 'mensal' | 'anual' | null) ?? null,
+        })
+        if (change) {
+          // Ativação só se a assinatura ainda é o checkout pendente; renovação só se continua sendo a atual.
+          const isPending = pre.id === sub?.pending_subscription_id
+          const isCurrent = pre.id === sub?.provider_subscription_id
+          if ((isPending && pre.status === 'authorized') || isCurrent) {
+            const { error } = await db
+              .from('subscriptions')
+              .update({
+                ...change.patch,
+                ...(isPending
+                  ? {
+                      pending_subscription_id: null,
+                      pending_amount: null,
+                      pending_billing_interval: null,
+                      pending_checkout_at: null,
+                      pending_checkout_token: null,
+                    }
+                  : {}),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('user_id', userId)
+              .eq(isPending ? 'pending_subscription_id' : 'provider_subscription_id', pre.id)
+            if (error) throw error
+          }
+        }
+      }
     }
 
     await db.from('billing_events').update({ processed_at: new Date().toISOString() }).eq('id', row.id)

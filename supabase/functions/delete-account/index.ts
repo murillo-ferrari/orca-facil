@@ -3,7 +3,7 @@
 // Antes de apagar, cancela a assinatura no Mercado Pago: sem isso, quem exclui a conta continuaria sendo cobrado.
 // Se o cancelamento falhar, a conta NÃO é apagada (a pessoa tenta de novo), para nunca sobrar cobrança sem conta.
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { cancelPreapproval } from '../_shared/server.ts'
+import { cancelPreapproval, findLinkedPreapprovals } from '../_shared/server.ts'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -28,19 +28,14 @@ Deno.serve(async (req) => {
   const { data, error } = await admin.auth.getUser(jwt)
   if (error || !data.user) return reply(401, { error: 'unauthorized' })
 
-  // Assinaturas ativas ou pausadas (a coluna guarda a última; as anteriores já foram canceladas por quem as trocou)
-  const { data: sub } = await admin
-    .from('subscriptions')
-    .select('provider_subscription_id, status')
-    .eq('user_id', data.user.id)
-    .maybeSingle()
-  if (sub?.provider_subscription_id && sub.status !== 'canceled') {
-    try {
-      await cancelPreapproval(sub.provider_subscription_id)
-    } catch (e) {
-      console.error('delete-account: cancelar assinatura', data.user.id, e instanceof Error ? e.message : e)
-      return reply(502, { error: 'cancel_subscription_failed' })
-    }
+  // Cancela as IDs vinculadas pelo servidor: assinatura ativa e checkout pendente iniciado no app. Nunca confia em
+  // IDs fornecidos pelo navegador nem tenta promover/alterar assinaturas achadas por busca ampla.
+  try {
+    const linked = await findLinkedPreapprovals(admin, data.user.id)
+    await Promise.all(linked.ids.map((id) => cancelPreapproval(id)))
+  } catch (e) {
+    console.error('delete-account: cancelar assinaturas', data.user.id, e instanceof Error ? e.message : e)
+    return reply(502, { error: 'cancel_subscription_failed' })
   }
 
   const { error: deleteError } = await admin.auth.admin.deleteUser(data.user.id)

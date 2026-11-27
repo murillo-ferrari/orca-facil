@@ -38,14 +38,18 @@ export function loadPlan() {
     // Volta do checkout: o Mercado Pago acrescenta ?preapproval_id= ao back_url. Confirma sem esperar o webhook.
     if (!returnChecked) {
       returnChecked = true
-      if (new URLSearchParams(location.search).has('preapproval_id')) {
+      const callbackId = new URLSearchParams(location.search).get('preapproval_id')
+      if (callbackId) {
         history.replaceState(null, '', location.pathname)
-        const data = await callAssinatura('confirmar')
+        const data = await callAssinatura('confirmar', undefined, callbackId)
         if (data?.pro) toast('Plano Pro ativo. Obrigado!')
       }
     }
     const [s, p] = await Promise.all([
-      supabase.from('subscriptions').select('plan, status, billing_interval, current_period_end').maybeSingle(),
+      supabase
+        .from('subscriptions')
+        .select('plan, status, billing_interval, current_period_end, provider_subscription_id')
+        .maybeSingle(),
       supabase.from('plan_prices').select('billing_interval, amount'),
     ])
     const apply = (sub: unknown) =>
@@ -60,7 +64,10 @@ export function loadPlan() {
     // do Mercado Pago não chegam sozinhos se o webhook falhar). Silencioso: erro aqui não incomoda ninguém.
     if (!reconciled && s.data?.plan === 'pro') {
       reconciled = true
-      const { error } = await supabase.functions.invoke('assinatura', { method: 'POST', body: { acao: 'confirmar' } })
+      const { error } = await supabase.functions.invoke('assinatura', {
+        method: 'POST',
+        body: { acao: 'confirmar', preapproval_id: s.data.provider_subscription_id },
+      })
       if (!error)
         apply(
           (
@@ -76,15 +83,27 @@ export function loadPlan() {
 }
 
 /** Chama a Edge Function `assinatura`. Erro vira aviso e retorna null. */
-export async function callAssinatura(acao: 'assinar' | 'cancelar' | 'confirmar', periodo?: Interval) {
+export async function callAssinatura(
+  acao: 'assinar' | 'cancelar' | 'confirmar',
+  periodo?: Interval,
+  preapprovalId?: string | null,
+) {
   usePlan.setState({ busy: true })
   const { data, error } = await supabase.functions.invoke<{ url?: string; pro?: boolean }>('assinatura', {
     method: 'POST',
-    body: { acao, periodo },
+    body: { acao, periodo, preapproval_id: preapprovalId },
   })
   usePlan.setState({ busy: false })
   if (error) {
     toast('Não foi possível falar com o Mercado Pago. Tente de novo em instantes.', 'error')
+    return null
+  }
+  if ((data as { error?: string } | null)?.error) {
+    const reason = (data as { error?: string }).error
+    if (reason === 'ja_assinante') toast('Sua assinatura Pro já está ativa. Confira em Ajustes › Conta e plano.')
+    else if (reason === 'checkout_em_andamento')
+      toast('O checkout está sendo preparado. Tente de novo em alguns segundos.', 'error')
+    else toast('Não foi possível iniciar o checkout. Tente de novo.', 'error')
     return null
   }
   return data
@@ -97,10 +116,19 @@ export async function subscribe(periodo: Interval) {
 
 /** "Já assinei": consulta o Mercado Pago e atualiza o plano. */
 export async function confirmSubscription() {
-  const data = await callAssinatura('confirmar')
+  const { data: sub } = await supabase.from('subscriptions').select('pending_subscription_id').maybeSingle()
+  if (!sub?.pending_subscription_id) {
+    toast('Para verificar, volte ao Orçafácil pelo botão do checkout do Mercado Pago.', 'error')
+    return
+  }
+  const data = await callAssinatura('confirmar', undefined, sub.pending_subscription_id)
   if (!data) return
+  reconciled = true
   await loadPlan()
-  toast(data.pro ? 'Plano Pro ativo' : 'Nenhum pagamento aprovado encontrado ainda', data.pro ? 'success' : 'error')
+  toast(
+    data.pro ? 'Plano Pro ativo' : 'Ainda não encontramos um pagamento aprovado para esta conta.',
+    data.pro ? 'success' : 'error',
+  )
 }
 
 /** Relê ao voltar para a aba (o webhook pode ter mudado o plano). Devolve a função que desliga. */

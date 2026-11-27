@@ -22,6 +22,9 @@ export interface SubscriptionPatch {
   plan: 'pro'
   status: 'active' | 'past_due' | 'canceled'
   billing_interval: PlanPrice['billing_interval']
+  /** Valor contratado nesta assinatura; pode diferir do preço atual após reajuste. */
+  provider_amount: number
+  billing_interval_contracted: PlanPrice['billing_interval']
   provider: 'mercadopago'
   provider_subscription_id: string
   current_period_end?: string
@@ -41,24 +44,42 @@ export function subscriptionFromPreapproval(
   prices: PlanPrice[],
   current: string | null,
   now = Date.now(),
+  contractedAmount?: number | null,
+  contractedInterval?: PlanPrice['billing_interval'] | null,
 ): { userId: string; patch: SubscriptionPatch } | null {
   const userId = String(pre.external_reference ?? '')
   if (!UUID.test(userId)) return null
 
-  const status = { authorized: 'active', paused: 'past_due', cancelled: 'canceled', canceled: 'canceled' }[pre.status]
+  // `authorized` pode ser a assinatura recém-aprovada ou uma renovação. Se já era a atual, mantém o status que o
+  // servidor conhece; uma cobrança renovada, sozinha, não desfaz um cancelamento nem uma pausa.
+  const status =
+    pre.status === 'authorized' && current === pre.id
+      ? 'active'
+      : ({ authorized: 'active', paused: 'past_due', cancelled: 'canceled', canceled: 'canceled' }[pre.status] ?? null)
   if (!status) return null // pending e desconhecidos
   if (status !== 'active' && current !== pre.id) return null
 
   const r = pre.auto_recurring ?? {}
   const months =
-    r.frequency_type === 'months' ? r.frequency : r.frequency_type === 'years' ? (r.frequency ?? 0) * 12 : 0
-  const price = prices.find((p) => p.months === months && Number(p.amount) === Number(r.transaction_amount))
-  if (!price || r.currency_id !== 'BRL') return null
+    r.frequency_type === 'months' ? (r.frequency ?? 0) : r.frequency_type === 'years' ? (r.frequency ?? 0) * 12 : 0
+  const interval = months === 1 ? 'mensal' : months === 12 ? 'anual' : null
+  const recurringAmount = Number(r.transaction_amount)
+  if (!interval || !Number.isFinite(recurringAmount) || recurringAmount <= 0 || r.currency_id !== 'BRL') return null
+  if (contractedInterval != null && contractedInterval !== interval) return null
+  if (contractedAmount != null) {
+    // Assinatura já contratada (renovação, cancelamento): vale o valor acordado, mesmo depois de um reajuste.
+    if (Number(contractedAmount) !== recurringAmount) return null
+  } else if (!prices.some((p) => p.months === months && Number(p.amount) === recurringAmount)) {
+    // Sem contrato gravado: só vira Pro com o preço vigente da tabela.
+    return null
+  }
 
   const patch: SubscriptionPatch = {
     plan: 'pro',
     status: status as SubscriptionPatch['status'],
-    billing_interval: price.billing_interval,
+    billing_interval: interval,
+    billing_interval_contracted: interval,
+    provider_amount: recurringAmount,
     provider: 'mercadopago',
     provider_subscription_id: pre.id,
   }
@@ -71,7 +92,7 @@ export function subscriptionFromPreapproval(
   if (status !== 'active') return { userId, patch }
 
   const end = new Date(now)
-  end.setUTCMonth(end.getUTCMonth() + price.months)
+  end.setUTCMonth(end.getUTCMonth() + months)
   patch.current_period_end = end.toISOString()
   return { userId, patch }
 }
@@ -86,8 +107,10 @@ export async function verifySignature(
   xSignature: string | null,
   xRequestId: string | null,
   dataId: string | null,
+  now = Date.now(),
 ): Promise<boolean> {
-  if (!xSignature) return false
+  // Configuração ausente não pode virar uma chave HMAC vazia aceita por engano.
+  if (!secret || !xSignature) return false
   const parts = Object.fromEntries(
     xSignature.split(',').map((p) => {
       const i = p.indexOf('=')
@@ -95,6 +118,8 @@ export async function verifySignature(
     }),
   )
   if (!/^\d+$/.test(parts.ts ?? '') || !parts.v1) return false
+  // Recusa replays: o Mercado Pago envia `ts` em segundos; tolerância pequena a atraso e diferença do relógio.
+  if (Math.abs(now - Number(parts.ts) * 1000) > 5 * 60 * 1000) return false
 
   const id = dataId?.trim() && /[a-z]/i.test(dataId) ? dataId.trim().toLowerCase() : dataId?.trim()
   const manifest =
@@ -123,15 +148,47 @@ export async function verifySignature(
  * uma autorizada (a mais recente do resultado vence se houver duas) ou, na falta, a que já estava gravada
  * (`current`), para refletir pausa, atraso ou cancelamento feitos fora do app. null = nada a gravar.
  */
+/** Dados que o servidor gravou na linha de `subscriptions`: só esses IDs podem ser ativados ou reconciliados. */
+export interface LinkedSubscription {
+  currentId: string | null
+  currentAmount: number | null
+  currentInterval: PlanPrice['billing_interval'] | null
+  pendingId: string | null
+  pendingAmount: number | null
+  pendingInterval: PlanPrice['billing_interval'] | null
+}
+
+/**
+ * Ativa o checkout pendente (se autorizado) ou reconcilia a assinatura atual. Nunca promove uma assinatura que o
+ * servidor não vinculou à conta, mesmo que tenha o mesmo external_reference.
+ */
 export function pickSubscription(
   found: Preapproval[],
   prices: PlanPrice[],
   userId: string,
-  current: string | null,
+  linked: LinkedSubscription,
   now = Date.now(),
 ) {
-  const all = found
-    .map((p) => subscriptionFromPreapproval(p, prices, current, now))
-    .filter((c): c is NonNullable<typeof c> => c?.userId === userId)
-  return all.find((c) => c.patch.status === 'active') ?? all.find((c) => c.patch.provider_subscription_id === current)
+  const own = found.filter((p) => String(p.external_reference ?? '') === userId)
+  const pending = own.find((p) => p.id === linked.pendingId && p.status === 'authorized')
+  if (pending) {
+    return subscriptionFromPreapproval(
+      pending,
+      prices,
+      linked.currentId,
+      now,
+      linked.pendingAmount,
+      linked.pendingInterval,
+    )
+  }
+  const current = own.find((p) => p.id === linked.currentId)
+  if (!current) return null
+  return subscriptionFromPreapproval(
+    current,
+    prices,
+    linked.currentId,
+    now,
+    linked.currentAmount,
+    linked.currentInterval,
+  )
 }

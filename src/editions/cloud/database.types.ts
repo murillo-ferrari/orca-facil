@@ -201,9 +201,16 @@ export type Database = {
       subscriptions: {
         Row: {
           billing_interval: string | null
+          billing_interval_contracted: string | null
           current_period_end: string | null
+          pending_amount: number | null
+          pending_billing_interval: string | null
+          pending_checkout_at: string | null
+          pending_checkout_token: string | null
+          pending_subscription_id: string | null
           plan: string
           provider: string | null
+          provider_amount: number | null
           provider_customer_id: string | null
           provider_subscription_id: string | null
           status: string
@@ -213,9 +220,16 @@ export type Database = {
         ComputedFields: never
         Insert: {
           billing_interval?: string | null
+          billing_interval_contracted?: string | null
           current_period_end?: string | null
+          pending_amount?: number | null
+          pending_billing_interval?: string | null
+          pending_checkout_at?: string | null
+          pending_checkout_token?: string | null
+          pending_subscription_id?: string | null
           plan?: string
           provider?: string | null
+          provider_amount?: number | null
           provider_customer_id?: string | null
           provider_subscription_id?: string | null
           status?: string
@@ -224,9 +238,16 @@ export type Database = {
         }
         Update: {
           billing_interval?: string | null
+          billing_interval_contracted?: string | null
           current_period_end?: string | null
+          pending_amount?: number | null
+          pending_billing_interval?: string | null
+          pending_checkout_at?: string | null
+          pending_checkout_token?: string | null
+          pending_subscription_id?: string | null
           plan?: string
           provider?: string | null
+          provider_amount?: number | null
           provider_customer_id?: string | null
           provider_subscription_id?: string | null
           status?: string
@@ -237,6 +258,13 @@ export type Database = {
           {
             foreignKeyName: 'subscriptions_billing_interval_fkey'
             columns: ['billing_interval']
+            isOneToOne: false
+            referencedRelation: 'plan_prices'
+            referencedColumns: ['billing_interval']
+          },
+          {
+            foreignKeyName: 'subscriptions_pending_billing_interval_fkey'
+            columns: ['pending_billing_interval']
             isOneToOne: false
             referencedRelation: 'plan_prices'
             referencedColumns: ['billing_interval']
@@ -282,6 +310,16 @@ export type Database = {
       aplicar_alteracoes: { Args: { p_changes: Json }; Returns: Json }
       buscar_alteracoes: { Args: { p_desde?: string; p_limite?: number }; Returns: Json }
       definir_proximo_numero: { Args: { p_empresa: string; p_proximo: number }; Returns: number }
+      iniciar_checkout: {
+        Args: { p_interval: string; p_user: string }
+        Returns: {
+          checkout_token: string
+          create_new: boolean
+          pending_amount: number
+          pending_billing_interval: string
+          pending_subscription_id: string
+        }[]
+      }
       reservar_numeros_orcamento: { Args: { p_empresa: string; p_quantidade?: number }; Returns: number }
     }
     Enums: {

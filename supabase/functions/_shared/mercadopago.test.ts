@@ -4,6 +4,7 @@ import {
   pickSubscription,
   subscriptionFromPreapproval,
   verifySignature,
+  type LinkedSubscription,
   type PlanPrice,
   type Preapproval,
 } from './mercadopago'
@@ -30,11 +31,23 @@ describe('subscriptionFromPreapproval', () => {
         plan: 'pro',
         status: 'active',
         billing_interval: 'mensal',
+        billing_interval_contracted: 'mensal',
+        provider_amount: 9.99,
         provider: 'mercadopago',
         provider_subscription_id: 'pre1',
         current_period_end: '2026-12-24T13:00:00.000Z',
       },
     })
+  })
+
+  it('continua reconhecendo o preço contratado depois de um reajuste, mas não ativa um checkout novo com preço antigo', () => {
+    const newPrices = [{ billing_interval: 'mensal' as const, amount: 12.99, months: 1 }]
+    expect(subscriptionFromPreapproval(pre({}), newPrices, 'pre1', Date.now(), 9.99)?.patch).toMatchObject({
+      plan: 'pro',
+      provider_amount: 9.99,
+      billing_interval: 'mensal',
+    })
+    expect(subscriptionFromPreapproval(pre({}), newPrices, null)).toBeNull()
   })
 
   it('reconhece o anual (12 meses ou 1 ano)', () => {
@@ -69,39 +82,63 @@ describe('subscriptionFromPreapproval', () => {
 })
 
 describe('pickSubscription', () => {
-  it('prefere a autorizada; sem ela, reflete o estado da que já estava gravada', () => {
-    const old = pre({ id: 'velha', status: 'cancelled', next_payment_date: null })
-    const novaAtiva = pre({ id: 'nova' })
-    expect(pickSubscription([old, novaAtiva], PRICES, USER, 'velha')?.patch.provider_subscription_id).toBe('nova')
-    expect(pickSubscription([old], PRICES, USER, 'velha')?.patch.status).toBe('canceled')
+  const linked = (l: Partial<LinkedSubscription>): LinkedSubscription => ({
+    currentId: null,
+    currentAmount: null,
+    currentInterval: null,
+    pendingId: null,
+    pendingAmount: null,
+    pendingInterval: null,
+    ...l,
   })
 
-  it('ignora pendentes, assinaturas de outro usuário e canceladas que não são a atual', () => {
-    expect(pickSubscription([pre({ status: 'pending' })], PRICES, USER, null)).toBeUndefined()
-    expect(pickSubscription([pre({})], PRICES, 'a0000000-0000-4000-8000-000000000002', null)).toBeUndefined()
-    expect(pickSubscription([pre({ id: 'x', status: 'cancelled' })], PRICES, USER, 'outra')).toBeUndefined()
+  it('ativa o checkout pendente autorizado; sem ele, reflete o estado da assinatura atual', () => {
+    const old = pre({ id: 'velha', status: 'cancelled', next_payment_date: null })
+    const nova = pre({ id: 'nova' })
+    const l = linked({ currentId: 'velha', currentAmount: 9.99, pendingId: 'nova', pendingAmount: 9.99 })
+    expect(pickSubscription([old, nova], PRICES, USER, l)?.patch.provider_subscription_id).toBe('nova')
+    const s = linked({ currentId: 'velha', currentAmount: 9.99, currentInterval: 'mensal' })
+    expect(pickSubscription([old], PRICES, USER, s)?.patch.status).toBe('canceled')
+  })
+
+  it('só ativa a ID de checkout vinculada pelo servidor, e só para o dono', () => {
+    const l = linked({ pendingId: 'pre1', pendingAmount: 9.99, pendingInterval: 'mensal' })
+    expect(pickSubscription([pre({ status: 'pending' })], PRICES, USER, l)).toBeNull()
+    expect(pickSubscription([pre({})], PRICES, 'a0000000-0000-4000-8000-000000000002', l)).toBeNull()
+    expect(pickSubscription([pre({})], PRICES, USER, linked({ pendingId: 'outra', pendingAmount: 9.99 }))).toBeNull()
+  })
+
+  it('não ativa checkout cujo valor ou período não batem com o reservado', () => {
+    const l = linked({ pendingId: 'pre1', pendingAmount: 99.99, pendingInterval: 'anual' })
+    expect(pickSubscription([pre({})], PRICES, USER, l)).toBeNull()
   })
 })
 
 describe('verifySignature', () => {
   const secret = 'segredo'
+  const now = Date.UTC(2026, 10, 26, 12)
+  const ts = Math.floor(now / 1000)
   const sign = (manifest: string) => createHmac('sha256', secret).update(manifest).digest('hex')
 
   it('aceita a assinatura do Mercado Pago (data.id alfanumérico em minúsculas)', async () => {
-    const v1 = sign('id:abc123;request-id:req-1;ts:1704908010;')
-    expect(await verifySignature(secret, `ts=1704908010,v1=${v1}`, 'req-1', 'ABC123')).toBe(true)
+    const v1 = sign(`id:abc123;request-id:req-1;ts:${ts};`)
+    expect(await verifySignature(secret, `ts=${ts},v1=${v1}`, 'req-1', 'ABC123', now)).toBe(true)
   })
 
   it('omite pares sem valor', async () => {
-    const v1 = sign('id:999;ts:1704908010;')
-    expect(await verifySignature(secret, `ts=1704908010, v1=${v1}`, null, '999')).toBe(true)
+    const v1 = sign(`id:999;ts:${ts};`)
+    expect(await verifySignature(secret, `ts=${ts}, v1=${v1}`, null, '999', now)).toBe(true)
   })
 
   it('recusa assinatura errada, ausente ou malformada', async () => {
-    const v1 = sign('id:999;request-id:req-1;ts:1704908010;')
-    expect(await verifySignature(secret, `ts=1704908010,v1=${v1}`, 'req-2', '999')).toBe(false)
-    expect(await verifySignature('outro', `ts=1704908010,v1=${v1}`, 'req-1', '999')).toBe(false)
-    expect(await verifySignature(secret, null, 'req-1', '999')).toBe(false)
-    expect(await verifySignature(secret, `v1=${v1}`, 'req-1', '999')).toBe(false)
+    const v1 = sign(`id:999;request-id:req-1;ts:${ts};`)
+    expect(await verifySignature(secret, `ts=${ts},v1=${v1}`, 'req-2', '999', now)).toBe(false)
+    expect(await verifySignature('outro', `ts=${ts},v1=${v1}`, 'req-1', '999', now)).toBe(false)
+    expect(await verifySignature(secret, null, 'req-1', '999', now)).toBe(false)
+    expect(await verifySignature(secret, `v1=${v1}`, 'req-1', '999', now)).toBe(false)
+    expect(await verifySignature('', `ts=${ts},v1=${v1}`, 'req-1', '999', now)).toBe(false)
+    expect(await verifySignature(secret, `ts=${ts - 301},v1=${v1}`, 'req-1', '999', now)).toBe(false)
+    expect(await verifySignature('', `ts=${ts},v1=${v1}`, 'req-1', '999', now)).toBe(false)
+    expect(await verifySignature(secret, `ts=${ts + 301},v1=${v1}`, 'req-1', '999', now)).toBe(false)
   })
 })

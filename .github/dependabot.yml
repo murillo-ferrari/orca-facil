@@ -1,0 +1,16 @@
+# Atualizações automáticas de dependências (npm e GitHub Actions). Os PRs passam pelo CI antes de qualquer merge.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Atualizações menores e de correção juntas, para não gerar um PR por pacote
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

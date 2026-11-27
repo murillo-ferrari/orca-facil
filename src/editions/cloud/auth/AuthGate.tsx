@@ -9,6 +9,8 @@ import MigrationPrompt from '../sync/MigrationPrompt'
 import { takeAfterLogin } from './afterLogin'
 
 const Landing = lazy(() => import('../landing/Landing'))
+const Termos = lazy(() => import('../legal/Legal').then((m) => ({ default: m.Termos })))
+const Privacidade = lazy(() => import('../legal/Legal').then((m) => ({ default: m.Privacidade })))
 
 /**
  * Logo depois do login: vai para onde a pessoa queria (ex.: página do Pro, vinda da landing) ou para o início.
@@ -33,6 +35,15 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe()
   }, [])
 
+  // Documentos legais: públicos, com ou sem sessão (o login e a landing apontam para eles)
+  if (pathname === '/termos' || pathname === '/privacidade') {
+    const Doc = pathname === '/termos' ? Termos : Privacidade
+    return (
+      <Suspense>
+        <Doc />
+      </Suspense>
+    )
+  }
   if (session === undefined) return null
   if (!session) {
     if (pathname !== '/') return <Login />

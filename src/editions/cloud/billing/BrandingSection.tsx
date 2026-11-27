@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Crown } from 'lucide-react'
 import { BrandingCard } from '../../../components/BrandingCard'
+import { BRANDING_SKELETON } from '../../../components/skeletons'
 import { CardSkeleton } from '../../../components/ui'
 import type { Branding } from '../../../types'
 import { usePlan, watchPlan } from './planStore'
@@ -17,7 +18,7 @@ export default function BrandingSection(props: Props) {
   const loaded = usePlan((s) => s.loaded)
   const pro = usePlan((s) => s.view.pro)
   useEffect(watchPlan, [])
-  if (!loaded) return <CardSkeleton lines={1} className="h-[180px]" />
+  if (!loaded) return <CardSkeleton lines={1} className={BRANDING_SKELETON} />
   return (
     <BrandingCard
       {...props}

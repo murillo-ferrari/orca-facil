@@ -118,6 +118,38 @@ export function Card({ className, children, ...props }: ComponentProps<'section'
   )
 }
 
+/** Bloco cinza que pulsa (só com motion-safe). Decorativo: quem usa avisa "Carregando…" para leitores de tela. */
+export function Skeleton({ className }: { className?: string }) {
+  return <span aria-hidden className={cn('block rounded bg-slate-200 motion-safe:animate-pulse', className)} />
+}
+
+/**
+ * Tela inteira "carregando" (topo, título e texto) das páginas públicas e do app enquanto o código chega. O topo tem
+ * a mesma altura do SiteHeader (h-16), então ele não pula quando a página real aparece.
+ */
+export function PageSkeleton() {
+  return (
+    <div aria-busy="true" className="min-h-screen bg-white">
+      <span role="status" className="sr-only">
+        Carregando…
+      </span>
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-8 rounded-lg" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <Skeleton className="h-9 w-20 rounded-lg" />
+      </div>
+      <div className="mx-auto max-w-3xl space-y-3 px-4 pt-10 sm:px-6">
+        <Skeleton className="h-9 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+      </div>
+    </div>
+  )
+}
+
 /**
  * Cartão "carregando" com o formato de um Card + CardHeader, para o espaço ficar reservado e nada pular (CLS).
  * `className`: altura do cartão real (ex. 'h-[262px] sm:h-[154px]'; medida no celular e no computador).

@@ -5,6 +5,7 @@ import { useStore, useActiveProfile } from './store/store'
 import { Toaster } from './components/Toaster'
 import { ConfirmHost } from './components/ConfirmHost'
 import { cn } from './components/styles'
+import { CardSkeleton, PageSkeleton, Skeleton } from './components/ui'
 import { QuotesList } from './pages/QuotesList'
 import { QuoteEditor } from './pages/QuoteEditor'
 import { Profiles } from './pages/Profiles'
@@ -113,14 +114,14 @@ function Shell() {
         </nav>
         {UpgradeCta && (
           <div className="mt-auto px-3">
-            <Suspense>
+            <Suspense fallback={<Skeleton className="h-24 rounded-lg" />}>
               <UpgradeCta />
             </Suspense>
           </div>
         )}
         <div className={cn('px-5 py-4', !UpgradeCta && 'mt-auto')}>
           {SyncStatus ? (
-            <Suspense>
+            <Suspense fallback={<Skeleton className="h-4 w-28" />}>
               <SyncStatus />
             </Suspense>
           ) : (
@@ -139,12 +140,12 @@ function Shell() {
           <ProfileSwitcher />
         </div>
         {UpgradeCta && (
-          <Suspense>
+          <Suspense fallback={<Skeleton className="h-9 w-[60px] rounded-lg" />}>
             <UpgradeCta compact />
           </Suspense>
         )}
         {SyncStatus && (
-          <Suspense>
+          <Suspense fallback={<Skeleton className="h-[18px] w-[18px]" />}>
             <SyncStatus compact />
           </Suspense>
         )}
@@ -152,7 +153,9 @@ function Shell() {
 
       <main className="mx-auto max-w-6xl px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12 print:max-w-none print:p-0">
         {NeedsPlanBanner && (
-          <Suspense>
+          // Sem skeleton de propósito: a faixa só existe para quem não é Pro e fica no topo do conteúdo, então reservar
+          // espaço empurraria a tela para baixo e depois para cima em quem assina (CLS pior do que o que se evita).
+          <Suspense fallback={null}>
             <NeedsPlanBanner />
           </Suspense>
         )}
@@ -171,7 +174,7 @@ function Shell() {
             <Route
               path="/assinatura"
               element={
-                <Suspense>
+                <Suspense fallback={<SubscriptionSkeleton />}>
                   <SubscriptionPage />
                 </Suspense>
               }
@@ -206,11 +209,33 @@ function Shell() {
   )
 }
 
+/** Esqueleto da /assinatura (título, seletor de período e os dois cartões), com as alturas da página real. */
+function SubscriptionSkeleton() {
+  return (
+    <div aria-busy="true">
+      <span role="status" className="sr-only">
+        Carregando…
+      </span>
+      <div className="mb-6 h-[76px] space-y-2 sm:h-14">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-full max-w-xl" />
+      </div>
+      <div className="mb-5 flex justify-center">
+        <Skeleton className="h-9 w-64 rounded-lg" />
+      </div>
+      <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2">
+        <CardSkeleton className="h-[472px]" />
+        <CardSkeleton className="h-[262px] md:h-[472px]" />
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <Router>
       {AuthGate ? (
-        <Suspense>
+        <Suspense fallback={<PageSkeleton />}>
           <AuthGate>
             <Shell />
           </AuthGate>

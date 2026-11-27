@@ -10,6 +10,7 @@ import { AddressFields } from '../components/AddressFields'
 import { DocumentField } from '../components/DocumentField'
 import { NumberInput } from '../components/NumberInput'
 import { BrandingCard } from '../components/BrandingCard'
+import { BRANDING_SKELETON } from '../components/skeletons'
 import {
   Button,
   Card,
@@ -261,7 +262,7 @@ export function ProfileEditor() {
         </Card>
 
         {BrandingSection ? (
-          <Suspense fallback={<CardSkeleton lines={1} className="h-[180px]" />}>
+          <Suspense fallback={<CardSkeleton lines={1} className={BRANDING_SKELETON} />}>
             <BrandingSection
               value={p.branding ?? NO_BRANDING}
               onChange={(branding) => set({ branding })}

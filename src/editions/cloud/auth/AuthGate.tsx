@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { lazy, Suspense } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
+import { PageSkeleton } from '../../../components/ui'
 import { supabase } from '../supabase'
 import { Login } from './Login'
 import SyncProvider from '../sync/SyncProvider'
@@ -39,16 +40,16 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   if (pathname === '/termos' || pathname === '/privacidade') {
     const Doc = pathname === '/termos' ? Termos : Privacidade
     return (
-      <Suspense>
+      <Suspense fallback={<PageSkeleton />}>
         <Doc />
       </Suspense>
     )
   }
-  if (session === undefined) return null
+  if (session === undefined) return <PageSkeleton />
   if (!session) {
     if (pathname !== '/') return <Login />
     return (
-      <Suspense>
+      <Suspense fallback={<PageSkeleton />}>
         <Landing />
       </Suspense>
     )

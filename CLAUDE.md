@@ -84,6 +84,11 @@ npm run lint           # oxlint --deny-warnings (qualquer aviso reprova o CI)
   (`createdAt`, `updatedAt`, `statusHistory[].at`). Use `parseDate`, `toISODate`, `formatDate` de `lib/format.ts`.
   Ao comparar `statusHistory[].at` com datas de calendário, converter para data local (ver `statusDate` em
   `reports/data.ts`).
+- **Tudo que é `lazy` tem skeleton** (nenhum `<Suspense>` sem `fallback`), com a **altura medida** do conteúdo real no
+  celular e no computador, para não haver salto de layout (CLS). Cartões: `CardSkeleton` (alturas compartilhadas em
+  `components/skeletons.ts`); páginas inteiras: `PageSkeleton`; peças pequenas: `Skeleton`. Em Ajustes, `lazyCard`
+  exige o skeleton. Exceção única e comentada: a faixa `NeedsPlanBanner` (`fallback={null}`), porque reservar espaço
+  empurraria a tela de quem é Pro. Ao mudar a altura de um cartão, remeça o skeleton.
 - **Impressão:** elementos que não devem sair no papel levam `print:hidden`.
 - **Commits e push:** só quando o usuário pedir. Branch `main`, remoto `origin` no GitHub. Push na `main` dispara só o
   CI (`ci.yml`); não publica nada.

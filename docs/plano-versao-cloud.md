@@ -1,7 +1,8 @@
 # Plano de implementação — Orçafácil Cloud
 
 > Documento de planejamento, atualizado em 26/11/2026. Estado: **F1 a F7 concluídas** (edição Local publicada; edição Cloud
-> com login, sincronização, plano Pro pelo Mercado Pago e landing, rodando no projeto `staging`). Faltam F8 a F10.
+> com login, sincronização, plano Pro pelo Mercado Pago e landing, rodando no projeto `staging`), **mais a F8**
+> (segurança e LGPD, em 26/11/2026). Faltam F9 e F10.
 > Valores de preços e limites de terceiros foram verificados em novembro de 2026 e devem ser reconferidos antes de
 > contratar (fontes no fim do documento).
 
@@ -653,6 +654,41 @@ sequenceDiagram
 - Proteção do login: CAPTCHA no envio do código, limites de envio do Supabase Auth e alerta de picos de cadastro.
 - Dependências: Dependabot e `npm audit` no CI.
 
+### 10.1 Como ficou (F8, 26/11/2026)
+
+- **Cabeçalhos** em `public/_headers` (o Vite copia para `dist/` e `dist/gratis/`; vale para a Cloud e para a Local):
+  CSP com `default-src 'self'`, `script-src` só com o próprio site e o Turnstile (sem `unsafe-eval` nem script inline),
+  `connect-src` com o Supabase e o ViaCEP, `frame-src` do Turnstile, `blob:` para o PDF, `frame-ancestors 'none'`,
+  `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS e cache longo dos arquivos com hash. `style-src`
+  mantém `'unsafe-inline'` porque o React escreve atributos `style` (ex.: altura das barras do gráfico). Testado no
+  navegador com a CSP aplicada (landing, login com Turnstile, app logado e sincronizando, ViaCEP, PDF, `/gratis/`,
+  fonte e gráficos): nenhuma violação. **Ao liberar um serviço externo novo, liberar aqui e repetir o teste.**
+- **Dependências:** Dependabot (npm e GitHub Actions, semanal e mensal) e `npm audit --omit=dev` no CI (0 hoje).
+- **Revisão de segurança do banco e das funções** (somente leitura, no banco local): nenhum achado crítico nem alto.
+  RLS ligada nas 8 tabelas, `anon` só lê `plan_prices`, funções `security definer` com `search_path` vazio, `private`
+  fora da API, sem escalada de plano e sem injeção SQL. Corrigido no que importava:
+  - **cobrança em dobro:** `public.iniciar_checkout` (só `service_role`) reserva um checkout por usuário com lock na linha
+    e `clock_timestamp()`; clique duplo recebe o mesmo link ou "checkout em andamento"; reserva abandonada expira em
+    2 minutos. Testes pgTAP em `05_checkout.test.sql`;
+  - **reajuste de preço:** a assinatura guarda o valor e o período contratados (`provider_amount`,
+    `billing_interval_contracted`), então renovar não depende do preço atual, e checkout novo só ativa com o preço
+    vigente;
+  - **promoção indevida:** só ativa o Pro o ID que o servidor gravou na conta (`pending_subscription_id` ou
+    `provider_subscription_id`); `preapproval_id` vindo do navegador nunca basta;
+  - **webhook:** recusa se `MP_WEBHOOK_SECRET` não existe e avisos com mais de 5 minutos;
+  - **exclusão de conta:** cancela a assinatura ativa e o checkout pendente vinculados.
+- **Termos de Uso e Política de Privacidade** em `/termos` e `/privacidade` (públicas, com links no rodapé da landing e no
+  login). São um **rascunho**: antes do lançamento, confirmar o nome de quem opera e o e-mail `contato@…` (que precisa
+  existir), o prazo de backups do Supabase (a política diz até 7 dias) e o direito de arrependimento de 7 dias (CDC,
+  art. 49), e passar por **revisão jurídica**.
+- **Ainda em aberto** (de operação ou de decisão de produto):
+  - ligar **"Confirm email"** no Auth do projeto online (a configuração local não vai para o online);
+  - **limite de armazenamento por conta Pro** (hoje só há teto por registro: 64 KB, 256 KB nos orçamentos) e **limite de
+    chamadas** por usuário em `assinar`/`confirmar`: precisam de um número decidido;
+  - conferir no projeto online o CAPTCHA (Turnstile) do Auth e que `MP_TEST_PAYER_EMAIL` **não** existe em produção;
+  - tirar `subscriptions` da publicação do Realtime se ele não for usado; definir por quanto tempo guardar `billing_events` (hoje sem prazo);
+  - **página de status** (prevista na F8) fica para a F9, junto da operação.
+
 ## 11. LGPD e aspectos legais
 
 - **Papéis:** para os dados da conta, o Orçafácil é **controlador**. Para os dados dos clientes que o usuário
@@ -718,7 +754,7 @@ Estimativas para uma pessoa desenvolvendo com apoio do Claude Code, em dias úte
 | ✅ **F5 · Sincronização** (concluída em 24/11/2026; Realtime ficou para depois)                      | IndexedDB, outbox, push/pull, Realtime, conflitos, reserva de números, indicador de status, testes                                                                                | 4–6 dias                  |
 | ✅ **F6 · Migração e conta** (concluída em 24/11/2026; migração aplicada no `staging`)               | Importar da Local/backup, exportar, excluir conta                                                                                                                                 | 1–2 dias                  |
 | ✅ **F7 · Planos e cobrança** (concluída em 26/11/2026; só Pro na nuvem)                             | Página de planos, checkout, webhook e confirmação, inadimplência, cancelamento, landing, testes no sandbox                                                                        | 3–5 dias                  |
-| **F8 · Segurança e LGPD**                                                                            | Cabeçalhos/CSP, revisão de RLS, Termos e Política (+ revisão jurídica), página de status                                                                                          | 1–2 dias                  |
+| ✅ **F8 · Segurança e LGPD** (concluída em 26/11/2026; faltam itens de operação, ver seção 10.1)     | Cabeçalhos/CSP, revisão de RLS, Termos e Política (+ revisão jurídica), página de status                                                                                          | 1–2 dias                  |
 | **F9 · Produção**                                                                                    | Supabase Pro em São Paulo, domínio e DNS (app + e-mail), Google OAuth publicado, Cloudflare Pages, Sentry, pipelines                                                              | 1–2 dias                  |
 | **F10 · Beta e lançamento**                                                                          | Beta fechado (5–10 autônomos reais), correções, landing page, lançamento                                                                                                          | 1–2 semanas de calendário |
 
@@ -784,8 +820,11 @@ infraestrutura (considerando taxas e câmbio).
 8. ~~Servir a edição Local no mesmo domínio~~ (feito em 26/11/2026: `/gratis/`, `npm run build:site`, botão "Usar
    grátis" da landing). **Falta publicar** com o domínio e o Cloudflare Pages (F9): o deploy deve subir `dist/` já com
    `dist/gratis/`. O GitHub Pages deixou de publicar a Local (o workflow `pages.yml` foi removido), sem aviso de migração porque ainda não havia usuários.
-9. **F8 (segurança e LGPD)**, depois **F9 (produção)** e **F10 (beta)**. Itens soltos: abrir o app sem internet
-   (service worker/PWA), título e imagem de compartilhamento da landing, e nota fiscal da venda (NFS-e).
+9. ~~F8 (segurança e LGPD)~~ (feito em 26/11/2026, seção 10.1). Migração `seguranca_f8` e as três funções já estão no
+   `staging`. **Falta** o que é de operação: ligar "Confirm email" no painel do Auth, e-mail de contato, revisão
+   jurídica e os limites por conta (seção 10.1).
+10. **F9 (produção)** e **F10 (beta)**. Itens soltos: abrir o app sem internet (service worker/PWA), título e imagem
+    de compartilhamento da landing, página de status e nota fiscal da venda (NFS-e).
 
 ## Fontes consultadas (novembro de 2026)
 

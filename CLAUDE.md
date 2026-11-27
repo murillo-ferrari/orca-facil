@@ -281,3 +281,8 @@ Decididas: **D1 licença AGPL-3.0**, **D2 código da Cloud no mesmo repositório
     `/entrar` (ícone do Google), rota de Ajustes `/ajustes` em abas, "serviços" unificado como "Catálogo",
     sincronização que grava a cópia local mesmo offline, e a decisão de a nuvem ser só Pro (migração
     `20261126110000_so_plano_pro`: sem Pro a conta só lê; fim dos limites do grátis e de `importar_dados`).
+15. **F8 (segurança e LGPD) concluída** (26/11/2026): `public/_headers` (CSP e cabeçalhos, testados sem violações),
+    Dependabot e `npm audit` no CI, `/termos` e `/privacidade` (rascunho, pede revisão jurídica) e as correções da
+    revisão de segurança (reserva de checkout `public.iniciar_checkout`, valor/período contratados, só ativa ID gravado
+    pelo servidor, webhook recusa sem segredo e aviso velho). Migração `seguranca_f8` e funções no `staging`. Em aberto:
+    "Confirm email" no Auth online, limites por conta, e-mail de contato e revisão jurídica (seção 10.1 do plano).

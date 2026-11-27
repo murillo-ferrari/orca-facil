@@ -149,11 +149,12 @@ export function compareRecords(base: Rec | null, local: Rec, server: Rec): Compa
   const auto: string[] = []
   for (const key of keys) {
     if (HIDDEN.has(key) || same(local[key], server[key])) continue
-    if (base && same(base[key], server[key]))
+    if (base && same(base[key], server[key])) {
       auto.push(key) // só o lado local mudou
-    else if (base && same(base[key], local[key]))
-      continue // só a nuvem mudou: já está no app
-    else conflicts.push({ key, label: labelOf(key), local: local[key], server: server[key] })
+      continue
+    }
+    if (base && same(base[key], local[key])) continue // só a nuvem mudou: já está no app
+    conflicts.push({ key, label: labelOf(key), local: local[key], server: server[key] })
   }
   if (conflicts.some((c) => c.key === 'status')) {
     return {
@@ -238,11 +239,10 @@ export function sideBySide(serverLines: string[], localLines: string[]) {
           kind: 'add',
           segs: words.filter((w) => !w.removed).map((w) => ({ text: w.value, hl: !!w.added })),
         })
-      } else if (o !== undefined) {
-        left.push({ kind: 'del', segs: [{ text: o, hl: true }] })
-      } else if (a !== undefined) {
-        right.push({ kind: 'add', segs: [{ text: a, hl: true }] })
+        continue
       }
+      if (o !== undefined) left.push({ kind: 'del', segs: [{ text: o, hl: true }] })
+      if (a !== undefined) right.push({ kind: 'add', segs: [{ text: a, hl: true }] })
     }
   }
   return { left, right }

@@ -117,7 +117,8 @@ Deno.serve(async (req) => {
           .eq('pending_subscription_id', id)
         if (saveError) throw saveError
         if (oldId && oldId !== id) await cancelPreapproval(oldId)
-      } else if (!isPending) {
+      }
+      if (!isPending) {
         const { error: updateError } = await db
           .from('subscriptions')
           .update({ ...change.patch, updated_at: new Date().toISOString() })

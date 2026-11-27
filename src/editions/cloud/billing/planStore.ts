@@ -100,10 +100,16 @@ export async function callAssinatura(
   }
   if ((data as { error?: string } | null)?.error) {
     const reason = (data as { error?: string }).error
-    if (reason === 'ja_assinante') toast('Sua assinatura Pro já está ativa. Confira em Ajustes › Conta e plano.')
-    else if (reason === 'checkout_em_andamento')
-      toast('O checkout está sendo preparado. Tente de novo em alguns segundos.', 'error')
-    else toast('Não foi possível iniciar o checkout. Tente de novo.', 'error')
+    switch (reason) {
+      case 'ja_assinante':
+        toast('Sua assinatura Pro já está ativa. Confira em Ajustes › Conta e plano.')
+        break
+      case 'checkout_em_andamento':
+        toast('O checkout está sendo preparado. Tente de novo em alguns segundos.', 'error')
+        break
+      default:
+        toast('Não foi possível iniciar o checkout. Tente de novo.', 'error')
+    }
     return null
   }
   return data

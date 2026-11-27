@@ -37,18 +37,23 @@ function DescriptionInput({
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (!show) return
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setHi((h) => (h + 1) % suggestions.length)
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setHi((h) => (h - 1 + suggestions.length) % suggestions.length)
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      onPick(suggestions[hi])
-      setOpen(false)
-    } else if (e.key === 'Escape') {
-      setOpen(false)
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setHi((h) => (h + 1) % suggestions.length)
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setHi((h) => (h - 1 + suggestions.length) % suggestions.length)
+        break
+      case 'Enter':
+        e.preventDefault()
+        onPick(suggestions[hi])
+        setOpen(false)
+        break
+      case 'Escape':
+        setOpen(false)
+        break
     }
   }
 

@@ -263,6 +263,7 @@ export default function Landing() {
                     <strong>Sincronização</strong> entre celular e computador
                   </Item>
                   <Item>Seus dados na nuvem, de qualquer aparelho, com a sua conta</Item>
+                  <Item>Logotipo e cor da sua marca no PDF</Item>
                   <Item>Traz para a nuvem o que você já tem no grátis</Item>
                   <Item>Cancele quando quiser</Item>
                 </ul>

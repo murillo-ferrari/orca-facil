@@ -1,7 +1,8 @@
-import { Document, Font, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { Document, Font, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { CompanyProfile, Quote } from '../types'
 import { itemTotal, quoteTotals } from '../lib/calc'
 import { formatAddressLines, formatCurrency, formatDate, formatNumber } from '../lib/format'
+import { resolveBranding } from './branding'
 
 // Sem hifenização automática (evita quebras como "silvare-formas")
 Font.registerHyphenationCallback((word) => [word])
@@ -29,6 +30,8 @@ const s = StyleSheet.create({
   // Obs. (react-pdf): lineHeight NÃO pode ficar na Page nem em Views (some a numeração / espaçamentos
   // exagerados). Use-o só em estilos de Text que também definem fontSize.
   header: { flexDirection: 'row', justifyContent: 'space-between', gap: 24 },
+  // Caixa fixa: o logotipo (qualquer proporção) cabe inteiro, encostado à esquerda
+  logo: { width: 150, height: 46, objectFit: 'contain', objectPosition: 'left center', marginBottom: 8 },
   companyName: { fontFamily: 'Helvetica-Bold', fontSize: 16, lineHeight: 1.2, color: C.strong, marginBottom: 4 },
   companyLine: { color: C.muted, fontSize: 8.5, lineHeight: LH },
   docBox: { alignItems: 'flex-end', minWidth: 150 },
@@ -141,6 +144,7 @@ function companyLines(p: CompanyProfile): string[] {
 
 export function QuotePdf({ quote, profile }: { quote: Quote; profile: CompanyProfile }) {
   const totals = quoteTotals(quote)
+  const { logo, accent } = resolveBranding(profile.branding)
   const c = quote.client
   const companyName = profile.tradeName || profile.legalName || profile.label
   const showLegal = profile.tradeName && profile.legalName && profile.legalName !== profile.tradeName
@@ -161,6 +165,7 @@ export function QuotePdf({ quote, profile }: { quote: Quote; profile: CompanyPro
         {/* Cabeçalho */}
         <View style={s.header}>
           <View style={{ flex: 1 }}>
+            {logo ? <Image src={logo} style={s.logo} /> : null}
             <Text style={s.companyName}>{companyName}</Text>
             {showLegal && <Text style={s.companyLine}>{profile.legalName}</Text>}
             {companyLines(profile).map((l, i) => (
@@ -170,7 +175,7 @@ export function QuotePdf({ quote, profile }: { quote: Quote; profile: CompanyPro
             ))}
           </View>
           <View style={s.docBox}>
-            <Text style={s.docTitle}>ORÇAMENTO</Text>
+            <Text style={[s.docTitle, accent ? { color: accent } : {}]}>ORÇAMENTO</Text>
             <Text style={s.docNumber}>Nº {quote.number}</Text>
             <View style={s.metaRow}>
               <Text style={s.metaLabel}>Emissão</Text>
@@ -183,7 +188,7 @@ export function QuotePdf({ quote, profile }: { quote: Quote; profile: CompanyPro
           </View>
         </View>
 
-        <View style={s.rule} />
+        <View style={[s.rule, accent ? { borderBottomColor: accent } : {}]} />
 
         {/* Cliente */}
         {c.name ? (
@@ -202,8 +207,8 @@ export function QuotePdf({ quote, profile }: { quote: Quote; profile: CompanyPro
 
         {/* Itens */}
         <View style={s.table}>
-          <View style={s.th} fixed>
-            <Text style={s.cIdx}>#</Text>
+          <View style={[s.th, accent ? { backgroundColor: accent, color: '#ffffff' } : {}]} fixed>
+            <Text style={[s.cIdx, accent ? { color: '#ffffff' } : {}]}>#</Text>
             <Text style={s.cDesc}>Descrição</Text>
             <Text style={s.cQty}>Qtd</Text>
             <Text style={s.cUnit}>Un</Text>
@@ -249,9 +254,9 @@ export function QuotePdf({ quote, profile }: { quote: Quote; profile: CompanyPro
                 <Text>{formatCurrency(e.value)}</Text>
               </View>
             ))}
-          <View style={s.grandTotal}>
+          <View style={[s.grandTotal, accent ? { borderTopColor: accent } : {}]}>
             <Text style={s.grandLabel}>Total</Text>
-            <Text style={s.grandValue}>{formatCurrency(totals.total)}</Text>
+            <Text style={[s.grandValue, accent ? { color: accent } : {}]}>{formatCurrency(totals.total)}</Text>
           </View>
         </View>
 

@@ -13,6 +13,7 @@ const FEATURES: [string, string | boolean, string | boolean][] = [
   ['Onde ficam os dados', 'Só neste aparelho', 'Na nuvem, na sua conta'],
   ['Sincronização entre celular e computador', false, true],
   ['Enviar para a nuvem os dados do grátis', false, true],
+  ['Logotipo e cor da sua marca no PDF', false, true],
   ['Funciona sem internet', true, true],
   ['PDF, clientes e catálogo', true, true],
   ['Relatórios e follow-up', true, true],
@@ -151,6 +152,12 @@ export default function SubscriptionPage() {
               <li className="flex gap-2">
                 <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Seus dados na nuvem, de qualquer
                 aparelho, com a sua conta
+              </li>
+              <li className="flex gap-2">
+                <Check size={18} className="shrink-0 text-emerald-600" aria-hidden />
+                <span>
+                  <strong>Logotipo e cor da sua marca</strong> no PDF
+                </span>
               </li>
               <li className="flex gap-2">
                 <Check size={18} className="shrink-0 text-emerald-600" aria-hidden /> Leva para a nuvem o que você já

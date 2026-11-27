@@ -70,3 +70,13 @@ describe('pickData', () => {
     expect(Object.keys(pickData(withActions)).sort()).toEqual([...DATA_KEYS].sort())
   })
 })
+
+describe('aparência do PDF (Pro)', () => {
+  it('sobrevive à migração e à importação; dados antigos (sem branding) continuam válidos', () => {
+    const withBrand = { ...newProfile(), branding: { logo: 'data:image/png;base64,AAAA', accent: '#1d4ed8' } }
+    const { branding: _old, ...legacy } = newProfile()
+    const out = normalizeImport({ profiles: [withBrand, legacy as never], quotes: [] })
+    expect(out.profiles[0].branding).toEqual({ logo: 'data:image/png;base64,AAAA', accent: '#1d4ed8' })
+    expect(out.profiles[1].branding).toBeUndefined()
+  })
+})

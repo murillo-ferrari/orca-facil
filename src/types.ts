@@ -20,6 +20,14 @@ export interface BankInfo {
   holder: string
 }
 
+/** Aparência do PDF (plano Pro). Ausente em dados antigos. */
+export interface Branding {
+  /** PNG ou JPEG em data URL, já reduzido para caber no registro (ver `lib/logo.ts`) */
+  logo: string | null
+  /** Cor de destaque `#rrggbb`; null = visual padrão (grafite) */
+  accent: string | null
+}
+
 export interface CompanyProfile {
   id: string
   /** Nome curto exibido no seletor do app */
@@ -39,6 +47,7 @@ export interface CompanyProfile {
   pixKey: string
   bank: BankInfo
   showBankInfo: boolean
+  branding?: Branding
   defaultValidityDays: number
   defaultPaymentTerms: string
   defaultNotes: string

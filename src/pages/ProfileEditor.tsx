@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, CreditCard, FileCog, MapPin, Phone, Save, Trash2 } from 'lucide-react'
+import { ArrowLeft, Building2, CreditCard, Crown, FileCog, MapPin, Phone, Save, Trash2 } from 'lucide-react'
 import { useStore } from '../store/store'
 import { newProfile } from '../store/factories'
 import type { CompanyProfile, PixKeyType } from '../types'
@@ -9,11 +9,27 @@ import { maskDoc, maskPhone } from '../lib/format'
 import { AddressFields } from '../components/AddressFields'
 import { DocumentField } from '../components/DocumentField'
 import { NumberInput } from '../components/NumberInput'
-import { Button, Card, CardHeader, Field, PageHeader, Select, Textarea, TextField } from '../components/ui'
+import { BrandingCard } from '../components/BrandingCard'
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardSkeleton,
+  Field,
+  PageHeader,
+  Select,
+  Textarea,
+  TextField,
+} from '../components/ui'
 import { toast } from '../components/toast'
 import { confirmDialog } from '../components/confirm'
 
 const PIX_TYPES: PixKeyType[] = ['CNPJ', 'CPF', 'E-mail', 'Telefone', 'Aleatória']
+const NO_BRANDING = { logo: null, accent: null }
+
+// Logotipo e cores do PDF são do plano Pro: na Cloud o cartão decide pelo plano; na Local mostra só o convite
+const BrandingSection =
+  import.meta.env.VITE_EDITION === 'cloud' ? lazy(() => import('../editions/cloud/billing/BrandingSection')) : null
 
 export function ProfileEditor() {
   const { id } = useParams()
@@ -31,6 +47,7 @@ export function ProfileEditor() {
     setP((prev) => ({ ...prev, bank: { ...prev.bank, ...patch } }))
 
   const nameMissing = !p.tradeName.trim() && !p.legalName.trim()
+  const companyName = p.tradeName.trim() || p.legalName.trim() || 'Sua empresa'
 
   function handleSave() {
     setTried(true)
@@ -242,6 +259,32 @@ export function ProfileEditor() {
             </label>
           </div>
         </Card>
+
+        {BrandingSection ? (
+          <Suspense fallback={<CardSkeleton lines={1} className="h-[180px]" />}>
+            <BrandingSection
+              value={p.branding ?? NO_BRANDING}
+              onChange={(branding) => set({ branding })}
+              companyName={companyName}
+            />
+          </Suspense>
+        ) : (
+          <BrandingCard
+            locked
+            value={p.branding ?? NO_BRANDING}
+            onChange={(branding) => set({ branding })}
+            companyName={companyName}
+            upgrade={
+              // ../ = raiz do site (a Local fica em /gratis/, ao lado da página do plano Pro)
+              <a
+                href="../"
+                className="inline-flex h-10 w-fit items-center gap-2 rounded-lg bg-brand-50 px-3.5 text-sm font-medium text-brand-700 hover:bg-brand-100"
+              >
+                <Crown size={16} aria-hidden /> Conhecer o plano Pro
+              </a>
+            }
+          />
+        )}
 
         <Card>
           <CardHeader

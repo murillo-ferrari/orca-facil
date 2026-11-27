@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { toast } from '../../../components/toast'
 import { formatDate } from '../../../lib/format'
 import { supabase } from '../supabase'
+import { setBrandingAllowed } from '../../branding'
 import { planView, type PlanView, type Subscription } from './plan'
 
 /**
@@ -28,6 +29,10 @@ const EMPTY: PlanState = {
 }
 
 export const usePlan = create<PlanState>(() => EMPTY)
+
+// Logotipo e cor no PDF são do Pro. ponytail: antes da primeira leitura do plano (poucos instantes após abrir o app)
+// o PDF sai no visual padrão; se isso incomodar, esperar `loaded` antes de gerar o PDF.
+usePlan.subscribe((s) => setBrandingAllowed(s.loaded && s.view.pro))
 
 let inflight: Promise<void> | null = null
 let returnChecked = false

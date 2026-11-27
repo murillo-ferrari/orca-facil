@@ -24,6 +24,9 @@ Duas edições, do mesmo código:
   a descrição sugere itens do catálogo enquanto você digita.
 - **Clientes e catálogo** reutilizáveis, salvos direto do editor.
 - **PDF** com layout sóbrio, gerado no navegador (a biblioteca só carrega na hora de gerar), com rodapé e numeração de páginas.
+- **Logotipo e cor da marca no PDF (plano Pro):** no cadastro da empresa, envie o logotipo (reduzido automaticamente no
+  navegador) e escolha uma cor de destaque (8 prontas ou qualquer outra), com pré-visualização. A cor é escurecida
+  sozinha quando ficaria ilegível. Sem Pro, o PDF usa o visual padrão.
 - **Backup:** exporte/importe todos os dados em JSON em _Ajustes_.
 - **Página do cliente** com histórico de orçamentos, resumo e taxa de aprovação.
 - **Relatórios** (por empresa ou todas), com filtros de período, status, cliente, serviço e faixa de valor,
@@ -155,6 +158,8 @@ orca-facil/
     │   ├── calc.ts             total do item, subtotal, desconto, acréscimos e total do orçamento
     │   ├── cep.ts              consulta de endereço na API ViaCEP
     │   ├── clientQuotes.ts     regra de quais orçamentos pertencem a um cliente
+    │   ├── color.ts            cor de destaque: validação, contraste (WCAG) e as cores prontas
+    │   ├── logo.ts             reduz o logotipo enviado (PNG/JPEG) no navegador para caber no registro
     │   └── status.ts           rótulos e cores dos status
     │
     ├── components/
@@ -171,6 +176,7 @@ orca-facil/
     │   ├── ClientFields.tsx    campos de cliente (usados no cadastro e no orçamento)
     │   ├── ClientFormModal.tsx modal de cadastro/edição de cliente
     │   ├── Faq.tsx             perguntas frequentes em <details> (landing e /assinatura)
+    │   ├── BrandingCard.tsx    "Logotipo e cores do PDF" no cadastro da empresa (bloqueado sem Pro)
     │   ├── ItemsEditor.tsx     itens do orçamento: sugestões do catálogo, atalhos de teclado, menu do item
     │   ├── UnitSelect.tsx      seletor de unidade (mostra só a sigla quando fechado)
     │   └── QuoteRow.tsx        linha de orçamento nas listas (PDF, duplicar, excluir)
@@ -188,6 +194,7 @@ orca-facil/
     │
     ├── pdf/
     │   ├── QuotePdf.tsx        layout do PDF do orçamento (@react-pdf/renderer)
+    │   ├── branding.ts         logotipo e cor aceitos no PDF (valida o dado e garante o contraste)
     │   └── exportPdf.ts        geração sob demanda, nome do arquivo e download
     │
     └── reports/

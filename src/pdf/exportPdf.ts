@@ -1,12 +1,15 @@
 import { createElement } from 'react'
 import type { CompanyProfile, Quote } from '../types'
 import { slugify } from '../lib/format'
+import { brandingAllowed } from '../editions/branding'
 
 /** Gera o PDF sob demanda (a biblioteca só é carregada quando necessária). */
 export async function renderQuotePdf(quote: Quote, profile: CompanyProfile): Promise<Blob> {
   const [{ pdf }, { QuotePdf }] = await Promise.all([import('@react-pdf/renderer'), import('./QuotePdf')])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return pdf(createElement(QuotePdf, { quote, profile }) as any).toBlob()
+  // Sem Pro, o PDF sai com o visual padrão (os dados de aparência continuam salvos)
+  const shown = brandingAllowed() ? profile : { ...profile, branding: undefined }
+  return pdf(createElement(QuotePdf, { quote, profile: shown }) as any).toBlob()
 }
 
 export function pdfFileName(quote: Quote) {

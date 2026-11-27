@@ -39,6 +39,9 @@ export const LABELS: Record<string, string> = {
   accountType: 'Tipo de conta',
   holder: 'Titular',
   showBankInfo: 'Mostrar dados bancários',
+  branding: 'Logotipo e cores do PDF',
+  logo: 'Logotipo',
+  accent: 'Cor de destaque',
   defaultValidityDays: 'Validade padrão (dias)',
   defaultPaymentTerms: 'Forma de pagamento padrão',
   defaultNotes: 'Observações padrão',
@@ -93,6 +96,7 @@ const same = (a: unknown, b: unknown) => fingerprint(a) === fingerprint(b)
 
 function scalar(v: unknown): string {
   if (typeof v === 'boolean') return v ? 'Sim' : 'Não'
+  if (typeof v === 'string' && v.startsWith('data:image/')) return '(imagem)'
   const s = String(v)
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return formatDate(s)
   if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return formatDate(s, 'dd/MM/yyyy HH:mm')

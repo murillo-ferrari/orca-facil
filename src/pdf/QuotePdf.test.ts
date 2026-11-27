@@ -26,7 +26,23 @@ async function pageCount(quote: Quote) {
   return (text.match(/\/Type \/Page(?!s)/g) ?? []).length
 }
 
+const PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+
 describe('PDF do orçamento', () => {
+  it('com logotipo e cor continua em 1 página', async () => {
+    const branded = { ...profile, branding: { logo: PNG, accent: '#1d4ed8' } }
+    const buf = await renderToBuffer(createElement(QuotePdf, { quote: makeQuote(3), profile: branded }) as never)
+    expect(buf.toString('latin1')).toContain('/Subtype /Image')
+    expect((buf.toString('latin1').match(/\/Type \/Page(?!s)/g) ?? []).length).toBe(1)
+  })
+
+  it('logotipo inválido é ignorado, sem quebrar o PDF', async () => {
+    const bad = { ...profile, branding: { logo: 'https://exemplo.com/x.png', accent: null } }
+    const buf = await renderToBuffer(createElement(QuotePdf, { quote: makeQuote(3), profile: bad }) as never)
+    expect(buf.toString('latin1')).not.toContain('/Subtype /Image')
+  })
+
   it('orçamento curto cabe em 1 página', async () => {
     expect(await pageCount(makeQuote(3))).toBe(1)
   })

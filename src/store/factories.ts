@@ -48,6 +48,7 @@ export function newProfile(): CompanyProfile {
     pixKey: '',
     bank: { bank: '', agency: '', account: '', accountType: 'Corrente', holder: '' },
     showBankInfo: true,
+    branding: { logo: null, accent: null },
     defaultValidityDays: 15,
     defaultPaymentTerms: '',
     defaultNotes: '',

@@ -160,6 +160,20 @@ persistência ali (contrato `DataPersistence` em `src/data/persistence.ts`), sem
   `--remote` (ex.: `npx supabase db push --remote --dry-run` antes de aplicar); sem ele, o alvo é o banco local.
 - Docker Desktop precisa estar rodando. Container do banco: `supabase_db_orca-facil` (porta 54322).
 
+## Logotipo e cor no PDF (plano Pro)
+
+- `CompanyProfile.branding?: { logo, accent }` (opcional, **sem mudar `SCHEMA_VERSION`**: dados antigos não têm o
+  campo e o PDF trata a ausência). `logo` é um data URL PNG/JPEG já reduzido no navegador (`lib/logo.ts`, teto de
+  ~45 mil caracteres porque o registro na nuvem tem limite de 64 KB); `accent` é `#rrggbb`.
+- Cadastro da empresa: `components/BrandingCard.tsx` (envio do logotipo, 8 cores prontas + "Outra cor", miniatura ao
+  vivo). Na Cloud, `editions/cloud/billing/BrandingSection.tsx` decide pelo plano; sem Pro (e na Local) o cartão sai
+  **bloqueado** com convite ao Pro. Os dados escolhidos continuam salvos.
+- **Quem libera o recurso** é `editions/branding.ts` (`setBrandingAllowed`), ligado pelo `planStore` quando a conta é
+  Pro. `exportPdf.ts` só passa `branding` ao PDF se estiver liberado: sem Pro o PDF volta ao visual padrão. É só
+  apresentação (os dados não são protegidos no banco).
+- O PDF nunca confia no dado: `pdf/branding.ts` aceita só data URL PNG/JPEG (nada de URL externa nem SVG) e cor
+  `#rrggbb`, e **escurece a cor até ter contraste 4,5:1 com o branco** (`lib/color.ts`). As cores prontas já passam.
+
 ## Regras de negócio
 
 - **Numeração:** por perfil de empresa, `prefixo + número com 4 dígitos` (`ORC-0001`). `createQuote` e

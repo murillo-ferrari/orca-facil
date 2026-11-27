@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { FileText } from 'lucide-react'
 import { Button, Card, Field, Input } from '../../../components/ui'
 import { fieldMessageId } from '../../../components/styles'
+import { SiteFooter } from '../landing/SiteFooter'
 import { supabase } from '../supabase'
 import { authErrorMessage } from './messages'
 
@@ -140,130 +141,133 @@ export function Login() {
   )
 
   return (
-    <main className="flex min-h-screen items-start justify-center bg-slate-50 px-4 pt-[12vh] pb-10">
-      <Card className="w-full max-w-sm p-6">
-        <div className="mb-6 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-            <FileText size={16} />
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <main className="flex flex-1 items-start justify-center px-4 pt-[12vh] pb-10">
+        <Card className="w-full max-w-sm p-6">
+          <div className="mb-6 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+              <FileText size={16} />
+            </div>
+            <span className="font-semibold tracking-tight text-slate-900">Orçafácil</span>
+            <Link to="/" className="ml-auto text-sm text-slate-500 hover:text-slate-800">
+              ← Início
+            </Link>
           </div>
-          <span className="font-semibold tracking-tight text-slate-900">Orçafácil</span>
-          <Link to="/" className="ml-auto text-sm text-slate-500 hover:text-slate-800">
-            ← Início
-          </Link>
-        </div>
 
-        {step === 'email' ? (
-          <>
-            <h1 className="text-xl font-semibold text-slate-900">Entrar</h1>
-            <p className="mt-1 mb-5 text-sm text-slate-600">
-              Enviamos um código para o seu e-mail. No primeiro acesso, a conta é criada.
-            </p>
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                void sendCode()
-              }}
-            >
-              <Field label="E-mail" htmlFor="login">
-                <Input
-                  id="login"
-                  name="email"
-                  type="email"
-                  autoComplete="username"
-                  spellCheck={false}
-                  required
-                  autoFocus
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  aria-invalid={!!error}
-                  aria-describedby={error ? fieldMessageId('login') : undefined}
-                />
-              </Field>
-              {SITE_KEY && <Turnstile key={captchaKey} onToken={setCaptchaToken} />}
-              {errorEl}
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="justify-center"
-                disabled={busy || needsCaptcha}
+          {step === 'email' ? (
+            <>
+              <h1 className="text-xl font-semibold text-slate-900">Entrar</h1>
+              <p className="mt-1 mb-5 text-sm text-slate-600">
+                Enviamos um código para o seu e-mail. No primeiro acesso, a conta é criada.
+              </p>
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  void sendCode()
+                }}
               >
-                {busy ? 'Enviando…' : 'Enviar código'}
-              </Button>
-            </form>
-            <div className="my-5 flex items-center gap-3 text-xs text-slate-400" aria-hidden="true">
-              <span className="h-px flex-1 bg-slate-200" /> ou <span className="h-px flex-1 bg-slate-200" />
-            </div>
-            <Button size="lg" className="w-full justify-center" onClick={google}>
-              <GoogleMark />
-              Continuar com Google
-            </Button>
-            <p className="mt-5 text-center text-xs text-slate-500">
-              Ao entrar, você concorda com os{' '}
-              <Link to="/termos" className="underline">
-                Termos de Uso
-              </Link>{' '}
-              e a{' '}
-              <Link to="/privacidade" className="underline">
-                Política de Privacidade
-              </Link>
-              .
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-xl font-semibold text-slate-900">Digite o código</h1>
-            <form className="mt-4 flex flex-col gap-4" onSubmit={verify}>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="login" className="text-sm font-medium text-slate-700">
-                  Código de acesso
-                </label>
-                {/* Dica acima do campo: o teclado do celular e o preenchimento automático não a cobrem */}
-                <p id="login-hint" className="text-sm text-slate-600">
-                  Enviamos um código de 6 dígitos para{' '}
-                  {/* Em linha própria: só quebra no meio se o e-mail sozinho não couber (overflow-wrap:anywhere) */}
-                  <strong className="block [overflow-wrap:anywhere]">{email.trim()}</strong>
-                  Confira também a caixa de spam.
-                </p>
-                <Input
-                  id="login"
-                  name="code"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  pattern="\d{6}"
-                  maxLength={6}
-                  required
-                  autoFocus
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                  className="h-12 font-mono text-xl tracking-[0.35em]"
-                  aria-invalid={!!error}
-                  aria-describedby={error ? `login-hint ${fieldMessageId('login')}` : 'login-hint'}
-                />
+                <Field label="E-mail" htmlFor="login">
+                  <Input
+                    id="login"
+                    name="email"
+                    type="email"
+                    autoComplete="username"
+                    spellCheck={false}
+                    required
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    aria-invalid={!!error}
+                    aria-describedby={error ? fieldMessageId('login') : undefined}
+                  />
+                </Field>
+                {SITE_KEY && <Turnstile key={captchaKey} onToken={setCaptchaToken} />}
+                {errorEl}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="justify-center"
+                  disabled={busy || needsCaptcha}
+                >
+                  {busy ? 'Enviando…' : 'Enviar código'}
+                </Button>
+              </form>
+              <div className="my-5 flex items-center gap-3 text-xs text-slate-400" aria-hidden="true">
+                <span className="h-px flex-1 bg-slate-200" /> ou <span className="h-px flex-1 bg-slate-200" />
               </div>
-              {errorEl}
-              <Button type="submit" variant="primary" size="lg" className="justify-center" disabled={busy}>
-                {busy ? 'Verificando…' : 'Entrar'}
+              <Button size="lg" className="w-full justify-center" onClick={google}>
+                <GoogleMark />
+                Continuar com Google
               </Button>
-            </form>
-            {SITE_KEY && canResend && (
-              <div className="mt-4">
-                <Turnstile key={captchaKey} onToken={setCaptchaToken} />
+              <p className="mt-5 text-center text-xs text-slate-500">
+                Ao entrar, você concorda com os{' '}
+                <Link to="/termos" className="underline">
+                  Termos de Uso
+                </Link>{' '}
+                e a{' '}
+                <Link to="/privacidade" className="underline">
+                  Política de Privacidade
+                </Link>
+                .
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl font-semibold text-slate-900">Digite o código</h1>
+              <form className="mt-4 flex flex-col gap-4" onSubmit={verify}>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="login" className="text-sm font-medium text-slate-700">
+                    Código de acesso
+                  </label>
+                  {/* Dica acima do campo: o teclado do celular e o preenchimento automático não a cobrem */}
+                  <p id="login-hint" className="text-sm text-slate-600">
+                    Enviamos um código de 6 dígitos para{' '}
+                    {/* Em linha própria: só quebra no meio se o e-mail sozinho não couber (overflow-wrap:anywhere) */}
+                    <strong className="block [overflow-wrap:anywhere]">{email.trim()}</strong>
+                    Confira também a caixa de spam.
+                  </p>
+                  <Input
+                    id="login"
+                    name="code"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="\d{6}"
+                    maxLength={6}
+                    required
+                    autoFocus
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                    className="h-12 font-mono text-xl tracking-[0.35em]"
+                    aria-invalid={!!error}
+                    aria-describedby={error ? `login-hint ${fieldMessageId('login')}` : 'login-hint'}
+                  />
+                </div>
+                {errorEl}
+                <Button type="submit" variant="primary" size="lg" className="justify-center" disabled={busy}>
+                  {busy ? 'Verificando…' : 'Entrar'}
+                </Button>
+              </form>
+              {SITE_KEY && canResend && (
+                <div className="mt-4">
+                  <Turnstile key={captchaKey} onToken={setCaptchaToken} />
+                </div>
+              )}
+              <div className="mt-4 flex flex-wrap justify-between gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setStep('email')}>
+                  Usar outro e-mail
+                </Button>
+                <Button variant="ghost" size="sm" disabled={!canResend || busy || needsCaptcha} onClick={sendCode}>
+                  {canResend ? 'Reenviar código' : 'Reenviar em 1 min'}
+                </Button>
               </div>
-            )}
-            <div className="mt-4 flex flex-wrap justify-between gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setStep('email')}>
-                Usar outro e-mail
-              </Button>
-              <Button variant="ghost" size="sm" disabled={!canResend || busy || needsCaptcha} onClick={sendCode}>
-                {canResend ? 'Reenviar código' : 'Reenviar em 1 min'}
-              </Button>
-            </div>
-          </>
-        )}
-      </Card>
-    </main>
+            </>
+          )}
+        </Card>
+      </main>
+      <SiteFooter />
+    </div>
   )
 }

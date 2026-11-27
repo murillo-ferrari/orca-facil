@@ -1,17 +1,19 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Cloud, FileText } from 'lucide-react'
+import { ArrowRight, Check, Cloud } from 'lucide-react'
 import { Badge, Card } from '../../../components/ui'
 import { Faq } from '../../../components/Faq'
 import { formatCurrency } from '../../../lib/format'
 import { supabase } from '../supabase'
 import { rememberAfterLogin } from '../auth/afterLogin'
 import { Showcase } from './Showcase'
+import { SiteFooter } from './SiteFooter'
+import { SiteHeader } from './SiteHeader'
+import { GITHUB_URL } from './site'
 
 // A edição Local (o plano grátis) é servida no mesmo domínio, em /gratis/ (npm run build:site). Por ser a mesma origem,
 // o localStorage dela é visível para a Cloud: quem assina o Pro já tem os dados do grátis à mão para enviar.
 const LOCAL_URL = '/gratis/'
-const GITHUB_URL = 'https://github.com/murillo-ferrari/orca-facil'
 
 const btn =
   'inline-flex shrink-0 items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500'
@@ -56,15 +58,6 @@ const FAQ: [string, ReactNode][] = [
     </>,
   ],
 ]
-
-/** Logo do GitHub (Octocat, domínio público/marca do GitHub), decorativo: o link já tem o texto. */
-function GithubMark() {
-  return (
-    <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true" className="shrink-0">
-      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
-    </svg>
-  )
-}
 
 function Item({ children }: { children: ReactNode }) {
   return (
@@ -128,13 +121,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white text-slate-800">
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8 sticky top-0 z-50 backdrop-blur">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-            <FileText size={16} aria-hidden />
-          </span>
-          <span className="font-semibold tracking-tight text-slate-900">Orçafácil</span>
-        </Link>
+      <SiteHeader>
         <nav aria-label="Principal" className="flex items-center gap-1 text-sm font-medium">
           <a href="#recursos" className="hidden rounded-lg px-3 py-2 text-slate-600 hover:bg-slate-100 sm:block">
             Recursos
@@ -149,7 +136,7 @@ export default function Landing() {
             Entrar
           </Link>
         </nav>
-      </header>
+      </SiteHeader>
 
       <main>
         <section className="bg-gradient-to-b from-brand-50 to-white" aria-labelledby="titulo">
@@ -178,7 +165,11 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="recursos" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="recursos-t">
+        <section
+          id="recursos"
+          className="scroll-mt-16 mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8"
+          aria-labelledby="recursos-t"
+        >
           <h2 id="recursos-t" className="text-2xl font-semibold tracking-tight text-slate-900">
             Tudo o que você precisa para orçar e fechar
           </h2>
@@ -209,7 +200,11 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="planos" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="planos-t">
+        <section
+          id="planos"
+          className="scroll-mt-16 mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8"
+          aria-labelledby="planos-t"
+        >
           <h2 id="planos-t" className="text-2xl font-semibold tracking-tight text-slate-900">
             Comece grátis. Leve para a nuvem quando quiser.
           </h2>
@@ -287,28 +282,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500 sm:px-6 lg:px-8">
-          <p>Orçafácil · Código aberto sob a licença AGPL-3.0</p>
-          <nav aria-label="Documentos" className="flex gap-4">
-            <Link to="/termos" className="underline">
-              Termos de Uso
-            </Link>
-            <Link to="/privacidade" className="underline">
-              Privacidade
-            </Link>
-          </nav>
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 font-medium text-slate-700 underline"
-          >
-            <GithubMark />
-            Ver no GitHub
-          </a>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

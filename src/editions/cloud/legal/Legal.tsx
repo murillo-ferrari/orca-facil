@@ -1,27 +1,27 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, FileText } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { SiteFooter } from '../landing/SiteFooter'
+import { SiteHeader } from '../landing/SiteHeader'
+import { GITHUB_URL } from '../landing/site'
 
 // Dados de quem opera o serviço. ATENÇÃO: confirme antes de publicar (nome, CNPJ se houver, e-mail que exista).
 const OPERATOR = 'Murillo Ferrari'
 const CONTACT_EMAIL = 'contato@orcafacil.murilloferrari.tech'
 const UPDATED = '26 de novembro de 2026'
-const REPO = 'https://github.com/murillo-ferrari/orca-facil'
 
 function Page({ title, children }: { title: string; children: ReactNode }) {
+  // Trocar de documento (ou chegar pelo rodapé da landing) abre sempre no topo
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
   return (
     <div className="min-h-screen bg-white text-slate-800">
-      <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sticky top-0 z-50 backdrop-blur">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
-            <FileText size={16} aria-hidden />
-          </span>
-          <span className="font-semibold tracking-tight text-slate-900">Orçafácil</span>
-        </Link>
+      <SiteHeader>
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800">
           <ArrowLeft size={16} aria-hidden /> Início
         </Link>
-      </header>
+      </SiteHeader>
       <main className="mx-auto max-w-3xl px-4 pt-6 pb-16 sm:px-6">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">{title}</h1>
         <p className="mt-1 text-sm text-slate-500">Atualizado em {UPDATED}.</p>
@@ -29,19 +29,7 @@ function Page({ title, children }: { title: string; children: ReactNode }) {
           {children}
         </div>
       </main>
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <nav
-          aria-label="Documentos"
-          className="mx-auto flex max-w-3xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-slate-600 sm:px-6"
-        >
-          <Link to="/termos" className="underline">
-            Termos de Uso
-          </Link>
-          <Link to="/privacidade" className="underline">
-            Política de Privacidade
-          </Link>
-        </nav>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }
@@ -58,7 +46,7 @@ export function Termos() {
           PDF. Ele é oferecido em duas formas: a <strong>edição grátis</strong>, que roda no seu aparelho e guarda os
           dados só nele, e a <strong>edição na nuvem (plano Pro)</strong>, com conta, sincronização entre aparelhos e
           cópia dos dados nos nossos servidores. O serviço é operado por {OPERATOR}. O código é aberto, sob a licença
-          AGPL-3.0 (<a href={REPO}>repositório no GitHub</a>).
+          AGPL-3.0 (<a href={GITHUB_URL}>repositório no GitHub</a>).
         </p>
       </section>
       <section>

@@ -29,6 +29,7 @@ export function NumberInput({
   className,
   onFocus,
   onBlur,
+  style,
   ...props
 }: Props) {
   const [draft, setDraft] = useState<string | null>(null)
@@ -47,7 +48,9 @@ export function NumberInput({
         type="text"
         inputMode="decimal"
         autoComplete="off"
-        className={cn(inputClass, 'text-right tabular-nums', currency && 'pl-9', suffix && 'pr-8', className)}
+        className={cn(inputClass, 'text-right tabular-nums', currency && 'pl-9', className)}
+        // Espaço do sufixo = largura dele (ch, no mesmo corpo de texto) + as margens de 0,75rem de cada lado
+        style={suffix ? { paddingRight: `calc(1.5rem + ${suffix.length}ch)`, ...style } : style}
         value={display}
         onFocus={(e) => {
           justFocused.current = true

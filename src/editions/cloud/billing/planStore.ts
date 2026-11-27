@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { create } from 'zustand'
 import { toast } from '../../../components/toast'
 import { formatDate } from '../../../lib/format'
@@ -82,6 +83,13 @@ export function loadPlan() {
   return inflight
 }
 
+/** Motivo (`{ error }`) que a função devolveu no corpo de uma resposta de erro. */
+const reasonOf = (e: FunctionsHttpError): Promise<string | null> =>
+  (e.context as Response).json().then(
+    (b: { error?: string }) => b?.error ?? null,
+    () => null,
+  )
+
 /** Chama a Edge Function `assinatura`. Erro vira aviso e retorna null. */
 export async function callAssinatura(
   acao: 'assinar' | 'cancelar' | 'confirmar',
@@ -94,13 +102,15 @@ export async function callAssinatura(
     body: { acao, periodo, preapproval_id: preapprovalId },
   })
   usePlan.setState({ busy: false })
-  if (error) {
+  // Respostas 4xx/5xx da função chegam como `error` (FunctionsHttpError), com o motivo no corpo; sem corpo, é rede.
+  const reason = error instanceof FunctionsHttpError ? await reasonOf(error) : null
+  if (error && (!reason || reason === 'provedor_indisponivel')) {
     toast('Não foi possível falar com o Mercado Pago. Tente de novo em instantes.', 'error')
     return null
   }
-  if ((data as { error?: string } | null)?.error) {
-    const reason = (data as { error?: string }).error
-    switch (reason) {
+  const failure = reason ?? (data as { error?: string } | null)?.error
+  if (failure) {
+    switch (failure) {
       case 'ja_assinante':
         toast('Sua assinatura Pro já está ativa. Confira em Ajustes › Conta e plano.')
         break

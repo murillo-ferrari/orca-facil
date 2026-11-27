@@ -97,7 +97,7 @@ export function QuotesList() {
         title="Orçamentos"
         description={active ? `Emitindo como ${active.label || active.tradeName}` : undefined}
         actions={
-          <Button variant="primary" size="lg" onClick={handleNew}>
+          <Button variant="primary" size="md" onClick={handleNew}>
             <Plus size={18} /> Novo orçamento
           </Button>
         }

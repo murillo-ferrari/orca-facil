@@ -34,21 +34,25 @@ class FakeServer implements RpcClient {
       if ('data' in c && c.data === null) {
         // Igual ao banco: JSON null não é SQL NULL e viola a constraint "data é objeto"
         out.rejected.push({ table: c.table, id: c.id, reason: 'dados_invalidos' })
-      } else if (this.refuse.has(c.id)) {
-        out.rejected.push({ table: c.table, id: c.id, reason: 'sem_permissao' })
-      } else if ((c.base_rev === null && cur) || (c.base_rev !== null && cur?.rev !== c.base_rev)) {
-        out.conflicts.push({ table: c.table, id: c.id, server: cur ?? null })
-      } else {
-        const row: ServerRow = {
-          id: c.id,
-          rev: (cur?.rev ?? 0) + 1,
-          updated_at: this.stamp(),
-          deleted_at: c.deleted ? this.stamp() : null,
-          data: c.data ?? cur?.data,
-        }
-        rows.set(c.id, row)
-        out.applied.push({ table: c.table, id: c.id, rev: row.rev })
+        continue
       }
+      if (this.refuse.has(c.id)) {
+        out.rejected.push({ table: c.table, id: c.id, reason: 'sem_permissao' })
+        continue
+      }
+      if ((c.base_rev === null && cur) || (c.base_rev !== null && cur?.rev !== c.base_rev)) {
+        out.conflicts.push({ table: c.table, id: c.id, server: cur ?? null })
+        continue
+      }
+      const row: ServerRow = {
+        id: c.id,
+        rev: (cur?.rev ?? 0) + 1,
+        updated_at: this.stamp(),
+        deleted_at: c.deleted ? this.stamp() : null,
+        data: c.data ?? cur?.data,
+      }
+      rows.set(c.id, row)
+      out.applied.push({ table: c.table, id: c.id, rev: row.rev })
     }
     return out
   }

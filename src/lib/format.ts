@@ -96,11 +96,10 @@ export function slugify(s: string) {
 export function parseBRNumber(text: string): number {
   let t = text.replace(/[^\d,.-]/g, '')
   if (!t) return 0
-  if (t.includes(',')) {
-    t = t.replace(/\./g, '').replace(',', '.')
-  } else if ((t.match(/\./g) ?? []).length > 1) {
-    t = t.replace(/\./g, '')
-  }
+  const hasComma = t.includes(',')
+  // Ponto é milhar com vírgula decimal ("1.234,56") ou quando repetido ("1.234.567"); ponto único é decimal ("1234.56")
+  if (hasComma || (t.match(/\./g) ?? []).length > 1) t = t.replace(/\./g, '')
+  if (hasComma) t = t.replace(',', '.')
   const n = Number.parseFloat(t)
   return Number.isFinite(n) ? n : 0
 }

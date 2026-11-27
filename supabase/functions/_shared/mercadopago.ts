@@ -66,11 +66,10 @@ export function subscriptionFromPreapproval(
   const recurringAmount = Number(r.transaction_amount)
   if (!interval || !Number.isFinite(recurringAmount) || recurringAmount <= 0 || r.currency_id !== 'BRL') return null
   if (contractedInterval != null && contractedInterval !== interval) return null
-  if (contractedAmount != null) {
-    // Assinatura já contratada (renovação, cancelamento): vale o valor acordado, mesmo depois de um reajuste.
-    if (Number(contractedAmount) !== recurringAmount) return null
-  } else if (!prices.some((p) => p.months === months && Number(p.amount) === recurringAmount)) {
-    // Sem contrato gravado: só vira Pro com o preço vigente da tabela.
+  // Assinatura já contratada (renovação, cancelamento): vale o valor acordado, mesmo depois de um reajuste.
+  if (contractedAmount != null && Number(contractedAmount) !== recurringAmount) return null
+  // Sem contrato gravado: só vira Pro com o preço vigente da tabela.
+  if (contractedAmount == null && !prices.some((p) => p.months === months && Number(p.amount) === recurringAmount)) {
     return null
   }
 

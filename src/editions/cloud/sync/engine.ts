@@ -223,9 +223,16 @@ export class SyncEngine {
 
   private async persist() {
     for (const k of this.dirty) {
-      if (k === 'cursors') await this.db.set('cursors', this.cursors)
-      else if (k === 'conflicts') await this.db.set('conflicts', this.conflicts)
-      else await this.db.set(`known:${k}`, [...this.known[k]])
+      switch (k) {
+        case 'cursors':
+          await this.db.set('cursors', this.cursors)
+          break
+        case 'conflicts':
+          await this.db.set('conflicts', this.conflicts)
+          break
+        default:
+          await this.db.set(`known:${k}`, [...this.known[k]])
+      }
     }
     this.dirty.clear()
   }

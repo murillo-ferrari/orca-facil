@@ -5,6 +5,39 @@ import { cn } from '../../../components/styles'
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`
 
+interface Status {
+  phase: string
+  pending: number
+  rejected: number
+  conflicts: number
+  needsPlan: boolean
+}
+
+/** Ícone, texto e cor do indicador; a primeira situação que vale (por prioridade) decide. */
+function statusOf({ phase, pending, rejected, conflicts, needsPlan }: Status) {
+  if (phase === 'syncing') return { Icon: RefreshCw, text: 'Sincronizando…', tone: 'text-slate-500' }
+  if (phase === 'offline') {
+    const text = pending ? `Offline — ${plural(pending, 'alteração pendente', 'alterações pendentes')}` : 'Offline'
+    return { Icon: CloudOff, text, tone: 'text-slate-500' }
+  }
+  if (phase === 'error') return { Icon: CloudAlert, text: 'Erro ao sincronizar', tone: 'text-red-600' }
+  if (conflicts) {
+    const text = plural(conflicts, 'conflito para resolver', 'conflitos para resolver')
+    return { Icon: GitMerge, text, tone: 'text-amber-700' }
+  }
+  if (rejected) {
+    // Sem plano Pro o servidor recusa tudo: diz o motivo; senão, só a contagem
+    const text = needsPlan
+      ? 'Sem plano Pro: não salvo na nuvem'
+      : plural(rejected, 'alteração não enviada', 'alterações não enviadas')
+    return { Icon: CloudAlert, text, tone: 'text-amber-700' }
+  }
+  if (pending) {
+    return { Icon: Cloud, text: plural(pending, 'alteração pendente', 'alterações pendentes'), tone: 'text-slate-500' }
+  }
+  return { Icon: CloudCheck, text: 'Sincronizado', tone: 'text-slate-500' }
+}
+
 /** Indicador de sincronização (plano 7.7). `compact`: só o ícone na tela, com o texto para leitores de tela. */
 export default function SyncStatus({ compact }: { compact?: boolean }) {
   const phase = useSyncState((s) => s.phase)
@@ -13,34 +46,7 @@ export default function SyncStatus({ compact }: { compact?: boolean }) {
   const conflicts = useSyncState((s) => s.conflicts.length)
   const needsPlan = useSyncState((s) => s.needsPlan)
 
-  let Icon = CloudCheck
-  let text = 'Sincronizado'
-  let tone = 'text-slate-500'
-  if (phase === 'syncing') {
-    Icon = RefreshCw
-    text = 'Sincronizando…'
-  } else if (phase === 'offline') {
-    Icon = CloudOff
-    text = pending ? `Offline — ${plural(pending, 'alteração pendente', 'alterações pendentes')}` : 'Offline'
-  } else if (phase === 'error') {
-    Icon = CloudAlert
-    text = 'Erro ao sincronizar'
-    tone = 'text-red-600'
-  } else if (conflicts) {
-    Icon = GitMerge
-    text = plural(conflicts, 'conflito para resolver', 'conflitos para resolver')
-    tone = 'text-amber-700'
-  } else if (rejected) {
-    Icon = CloudAlert
-    // Sem plano Pro o servidor recusa tudo: diz o motivo; senão, só a contagem
-    text = needsPlan
-      ? 'Sem plano Pro: não salvo na nuvem'
-      : plural(rejected, 'alteração não enviada', 'alterações não enviadas')
-    tone = 'text-amber-700'
-  } else if (pending) {
-    Icon = Cloud
-    text = plural(pending, 'alteração pendente', 'alterações pendentes')
-  }
+  const { Icon, text, tone } = statusOf({ phase, pending, rejected, conflicts, needsPlan })
 
   return (
     <div role="status" className={cn('flex items-center gap-2 text-xs', tone)} title={compact ? text : undefined}>
